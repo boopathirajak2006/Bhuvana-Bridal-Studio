@@ -81,7 +81,15 @@
       msgEl.textContent = contact.message ? `“${contact.message}”` : 'No additional message provided.';
     }
 
-    // WhatsApp Action
+    // Action 1: Generate Booking Image
+    const btnGenerateImage = document.getElementById('btn-generate-booking-image');
+    if (btnGenerateImage) {
+      btnGenerateImage.addEventListener('click', function () {
+        window.location.href = 'booking-preview.html';
+      });
+    }
+
+    // Action 2: Direct WhatsApp Action
     const btnSendWhatsApp = document.getElementById('btn-send-whatsapp');
     const statusEl = document.getElementById('whatsapp-handoff-status');
 

@@ -1,0 +1,603 @@
+/* ==============================================================================
+   BHUVANA'S BRIDAL & TAILORING STUDIO
+   Dynamic Booking Confirmation Poster Stylesheet
+   Canvas Base Width: 1080px (Dynamic Height)
+   Matches the Official Reference Booking Poster Design
+   ============================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Jost:wght@400;500;600;700&display=swap');
+
+/* Master Poster Container */
+.booking-poster-container {
+  width: 1080px;
+  min-width: 1080px;
+  max-width: 1080px;
+  margin: 0 auto;
+  position: relative;
+  background-color: #FEF6ED;
+  background-image:
+    radial-gradient(circle at 95% 5%, rgba(247, 219, 217, 0.65) 0%, transparent 40%),
+    radial-gradient(circle at 5% 95%, rgba(247, 219, 217, 0.65) 0%, transparent 40%),
+    radial-gradient(circle at 95% 95%, rgba(247, 219, 217, 0.5) 0%, transparent 35%),
+    linear-gradient(180deg, #FEF8F2 0%, #FEF4EA 50%, #FDF0E4 100%);
+  padding: 42px 48px 50px;
+  box-sizing: border-box;
+  font-family: 'Jost', sans-serif;
+  color: #3B2416;
+  overflow: hidden;
+  box-shadow: 0 14px 45px rgba(93, 64, 55, 0.18);
+  border-radius: 4px;
+}
+
+/* Dual Ornamental Border Frame */
+.poster-frame {
+  position: relative;
+  border: 2px solid #C8A46B;
+  outline: 1.5px solid #E8D5BC;
+  outline-offset: 8px;
+  border-radius: 12px;
+  padding: 36px 38px 38px;
+  box-sizing: border-box;
+  background: rgba(254, 246, 237, 0.4);
+  z-index: 2;
+}
+
+/* Corner Ornamental Flourishes (SVG Inset) */
+.poster-corner-flourish {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  pointer-events: none;
+  z-index: 3;
+}
+.poster-corner-flourish.tl { top: -6px; left: -6px; border-top: 3px solid #8A6230; border-left: 3px solid #8A6230; border-top-left-radius: 6px; }
+.poster-corner-flourish.tr { top: -6px; right: -6px; border-top: 3px solid #8A6230; border-right: 3px solid #8A6230; border-top-right-radius: 6px; }
+.poster-corner-flourish.bl { bottom: -6px; left: -6px; border-bottom: 3px solid #8A6230; border-left: 3px solid #8A6230; border-bottom-left-radius: 6px; }
+.poster-corner-flourish.br { bottom: -6px; right: -6px; border-bottom: 3px solid #8A6230; border-right: 3px solid #8A6230; border-bottom-right-radius: 6px; }
+
+/* Corner Floral Decorations */
+.poster-floral {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  user-select: none;
+}
+.poster-floral-tr {
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: auto;
+  opacity: 0.95;
+}
+.poster-floral-bl {
+  bottom: 0;
+  left: 0;
+  width: 250px;
+  height: auto;
+  opacity: 0.95;
+}
+.poster-floral-br {
+  bottom: 0;
+  right: 0;
+  width: 260px;
+  height: auto;
+  opacity: 0.95;
+}
+
+/* ---------- Header Section ---------- */
+.poster-header {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 4;
+}
+
+.poster-logo-wrap {
+  flex-shrink: 0;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 3px solid #D8C3A5;
+  box-shadow: 0 4px 15px rgba(184, 142, 82, 0.18);
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.poster-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.poster-brand-wrap {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.poster-brand-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: #3B2416;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.poster-brand-sub {
+  font-family: 'Jost', sans-serif;
+  font-size: 21px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #7A5228;
+  margin-top: 4px;
+}
+
+.poster-header-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.poster-header-divider-text {
+  font-family: 'Jost', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: #8B263E;
+  white-space: nowrap;
+}
+
+.poster-header-line {
+  flex-grow: 1;
+  height: 1.5px;
+  background: linear-gradient(90deg, #D4AF37, rgba(212, 175, 55, 0.1));
+}
+
+.poster-heart-center {
+  display: flex;
+  justify-content: center;
+  margin-top: 2px;
+  color: #8B263E;
+  font-size: 18px;
+}
+
+/* ---------- Reusable Information Panels ---------- */
+.poster-panel {
+  position: relative;
+  background: rgba(255, 252, 248, 0.95);
+  border: 1.8px solid #D8C3A5;
+  border-radius: 20px;
+  box-shadow: 0 4px 18px rgba(138, 104, 52, 0.07);
+  padding: 32px 36px 28px;
+  margin-top: 36px;
+  box-sizing: border-box;
+  z-index: 4;
+}
+
+/* Gold Gradient Section Header Badge */
+.poster-panel-badge {
+  position: absolute;
+  top: -19px;
+  left: 32px;
+  background: linear-gradient(135deg, #B88E52 0%, #8A6834 100%);
+  border: 1.5px solid #F5E5C9;
+  border-radius: 999px;
+  padding: 7px 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #FFFFFF;
+  font-family: 'Jost', sans-serif;
+  font-size: 16.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(138, 104, 52, 0.28);
+  white-space: nowrap;
+}
+
+.poster-panel-badge svg,
+.poster-panel-badge .badge-icon {
+  font-size: 16px;
+}
+
+/* ---------- Customer Information Panel ---------- */
+.customer-info-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.customer-info-table {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: 28px 160px 20px 1fr;
+  align-items: baseline;
+  font-size: 21px;
+  line-height: 1.35;
+}
+
+.info-icon {
+  font-size: 20px;
+  color: #8A6230;
+  display: flex;
+  align-items: center;
+}
+
+.info-label {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 23px;
+  font-weight: 700;
+  color: #5D3A20;
+  letter-spacing: 0.01em;
+}
+
+.info-colon {
+  font-weight: 700;
+  color: #8A6230;
+  text-align: center;
+}
+
+.info-value {
+  font-family: 'Jost', sans-serif;
+  font-size: 21px;
+  font-weight: 600;
+  color: #2C1E16;
+  word-break: break-word;
+}
+
+.customer-illustration-wrap {
+  flex-shrink: 0;
+  width: 220px;
+  height: 220px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.customer-illustration-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(184, 142, 82, 0.15));
+}
+
+.floating-hearts {
+  position: absolute;
+  top: 15px;
+  left: -20px;
+  font-size: 22px;
+  color: #C89578;
+  opacity: 0.85;
+  user-select: none;
+}
+
+/* ---------- Selected Services Panel ---------- */
+.selected-services-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+}
+
+.selected-services-grid.two-col {
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.services-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+}
+
+.services-group.with-divider {
+  border-right: 1.5px solid #E8D5BC;
+  padding-right: 28px;
+}
+
+.services-group-pill {
+  align-self: flex-start;
+  background: #F7DFDE;
+  color: #7B1F33;
+  border: 1px solid #E8B9BA;
+  border-radius: 999px;
+  padding: 5px 20px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.services-group-body {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.services-group-icon {
+  flex-shrink: 0;
+  width: 72px;
+  height: 85px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.services-group-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.services-items-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.service-item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 19px;
+  line-height: 1.3;
+}
+
+.check-circle {
+  flex-shrink: 0;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #8A6230;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.service-item-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.service-title {
+  font-family: 'Jost', sans-serif;
+  font-size: 19.5px;
+  font-weight: 600;
+  color: #2C1E16;
+}
+
+.service-price-tag {
+  font-family: 'Jost', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #8A6230;
+  margin-top: 2px;
+}
+
+.service-price-tag.quote {
+  color: #6D4C33;
+  font-weight: 500;
+}
+
+/* ---------- Additional Requirements Panel ---------- */
+.req-table {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.req-row {
+  display: grid;
+  grid-template-columns: 210px 20px 1fr;
+  align-items: baseline;
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.req-label {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 22.5px;
+  font-weight: 700;
+  color: #5D3A20;
+}
+
+.req-colon {
+  font-weight: 700;
+  color: #8A6230;
+  text-align: center;
+}
+
+.req-value {
+  font-family: 'Jost', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: #2C1E16;
+  word-break: break-word;
+}
+
+/* ---------- Final Status Banner Section ---------- */
+.poster-status-wrap {
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 4;
+}
+
+.status-banner-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.status-flank-line {
+  flex: 1;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, #C8A46B, transparent);
+}
+
+.status-pill-banner {
+  background: linear-gradient(135deg, #8C253E 0%, #681729 100%);
+  color: #FFFFFF;
+  border: 1.5px solid #E6A8B4;
+  border-radius: 999px;
+  padding: 12px 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 15px rgba(104, 23, 41, 0.25);
+  white-space: nowrap;
+}
+
+.status-check-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  color: #8C253E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.status-text {
+  font-family: 'Jost', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.poster-thankyou-script {
+  font-family: 'Alex Brush', 'Cormorant Garamond', cursive;
+  font-size: 34px;
+  color: #3B2416;
+  text-align: center;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.poster-thankyou-heart {
+  font-size: 26px;
+  color: #3B2416;
+  transform: rotate(-10deg);
+}
+
+/* ==============================================================================
+   PREVIEW PAGE USER INTERFACE STYLES (booking-preview.html)
+   ============================================================================== */
+.preview-container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+.preview-actions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+  position: sticky;
+  top: 76px;
+  z-index: 50;
+  background: rgba(251, 248, 243, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 0.85rem 1rem;
+  border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(59, 47, 42, 0.08);
+  border: 1px solid var(--border, #E8D5BC);
+}
+
+.preview-image-wrapper {
+  max-width: 1080px;
+  margin: 0 auto;
+  background: #FFFFFF;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(59, 47, 42, 0.15);
+  border: 1px solid #E8D5BC;
+  display: flex;
+  justify-content: center;
+}
+
+.preview-image-wrapper img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Live render target (hidden during export or scaled for responsive preview) */
+#poster-render-target {
+  margin: 0 auto;
+}
+
+/* Generation loading spinner */
+.poster-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.poster-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #E8D5BC;
+  border-top-color: #8A6834;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1.25rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1120px) {
+  .poster-render-scaler {
+    overflow-x: auto;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+}

@@ -10,6 +10,7 @@
   const STORAGE_KEY_FIRST = 'bbs_first_service';
   const STORAGE_KEY_REQ = 'bbs_booking_requirements';
   const STORAGE_KEY_CONTACT = 'bbs_contact_details';
+  const STORAGE_KEY_REF = 'bbs_booking_ref';
   const ARTIST_WHATSAPP_NUMBER = '916374036629';
 
   // Safe Storage access with in-memory fallback
@@ -97,7 +98,27 @@
     storage.remove(STORAGE_KEY_FIRST);
     storage.remove(STORAGE_KEY_REQ);
     storage.remove(STORAGE_KEY_CONTACT);
+    storage.remove(STORAGE_KEY_REF);
     updateGlobalBadges();
+  }
+
+  function getBookingRef() {
+    let ref = storage.get(STORAGE_KEY_REF);
+    if (!ref) {
+      const year = new Date().getFullYear();
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 4; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      ref = 'BBS-' + year + '-' + code;
+      storage.set(STORAGE_KEY_REF, ref);
+    }
+    return ref;
+  }
+
+  function clearBookingRef() {
+    storage.remove(STORAGE_KEY_REF);
   }
 
   function getPopulatedServices() {
@@ -219,14 +240,15 @@
 
     return [
       '✦ ───── 𓆩♡𓆪 ───── ✦',
-      "୨୧ BHUVANA'S BRIDAL STUDIO ୨୧",
+      "୨୧BHUVANA'S BRIDAL STUDIO୨୧",
       '✦ ───── 𓆩♡𓆪 ───── ✦',
-      `❀ DIVISION: ${divisionStr.toUpperCase()} ❀`,
+      `❀ DIVISION : ${divisionStr.toUpperCase()} ❀`,
       '❀ Multi-Service Customer Enquiry ❀',
       '',
       '══════❀══════',
       '  CLIENT DETAILS ',
       '══════❀══════',
+      `• Booking Ref: ${getBookingRef()}`,
       `• Name: ${contact.name || contact.fullName || 'Not provided'}`,
       `• Mobile: ${contact.mobile || contact.phone || 'Not provided'}`,
       `• Email: ${contact.email || 'Not provided'}`,
@@ -284,6 +306,8 @@
     renderProgressBar: renderProgressBar,
     buildMessage: buildWhatsAppMessage,
     getWhatsAppUrl: getWhatsAppUrl,
+    getRef: getBookingRef,
+    clearRef: clearBookingRef,
     whatsappNumber: ARTIST_WHATSAPP_NUMBER
   };
 

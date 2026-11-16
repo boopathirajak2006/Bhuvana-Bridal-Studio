@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your Booking Details | Bhuvana's Bridal &amp; Tailoring Studio</title>
+  <meta name="description"
+    content="View, download and share your official booking confirmation poster from Bhuvana's Bridal &amp; Tailoring Studio, Salem.">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
+
+  <!-- Fonts & Stylesheets -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Jost:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/booking-poster.css">
+</head>
+
+<body>
+
+  <!-- Sticky Header -->
+  <header>
+    <div class="wrap nav">
+      <a class="logo-link" href="index.html" aria-label="Bhuvana's Bridal Studio Home">
+        <img class="logo-img" src="assets/images/logo.png" alt="Bhuvana's Bridal Studio logo" width="50" height="50">
+        <div class="brand-text">
+          <span class="brand-title">Bhuvana's Bridal Studio</span>
+          <span class="brand-sub">Salem &middot; Bridal &amp; Tailoring</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav aria-label="Main Navigation">
+        <ul class="nav-menu">
+          <li><a href="index.html#about">About</a></li>
+          <li><a href="pricing.html">Pricing</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="btn sm gold btn-booking-nav" href="select-service.html">Booking</a>
+        <button class="menu-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer Menu -->
+  <div class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation Menu">
+    <ul class="mobile-nav-list">
+      <li><a href="index.html#about">About <span>&rarr;</span></a></li>
+      <li><a href="pricing.html">Pricing <span>&rarr;</span></a></li>
+      <li><a href="contact.html">Contact <span>&rarr;</span></a></li>
+      <li><a href="select-service.html" class="mobile-booking-link">Booking <span>&rarr;</span></a></li>
+    </ul>
+    <div class="mobile-nav-contact">
+      <p><strong>Bhuvana's Bridal Studio</strong><br>Erumbalai, Steel Plant, Salem</p>
+      <p>Phone / WhatsApp: <a href="tel:+916374036629">+91 63740 36629</a></p>
+      <p>Instagram: <a href="https://instagram.com/__itz_berry_" target="_blank" rel="noopener">@__itz_berry_</a></p>
+    </div>
+  </div>
+
+  <main class="bg-ivory space-lg">
+    <div class="preview-container">
+
+      <!-- Progress Bar (Step 5 of 5) -->
+      <div id="progress-bar-container" style="margin-bottom: 2rem;"></div>
+
+      <div class="center" style="margin-bottom: 1.5rem;">
+        <span class="eyebrow">Booking Poster Ready</span>
+        <h1>YOUR BOOKING DETAILS</h1>
+        <p class="lead">
+          Your personalized booking confirmation poster has been generated automatically with your selected services, requirements, and reference number.
+        </p>
+      </div>
+
+      <!-- Action Buttons Bar -->
+      <div class="preview-actions-bar" id="poster-action-bar">
+        <button class="btn gold" id="btn-download-image" type="button">
+          <span>⬇</span>
+          <span>Download Image</span>
+        </button>
+        <button class="btn" id="btn-share-image" type="button" style="background:#25D366; color:#FFFFFF; border-color:#25D366;">
+          <span>📤</span>
+          <span>Share Image</span>
+        </button>
+        <a class="btn ghost" id="btn-edit-details" href="review.html">
+          <span>✏</span>
+          <span>Edit Details</span>
+        </a>
+        <button class="btn ghost" id="btn-continue-whatsapp" type="button" style="color:var(--ink); border-color:var(--ink);">
+          <span>💬</span>
+          <span>Continue to WhatsApp &rarr;</span>
+        </button>
+      </div>
+
+      <!-- Status Alerts / Notifications -->
+      <div id="share-feedback-alert" class="form-status" style="display:none; margin-bottom: 1.5rem;" role="status"></div>
+
+      <!-- Poster Preview Frame -->
+      <div class="preview-image-wrapper" id="preview-image-wrapper">
+        <div class="poster-loader" id="poster-loader">
+          <div class="poster-spinner"></div>
+          <h3 style="font-family:var(--serif); font-size:1.5rem; color:var(--ink);">Generating Your Booking Poster...</h3>
+          <p style="color:var(--muted); font-size:0.95rem; margin-top:0.4rem;">
+            Assembling studio branding, typography, and customer details.
+          </p>
+        </div>
+        <img id="generated-poster-img" style="display:none;" alt="Bhuvana's Bridal &amp; Tailoring Studio Booking Confirmation Poster">
+      </div>
+
+      <!-- Instructions & Guidance Box -->
+      <div class="review-card" style="margin-top: 2.5rem; background: var(--white);">
+        <h3 style="font-size:1.25rem; margin-bottom: 0.8rem; color:var(--ink);">
+          How to Complete Your Booking with Bhuvaneshwari
+        </h3>
+        <div style="font-size:0.95rem; color:var(--ink-light); line-height:1.6;">
+          <p style="margin-bottom:0.6rem;">
+            <strong>📱 On Mobile Phones:</strong> Tap <strong>Share Image</strong> above. If your browser supports direct file sharing, select WhatsApp from the menu to send your booking poster directly.
+          </p>
+          <p style="margin-bottom:0.6rem;">
+            <strong>💻 On Desktop / Laptop:</strong> Click <strong>Download Image</strong> to save your high-resolution PNG poster. Then click <strong>Continue to WhatsApp</strong> to open the chat and attach your downloaded poster image.
+          </p>
+          <div style="margin-top:1rem; padding:0.85rem 1.2rem; background:rgba(184, 142, 82, 0.1); border-left:4px solid var(--gold-dark); border-radius:4px;">
+            <strong style="color:var(--gold-dark);">&#9432; Honest Status Notice:</strong>
+            <span style="color:var(--ink);">This poster represents an official enquiry received by the studio. Service slots, timings, and advance deposits are confirmed after direct consultation with Bhuvaneshwari.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Offscreen Render Target (1080px width) -->
+  <div id="poster-render-target" style="position:fixed; left:-9999px; top:0; width:1080px; z-index:-1;" aria-hidden="true"></div>
+
+  <!-- Footer -->
+  <footer id="contact">
+    <div class="wrap">
+      <div class="footer-bottom" style="margin-top:0; border-top:none;">
+        <div>&copy; 2026 Bhuvana's Bridal &amp; Tailoring Studio. Salem, Tamil Nadu.</div>
+        <div>Dedicated Bridal &amp; Tailoring Services</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script src="js/services-data.js"></script>
+  <script src="js/booking-store.js"></script>
+  <script src="js/html2canvas.min.js"></script>
+  <script src="js/booking-poster.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      document.addEventListener('DOMContentLoaded', async function () {
+        if (!window.BBS_STORE || !window.BBS_CATALOG || !window.BBS_POSTER) return;
+
+        const store = window.BBS_STORE;
+        const posterModule = window.BBS_POSTER;
+
+        // Render progress bar (Step 5 of 5)
+        store.renderProgressBar('progress-bar-container', 5);
+
+        const contact = store.getContact();
+        const services = store.getPopulated();
+        const requirements = store.getRequirements();
+        const ref = store.getRef();
+
+        // Redirect if no services selected
+        if (services.length === 0) {
+          window.location.href = 'select-service.html';
+          return;
+        }
+
+        const renderTarget = document.getElementById('poster-render-target');
+        const previewImg = document.getElementById('generated-poster-img');
+        const loader = document.getElementById('poster-loader');
+        const alertBox = document.getElementById('share-feedback-alert');
+
+        let generatedCanvas = null;
+        let generatedBlob = null;
+
+        function showAlert(msg, isSuccess) {
+          if (!alertBox) return;
+          alertBox.style.display = 'block';
+          alertBox.className = 'form-status ' + (isSuccess ? 'is-ready' : 'is-error');
+          alertBox.innerHTML = msg;
+          alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // 1. Generate Poster HTML
+        const html = posterModule.generateHTML({
+          contact: contact,
+          services: services,
+          requirements: requirements,
+          ref: ref
+        });
+
+        renderTarget.innerHTML = html;
+
+        // 2. Render to Canvas and display PNG
+        try {
+          generatedCanvas = await posterModule.renderToCanvas(document.getElementById('poster-root'));
+          const dataUrl = generatedCanvas.toDataURL('image/png');
+          generatedBlob = await posterModule.toBlob(generatedCanvas);
+
+          if (loader) loader.style.display = 'none';
+          if (previewImg) {
+            previewImg.src = dataUrl;
+            previewImg.style.display = 'block';
+          }
+        } catch (err) {
+          console.error('Poster rendering error:', err);
+          if (loader) {
+            loader.innerHTML = `
+              <p style="color:#C62828; font-weight:600;">Failed to render poster image: ${err.message}</p>
+              <p>You can still continue to WhatsApp directly with your booking details.</p>
+            `;
+          }
+        }
+
+        // Action 1: Download Image
+        const btnDownload = document.getElementById('btn-download-image');
+        if (btnDownload) {
+          btnDownload.addEventListener('click', function () {
+            if (!generatedCanvas) {
+              showAlert('Please wait for the booking poster to finish rendering.', false);
+              return;
+            }
+            const filename = `Bhuvana-Booking-${ref}.png`;
+            posterModule.downloadPNG(generatedCanvas, filename);
+            showAlert(`✓ Your booking poster (<strong>${filename}</strong>) has been downloaded successfully.`, true);
+          });
+        }
+
+        // Action 2: Share Image (Web Share API)
+        const btnShare = document.getElementById('btn-share-image');
+        if (btnShare) {
+          btnShare.addEventListener('click', async function () {
+            if (!generatedCanvas) {
+              showAlert('Please wait for the booking poster to finish rendering.', false);
+              return;
+            }
+
+            const customerName = contact.name || contact.fullName || 'Valued Client';
+            try {
+              const shared = await posterModule.shareFile(generatedCanvas, ref, customerName);
+              if (shared) {
+                showAlert('✓ Booking poster shared successfully!', true);
+              } else {
+                // Fallback: download PNG & guide to attach in WhatsApp
+                const filename = `Bhuvana-Booking-${ref}.png`;
+                posterModule.downloadPNG(generatedCanvas, filename);
+                showAlert(`
+                  <strong>Image Downloaded for WhatsApp Sharing:</strong><br>
+                  Your booking poster was saved to your device. Opening WhatsApp chat with Bhuvaneshwari now &mdash; please tap the <strong>attachment / paperclip icon</strong> in WhatsApp to send the image!
+                `, true);
+                setTimeout(function () {
+                  window.location.href = store.getWhatsAppUrl();
+                }, 2200);
+              }
+            } catch (err) {
+              console.warn('Share error:', err);
+              // Fallback
+              const filename = `Bhuvana-Booking-${ref}.png`;
+              posterModule.downloadPNG(generatedCanvas, filename);
+              showAlert(`
+                Poster downloaded. Tap the attachment icon in WhatsApp to send it to Bhuvaneshwari.
+              `, true);
+            }
+          });
+        }
+
+        // Action 3: Continue to WhatsApp
+        const btnWhatsApp = document.getElementById('btn-continue-whatsapp');
+        if (btnWhatsApp) {
+          btnWhatsApp.addEventListener('click', function () {
+            showAlert('Opening WhatsApp chat with Bhuvaneshwari...', true);
+            setTimeout(function () {
+              window.location.href = store.getWhatsAppUrl();
+            }, 600);
+          });
+        }
+
+      });
+    })();
+  </script>
+</body>
+
+</html>
