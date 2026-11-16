@@ -94,14 +94,29 @@ export class WhatsAppService {
     const accessToken = env.WHATSAPP_ACCESS_TOKEN;
     const apiVersion = env.WHATSAPP_API_VERSION || 'v21.0';
 
-    if (!phoneNumberId || !accessToken || phoneNumberId === 'REPLACE_WITH_YOUR_PHONE_NUMBER_ID') {
-      console.log(`[WhatsApp Mock/Dry-Run] Template ${templateName} prepared for ${recipient}`);
-      const mockId = `wamid.dryrun_${Date.now()}`;
+    // Verify credentials are genuinely configured and not placeholder values
+    const isConfigured = Boolean(
+      phoneNumberId &&
+      accessToken &&
+      phoneNumberId !== 'REPLACE_WITH_YOUR_PHONE_NUMBER_ID' &&
+      !phoneNumberId.includes('your_meta_') &&
+      !accessToken.includes('your_meta_') &&
+      !accessToken.includes('replace_')
+    );
+
+    if (!isConfigured) {
+      const reason = 'Meta WhatsApp Cloud API credentials not configured in Worker environment';
+      console.warn(`[WhatsApp] ${reason}. Notification skipped for recipient ${recipient}.`);
       await D1Service.updateNotificationJob(env, jobId, {
-        status: 'sent',
-        externalMessageId: mockId
+        status: 'failed',
+        error: reason
       });
-      return { jobId, messageId: mockId, dryRun: true };
+      return {
+        jobId,
+        dispatched: false,
+        status: 'unconfigured',
+        message: 'WhatsApp notification skipped: Meta credentials not configured'
+      };
     }
 
     try {

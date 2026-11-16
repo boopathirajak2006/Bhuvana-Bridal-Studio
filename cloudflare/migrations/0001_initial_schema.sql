@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS bookings (
   poster_secure_url TEXT,                       -- Cloudinary Secure Delivery URL
   poster_version TEXT,                          -- Cloudinary Asset Version
   poster_asset_id TEXT,                         -- Cloudinary Unique Asset ID
-  poster_r2_key TEXT,                           -- Legacy reference (kept for compatibility)
   poster_file_size INTEGER DEFAULT 0,           -- File size in bytes
   booking_status TEXT NOT NULL DEFAULT 'draft'  -- 'draft', 'pending', 'approved', 'rejected'
     CHECK (booking_status IN ('draft', 'pending', 'approved', 'rejected')),

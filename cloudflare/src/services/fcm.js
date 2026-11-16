@@ -121,11 +121,12 @@ export class FCMService {
         payload: { title, body, clickUrl }
       });
 
-      if (!accessToken || !projectId) {
-        console.log(`[FCM Mock/Dry-Run] Notification queued for device ${device.device_name || device.id}`);
+      if (!accessToken || !projectId || projectId === 'your-firebase-project-id') {
+        const reason = 'Firebase FCM service account credentials not configured in Worker environment';
+        console.warn(`[FCM] ${reason}. Push skipped for device ${device.device_name || device.id}.`);
         await D1Service.updateNotificationJob(env, jobId, {
-          status: 'sent',
-          externalMessageId: `fcm-dryrun-${Date.now()}`
+          status: 'failed',
+          error: reason
         });
         continue;
       }

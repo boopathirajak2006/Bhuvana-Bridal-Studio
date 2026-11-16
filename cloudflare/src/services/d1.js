@@ -110,7 +110,6 @@ export class D1Service {
       posterSecureUrl,
       posterVersion,
       posterAssetId,
-      posterR2Key,
       posterFileSize,
       customerName,
       customerMobile,
@@ -126,7 +125,7 @@ export class D1Service {
       idempotencyKey
     } = data;
 
-    const publicId = posterPublicId || posterR2Key || null;
+    const publicId = posterPublicId || null;
     const secureUrl = posterSecureUrl || null;
     const version = posterVersion ? String(posterVersion) : null;
     const assetId = posterAssetId || null;
@@ -153,7 +152,6 @@ export class D1Service {
           poster_secure_url = ?,
           poster_version = ?,
           poster_asset_id = ?,
-          poster_r2_key = ?,
           poster_file_size = ?,
           booking_status = 'pending',
           whatsapp_consent = ?,
@@ -175,7 +173,6 @@ export class D1Service {
         secureUrl,
         version,
         assetId,
-        publicId,
         posterFileSize || 0,
         whatsappConsent ? 1 : 0,
         consentTimestamp || nowIso,
@@ -191,10 +188,10 @@ export class D1Service {
         INSERT INTO bookings (
           id, booking_ref, idempotency_key, customer_name, customer_mobile, customer_email,
           event_date, event_location, selected_services_json, requirements_json, special_notes,
-          poster_public_id, poster_secure_url, poster_version, poster_asset_id, poster_r2_key,
+          poster_public_id, poster_secure_url, poster_version, poster_asset_id,
           poster_file_size, booking_status, whatsapp_consent, consent_timestamp,
           consent_version, submitted_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)
       `).bind(
         id,
         bookingRef,
@@ -211,7 +208,6 @@ export class D1Service {
         secureUrl,
         version,
         assetId,
-        publicId,
         posterFileSize || 0,
         whatsappConsent ? 1 : 0,
         consentTimestamp || nowIso,

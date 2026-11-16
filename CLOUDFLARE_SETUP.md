@@ -63,40 +63,32 @@ npx wrangler login
 
 ---
 
-### Step 4.2: Create Cloudflare D1 Database
-Create the production D1 SQLite database:
-```bash
-npx wrangler d1 create bhuvana-bridal-db
-```
-*Note the `database_id` printed in the terminal output.*
-
-Open `cloudflare/wrangler.jsonc` and replace the placeholder `database_id`:
+### Step 4.2: Verify Cloudflare D1 Database Configuration
+The production D1 SQLite database is already configured in `cloudflare/wrangler.jsonc`:
 ```jsonc
 "d1_databases": [
   {
     "binding": "DB",
-    "database_name": "bhuvana-bridal-db",
-    "database_id": "PASTE_YOUR_ACTUAL_DATABASE_ID_HERE"
+    "database_name": "bhuvana-bookings-db",
+    "database_id": "c33e932b-9a44-4002-ac5a-9dc47c45c227",
+    "migrations_dir": "migrations"
   }
 ]
 ```
 
 ---
 
-### Step 4.3: Apply Database Migrations
-Execute the schema migrations to create the required tables and indexes:
+### Step 4.3: Apply Database Migrations to D1
+Execute the 3 schema migrations to initialize your database:
 ```bash
 # Migration 1: Initial schema (bookings, owners, sessions, devices)
-npx wrangler d1 execute bhuvana-bridal-db --file=cloudflare/migrations/0001_initial_schema.sql --remote
+npx wrangler d1 execute bhuvana-bookings-db --file=cloudflare/migrations/0001_initial_schema.sql --remote
 
 # Migration 2: Performance & uniqueness indexes
-npx wrangler d1 execute bhuvana-bridal-db --file=cloudflare/migrations/0002_booking_indexes.sql --remote
+npx wrangler d1 execute bhuvana-bookings-db --file=cloudflare/migrations/0002_booking_indexes.sql --remote
 
 # Migration 3: Notification jobs & audit logs
-npx wrangler d1 execute bhuvana-bridal-db --file=cloudflare/migrations/0003_notification_tables.sql --remote
-
-# Migration 4: Cloudinary image storage support
-npx wrangler d1 execute bhuvana-bridal-db --file=cloudflare/migrations/0004_cloudinary_storage.sql --remote
+npx wrangler d1 execute bhuvana-bookings-db --file=cloudflare/migrations/0003_notification_tables.sql --remote
 ```
 
 ---
@@ -113,9 +105,7 @@ npx wrangler secret put OWNER_INITIAL_PASSWORD
 # Enter: YourSecureOwnerPassword2026!
 
 # 2. Cloudinary Private Image Storage
-npx wrangler secret put CLOUDINARY_CLOUD_NAME
-# Enter your Cloudinary Cloud Name
-
+# Note: CLOUDINARY_CLOUD_NAME is already defined in wrangler.jsonc as "hcj8r6r4"
 npx wrangler secret put CLOUDINARY_API_KEY
 # Enter your Cloudinary API Key
 
@@ -155,15 +145,15 @@ cd cloudflare
 npx wrangler deploy
 ```
 
-Once deployed, Wrangler will output your live worker URL:
-`https://bhuvana-bridal-studio.<your-subdomain>.workers.dev`
+Once deployed, your live worker URL will be:
+`https://bhuvana-booking-api.boopathiraja-k2006.workers.dev`
 
 ---
 
-### Step 4.6: Connect Frontend to Your Live Worker
-Open `js/cloudflare-config.js` and set `PRODUCTION_WORKER_URL` to your live worker URL:
+### Step 4.6: Verify Frontend Configuration
+`js/cloudflare-config.js` is already preconfigured to connect to your live Worker:
 ```javascript
-const PRODUCTION_WORKER_URL = 'https://bhuvana-bridal-studio.<your-subdomain>.workers.dev';
+const PRODUCTION_WORKER_URL = 'https://bhuvana-booking-api.boopathiraja-k2006.workers.dev';
 ```
 
 ---

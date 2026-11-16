@@ -1,6 +1,6 @@
 /**
  * Bhuvana's Bridal & Tailoring Studio — Cloudflare Worker Entrypoint
- * Provides high-performance, serverless booking management on Cloudflare Workers, D1, R2, FCM & WhatsApp.
+ * Provides high-performance, serverless booking management on Cloudflare Workers, D1, Cloudinary, FCM & WhatsApp.
  */
 
 import { handleOptions, errorResponse, jsonResponse } from './utils/response.js';

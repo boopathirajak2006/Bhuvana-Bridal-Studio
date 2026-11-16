@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "bhuvanas-bridal-backend",
+  "name": "bhuvana-booking-api",
   "main": "src/index.js",
   "compatibility_date": "2024-11-01",
   "compatibility_flags": [
@@ -8,16 +8,16 @@
   ],
   "vars": {
     "ENVIRONMENT": "production",
-    "CORS_ORIGINS": "https://boopathirajak2006.github.io,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080",
+    "CORS_ORIGINS": "https://boopathirajak2006.github.io,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080,http://localhost:8787",
+    "CLOUDINARY_CLOUD_NAME": "hcj8r6r4",
     "MAX_POSTER_SIZE_BYTES": "5242880",
-    "WHATSAPP_API_VERSION": "v21.0",
-    "WHATSAPP_PHONE_NUMBER_ID": "REPLACE_WITH_YOUR_PHONE_NUMBER_ID"
+    "WHATSAPP_API_VERSION": "v21.0"
   },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "bhuvanas-bridal-d1",
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+      "database_name": "bhuvana-bookings-db",
+      "database_id": "c33e932b-9a44-4002-ac5a-9dc47c45c227",
       "migrations_dir": "migrations"
     }
   ],

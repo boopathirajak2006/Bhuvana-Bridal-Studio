@@ -13,8 +13,8 @@
                       window.location.hostname === '';
 
   // Cloudflare Workers Production Endpoint
-  // Replace this with your deployed Cloudflare Worker URL after deployment (e.g. https://bhuvana-bridal-api.workers.dev)
-  const PRODUCTION_WORKER_URL = 'https://bhuvana-bridal-studio.workers.dev';
+  // Exact deployed Worker URL: bhuvana-booking-api
+  const PRODUCTION_WORKER_URL = 'https://bhuvana-booking-api.boopathiraja-k2006.workers.dev';
   const LOCAL_WORKER_URL = 'http://localhost:8787';
 
   // Allow custom override via localStorage if needed

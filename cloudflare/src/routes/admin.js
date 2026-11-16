@@ -170,7 +170,7 @@ export async function handleGetBookingPoster(request, env, auth, bookingId) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     }
 
-    const publicId = booking.poster_public_id || booking.poster_r2_key;
+    const publicId = booking.poster_public_id;
     if (!publicId && !booking.poster_secure_url) {
       return errorResponse(request, env, 'No poster image stored for this booking', 404, 'NOT_FOUND');
     }

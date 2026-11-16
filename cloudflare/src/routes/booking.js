@@ -88,7 +88,6 @@ export async function handleSubmitBooking(request, env) {
       posterSecureUrl: cloudinaryResult.secure_url,
       posterVersion: cloudinaryResult.version,
       posterAssetId: cloudinaryResult.asset_id,
-      posterR2Key: cloudinaryResult.public_id, // keep synced for backward compatibility
       posterFileSize: cloudinaryResult.bytes || arrayBuffer.byteLength,
       customerName: customerDisplayName,
       customerMobile: (customerData && customerData.customer_phone) || existing.customer_mobile,

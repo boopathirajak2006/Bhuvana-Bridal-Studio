@@ -1,7 +1,7 @@
 /**
  * Bhuvana's Bridal & Tailoring Studio — Cloudflare Backend
  * Cloudinary Secure Image Storage Service
- * Replaces Cloudflare R2: Handles signed uploads, private asset storage, and authenticated streaming.
+ * Handles signed uploads, private asset storage, and authenticated streaming.
  */
 
 export class CloudinaryService {
@@ -79,18 +79,17 @@ export class CloudinaryService {
     const apiKey = env.CLOUDINARY_API_KEY;
     const apiSecret = env.CLOUDINARY_API_SECRET;
 
-    // Check if Cloudinary credentials are configured
+    // Strict validation: Credentials MUST be present. No fake or mock success.
     if (!cloudName || !apiKey || !apiSecret) {
-      console.warn('[Cloudinary] Cloudinary credentials missing in environment. Operating in mock mode.');
-      return {
-        public_id: `bhuvana_posters/2026/${bookingRef}`,
-        asset_id: `mock-cloudinary-asset-${Date.now()}`,
-        version: '1',
-        format: 'png',
-        bytes: arrayBuffer ? arrayBuffer.byteLength : 0,
-        secure_url: `https://res.cloudinary.com/mock/image/authenticated/bhuvana_posters/2026/${bookingRef}.png`,
-        type: 'authenticated'
-      };
+      const missing = [];
+      if (!cloudName) missing.push('CLOUDINARY_CLOUD_NAME');
+      if (!apiKey) missing.push('CLOUDINARY_API_KEY');
+      if (!apiSecret) missing.push('CLOUDINARY_API_SECRET');
+      throw new Error(`Cloudinary configuration error: Missing required credentials (${missing.join(', ')}). Image upload cannot proceed.`);
+    }
+
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      throw new Error('Poster image file buffer is empty');
     }
 
     const currentYear = new Date().getFullYear();
@@ -162,28 +161,14 @@ export class CloudinaryService {
     const apiKey = env.CLOUDINARY_API_KEY;
     const apiSecret = env.CLOUDINARY_API_SECRET;
 
-    const publicId = booking.poster_public_id || booking.poster_r2_key;
+    const publicId = booking.poster_public_id;
     if (!publicId) {
       return null;
     }
 
-    // In mock mode / missing credentials, return mock PNG
+    // Require credentials for retrieval
     if (!cloudName || !apiKey || !apiSecret) {
-      // 1x1 transparent PNG magic bytes
-      const fallbackPng = new Uint8Array([
-        0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
-        0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
-        0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-        0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
-        0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41,
-        0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
-        0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
-        0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
-        0x42, 0x60, 0x82
-      ]);
-      return new Response(fallbackPng, {
-        headers: { 'Content-Type': 'image/png' }
-      });
+      throw new Error('Cloudinary credentials missing in worker environment');
     }
 
     // Method 1: Try signed delivery URL from Cloudinary CDN
