@@ -1,0 +1,19 @@
+{
+  "name": "bhuvanas-bridal-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Website for Bhuvana's Bridal Studio in Salem (Erumbalai, Steel Plant)",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "bridal",
+    "makeup",
+    "salem",
+    "studio"
+  ],
+  "author": "Bhuvana's Bridal Studio",
+  "license": "ISC"
+}

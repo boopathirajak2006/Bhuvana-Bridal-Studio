@@ -1,0 +1,20 @@
+# Environment and secret files
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Local configuration overrides containing sensitive tokens
+env-config.js
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE and Editor directories
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
