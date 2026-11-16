@@ -254,8 +254,22 @@
             }
 
             const customerName = contact.name || contact.fullName || 'Valued Client';
+            const eventDateFormatted = contact.eventDate || contact.preferredDate || '';
+            const servicesListStr = services.map(s => s.title).join(', ');
+
+            const caption = [
+              `🌸 Bhuvana's Bridal & Tailoring Studio — Booking Enquiry`,
+              `• Booking Ref: ${ref}`,
+              `• Client Name: ${customerName}`,
+              contact.mobile || contact.phone ? `• Mobile: ${contact.mobile || contact.phone}` : '',
+              eventDateFormatted ? `• Event / Delivery Date: ${eventDateFormatted}` : '',
+              contact.location ? `• Location: ${contact.location}` : '',
+              servicesListStr ? `• Selected Services: ${servicesListStr}` : '',
+              `\nOfficial booking poster attached above. Please press Send in WhatsApp to complete your enquiry.`
+            ].filter(Boolean).join('\n');
+
             try {
-              const result = await posterModule.shareFile(generatedCanvas, ref, customerName);
+              const result = await posterModule.shareFile(generatedCanvas, ref, customerName, caption);
 
               if (result && result.supported && result.shared) {
                 showAlert('✓ Share dialog completed. Please finish sending the poster in your selected app (e.g. WhatsApp).', true);
@@ -265,8 +279,11 @@
                 // Direct file sharing is not supported on this browser (e.g. desktop browsers)
                 showAlert(`
                   <strong>Direct Image Sharing Unsupported on this Browser:</strong><br>
-                  Direct file sharing via Web Share is supported on modern mobile browsers (such as Google Chrome on Android or Safari on iOS).<br>
-                  To send your poster from this device: please click <strong>Download Image</strong> to save the poster, then click <strong>Continue to WhatsApp</strong> to attach it manually.
+                  Direct file sharing via Web Share is supported on modern mobile browsers (such as Google Chrome on Android or Safari on iOS).<br><br>
+                  To complete your booking on desktop:<br>
+                  1. Click <strong>Download Image</strong> to save your high-resolution booking poster.<br>
+                  2. Click <strong>Continue to WhatsApp</strong> to open the chat with Bhuvaneshwari.<br>
+                  3. Attach your downloaded poster image (using the &#128206; paperclip icon) and press <strong>Send</strong> in WhatsApp!
                 `, false);
               }
             } catch (err) {
@@ -279,13 +296,16 @@
           });
         }
 
-        // Action 3: Continue to WhatsApp
+        // Action 3: Continue to WhatsApp (Desktop & Manual Attachment Flow)
         const btnWhatsApp = document.getElementById('btn-continue-whatsapp');
         if (btnWhatsApp) {
           btnWhatsApp.addEventListener('click', function () {
-            showAlert('Opening WhatsApp chat with Bhuvaneshwari...', true);
+            showAlert(`
+              <strong>Opening WhatsApp Chat with Bhuvaneshwari (+91 63740 36629)...</strong><br>
+              WhatsApp has opened in a new tab. Please attach your downloaded booking poster image (using the &#128206; paperclip icon) and press <strong>Send</strong> in WhatsApp to deliver your enquiry!
+            `, true);
             setTimeout(function () {
-              window.location.href = store.getWhatsAppUrl();
+              window.open(store.getWhatsAppUrl(), '_blank', 'noopener');
             }, 600);
           });
         }

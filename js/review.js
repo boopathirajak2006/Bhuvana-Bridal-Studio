@@ -91,35 +91,11 @@
       msgEl.textContent = contact.message ? `“${contact.message}”` : 'No additional message provided.';
     }
 
-    // Action 1: Generate Booking Image
+    // Primary Action: Generate Booking Poster & Continue
     const btnGenerateImage = document.getElementById('btn-generate-booking-image');
     if (btnGenerateImage) {
       btnGenerateImage.addEventListener('click', function () {
         window.location.href = 'booking-preview.html';
-      });
-    }
-
-    // Action 2: Direct WhatsApp Action
-    const btnSendWhatsApp = document.getElementById('btn-send-whatsapp');
-    const statusEl = document.getElementById('whatsapp-handoff-status');
-
-    if (btnSendWhatsApp) {
-      btnSendWhatsApp.addEventListener('click', function () {
-        const waUrl = store.getWhatsAppUrl();
-        window.open(waUrl, '_blank', 'noopener');
-
-        if (statusEl) {
-          statusEl.style.display = 'block';
-          statusEl.innerHTML = `
-            <strong>Your WhatsApp enquiry is prepared!</strong>
-            <p style="margin-top:0.4rem; font-size:0.9rem;">
-              WhatsApp has opened in a new tab with your pre-filled enquiry. Please click <strong>Send</strong> in WhatsApp to deliver your enquiry directly to Bhuvaneshwari (+91 63740 36629).
-            </p>
-            <p style="margin-top:0.4rem; font-size:0.85rem;">
-              If WhatsApp did not open automatically, <a href="${waUrl}" target="_blank" rel="noopener" style="text-decoration:underline; font-weight:700; color:inherit;">click here to open WhatsApp</a>.
-            </p>
-          `;
-        }
       });
     }
   });

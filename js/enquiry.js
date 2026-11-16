@@ -31,12 +31,58 @@
            (digits.length === 11 && digits.startsWith('0') && /^[6-9]\d{9}$/.test(digits.slice(1)));
   }
 
-  // Setup min date as today for all date inputs
-  const today = new Date();
-  const todayISO = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
-  document.querySelectorAll('input[type="date"]').forEach(function (inp) {
-    inp.min = todayISO;
-  });
+  // Helper to safely persist booking state to BBS_STORE / sessionStorage
+  function saveBookingState(serviceIds, requirements, contact) {
+    if (window.BBS_STORE) {
+      if (typeof window.BBS_STORE.setSelectedIds === 'function') {
+        window.BBS_STORE.setSelectedIds(serviceIds);
+      } else if (typeof window.BBS_STORE.setSelectedServiceIds === 'function') {
+        window.BBS_STORE.setSelectedServiceIds(serviceIds);
+      }
+      if (typeof window.BBS_STORE.setRequirements === 'function') {
+        window.BBS_STORE.setRequirements(requirements);
+      }
+      if (typeof window.BBS_STORE.setContact === 'function') {
+        window.BBS_STORE.setContact(contact);
+      }
+      return typeof window.BBS_STORE.getRef === 'function' ? window.BBS_STORE.getRef() : 'BBS-2026-ENQ';
+    }
+    try {
+      sessionStorage.setItem('bbs_selected_services', JSON.stringify(serviceIds));
+      sessionStorage.setItem('bbs_booking_requirements', JSON.stringify(requirements));
+      sessionStorage.setItem('bbs_contact_details', JSON.stringify(contact));
+      let ref = sessionStorage.getItem('bbs_booking_ref');
+      if (!ref) {
+        const rand = Math.floor(1000 + Math.random() * 9000);
+        ref = 'BBS-2026-ENQ-' + rand;
+        sessionStorage.setItem('bbs_booking_ref', ref);
+      }
+      return ref;
+    } catch (e) {
+      console.warn('Storage unavailable:', e);
+      return 'BBS-2026-ENQ';
+    }
+  }
+
+  const BRIDAL_SERVICE_MAP = {
+    'bridal makeup': 'bridal-makeup',
+    'hd bridal makeup': 'hd-makeup',
+    'traditional bridal makeup': 'traditional-bridal-makeup',
+    'muhurtham makeup': 'traditional-bridal-makeup',
+    'guest / family makeup': 'guest-family-makeup',
+    'saree draping & ironing': 'saree-draping',
+    'hair styling & flowers': 'hair-styling',
+    'bridal mehndi': 'bridal-mehndi'
+  };
+
+  const BLOUSE_SERVICE_MAP = {
+    'bridal blouse designing': 'custom-bridal-blouse-designs',
+    'custom blouse stitching': 'blouse-stitching',
+    'hand-embroidered aari work': 'bridal-heavy-aari-work',
+    'simple / semi-bridal aari work': 'simple-aari-embroidery',
+    'designer blouse pattern': 'custom-blouse-designs',
+    'express blouse stitching': 'express-blouse-stitching'
+  };
 
   // -------------------------------------------------------------
   // 1. BRIDAL & BEAUTY STUDIO ENQUIRY FORM
@@ -155,67 +201,57 @@
         return;
       }
 
-      const services = getCheckedValues('services');
+      const rawServices = getCheckedValues('services');
       const preferences = getCheckedValues('preference');
       const clientName = el.clientName.value.trim();
       const mobile = el.mobile.value.trim();
-      const email = el.email && el.email.value.trim() ? el.email.value.trim() : 'Not provided';
-      const eventDate = el.eventDate ? (formatDate(el.eventDate.value) || el.eventDate.value) : 'Not specified';
-      const makeupDate = el.makeupDate ? (formatDate(el.makeupDate.value) || el.makeupDate.value) : 'Same as event date';
-      const location = el.location ? el.location.value.trim() : 'Salem / Nearby';
+      const email = el.email && el.email.value.trim() ? el.email.value.trim() : '';
+      const rawEventDate = el.eventDate ? el.eventDate.value : '';
+      const makeupDate = el.makeupDate ? (formatDate(el.makeupDate.value) || el.makeupDate.value) : '';
+      const location = el.location ? el.location.value.trim() : 'Salem / Nearby Venue';
       const people = el.people ? el.people.value : '1';
-      const notes = el.message && el.message.value.trim() ? el.message.value.trim() : 'None';
+      const notes = el.message && el.message.value.trim() ? el.message.value.trim() : '';
 
-      const message = [
-        '✦ ───── 𓆩♡𓆪 ───── ✦',
-        "୨୧ BHUVANA'S BRIDAL STUDIO ୨୧",
-        '✦ ───── 𓆩♡𓆪 ───── ✦',
-        '❀ DIVISION: BRIDAL & BEAUTY STUDIO ❀',
-        '❀ New Service Enquiry ❀',
-        '',
-        '══════❀══════',
-        '  CLIENT DETAILS ',
-        '══════❀══════',
-        '𐀔 Name: ' + clientName,
-        '𐀔 Mobile: ' + mobile,
-        '𐀔 Email: ' + email,
-        '',
-        '══════❀══════',
-        '  EVENT & VENUE DETAILS ',
-        '══════❀══════',
-        '𐀔 Event Date: ' + eventDate,
-        '𐀔 Makeup Date: ' + makeupDate,
-        '𐀔 Venue / Location: ' + location,
-        '𐀔 Total Persons: ' + people,
-        '',
-        '══════❀══════',
-        '  SELECTED SERVICES ',
-        '══════❀══════',
-        services.map(s => '𐀔 ' + s).join('\n') || '𐀔 None selected',
-        '',
-        '══════❀══════',
-        '  STYLING PREFERENCES ',
-        '══════❀══════',
-        preferences.length ? preferences.map(p => '𐀔 ' + p).join('\n') : '𐀔 Standard bridal consultation',
-        '',
-        '══════❀══════',
-        "  CLIENT'S SPECIAL NOTE ",
-        '══════❀══════',
-        '“' + notes + '”',
-        '',
-        '━━━━━━━━━━━━━━',
-        ' 𓆩♡𓆪 STATUS: AWAITING STUDIO CONFIRMATION',
-        '━━━━━━━━━━━━━━',
-        '_Thank you for contacting Bhuvana’s Bridal Studio, Salem._'
-      ].join('\n');
+      // Map service names to catalog IDs
+      let mappedIds = rawServices.map(name => {
+        const key = name.toLowerCase().trim();
+        return BRIDAL_SERVICE_MAP[key] || null;
+      }).filter(Boolean);
 
-      const waUrl = 'https://wa.me/' + ARTIST_WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
-      window.open(waUrl, '_blank', 'noopener');
+      if (mappedIds.length === 0) {
+        mappedIds = ['bridal-makeup'];
+      }
+
+      // Build requirements object
+      const requirements = {
+        makeupStyle: preferences.length ? preferences.join(', ') : 'Traditional Bridal Makeup',
+        eventType: makeupDate ? `Event Date: ${rawEventDate} (Makeup Date: ${makeupDate})` : 'Bridal Celebration',
+        makeupPeople: people,
+        specificNotes: notes
+      };
+
+      // Build contact details object
+      const contact = {
+        name: clientName,
+        mobile: mobile,
+        email: email,
+        eventDate: rawEventDate,
+        location: location,
+        message: notes
+      };
+
+      // Persist to unified booking state
+      saveBookingState(mappedIds, requirements, contact);
 
       if (statusEl) {
         statusEl.className = 'form-status is-ready full';
-        statusEl.innerHTML = '<strong>Your bridal enquiry is prepared!</strong> WhatsApp has opened with your details. Please press <strong>Send</strong> in WhatsApp to complete your enquiry. <br><span style="display:block;margin-top:0.35rem">Did WhatsApp not open? <a href="' + waUrl + '" target="_blank" rel="noopener" style="text-decoration:underline;color:inherit;font-weight:600">Tap here to open WhatsApp directly</a>.</span>';
+        statusEl.innerHTML = '<strong>Booking details saved!</strong> Taking you to review your details and generate your official booking poster...';
       }
+
+      // Every booking route must lead to the review and poster generation flow
+      setTimeout(function () {
+        window.location.href = 'review.html';
+      }, 350);
     });
   }
 
@@ -300,63 +336,55 @@
         return;
       }
 
-      const services = getCheckedValues('blouseServices');
+      const rawServices = getCheckedValues('blouseServices');
       const workPreferences = getCheckedValues('workType');
       const clientName = el.clientName.value.trim();
       const mobile = el.mobile.value.trim();
-      const email = el.email && el.email.value.trim() ? el.email.value.trim() : 'Not provided';
-      const deliveryDate = el.deliveryDate ? (formatDate(el.deliveryDate.value) || el.deliveryDate.value) : 'Flexible';
-      const fabricDetails = el.fabricDetails && el.fabricDetails.value.trim() ? el.fabricDetails.value.trim() : 'To be discussed';
-      const notes = el.message && el.message.value.trim() ? el.message.value.trim() : 'None';
+      const email = el.email && el.email.value.trim() ? el.email.value.trim() : '';
+      const rawDeliveryDate = el.deliveryDate ? el.deliveryDate.value : '';
+      const fabricDetails = el.fabricDetails && el.fabricDetails.value.trim() ? el.fabricDetails.value.trim() : '';
+      const notes = el.message && el.message.value.trim() ? el.message.value.trim() : '';
 
-      const message = [
-        '✦ ───── 𓆩♡𓆪 ───── ✦',
-        "୨୧ BHUVANA'S BRIDAL STUDIO ୨୧",
-        '✦ ───── 𓆩♡𓆪 ───── ✦',
-        '❀ DIVISION: DESIGNER BLOUSE STUDIO ❀',
-        '❀ Custom Blouse & Aari Work Enquiry ❀',
-        '',
-        '══════❀══════',
-        '  CLIENT DETAILS ',
-        '══════❀══════',
-        '𐀔 Name: ' + clientName,
-        '𐀔 Mobile: ' + mobile,
-        '𐀔 Email: ' + email,
-        '',
-        '══════❀══════',
-        '  ORDER & TIMELINE ',
-        '══════❀══════',
-        '𐀔 Required By Date: ' + deliveryDate,
-        '𐀔 Saree / Fabric Type: ' + fabricDetails,
-        '',
-        '══════❀══════',
-        '  SELECTED BLOUSE SERVICES ',
-        '══════❀══════',
-        services.map(s => '𐀔 ' + s).join('\n') || '𐀔 None selected',
-        '',
-        '══════❀══════',
-        '  WORK & EMBROIDERY PREFERENCE ',
-        '══════❀══════',
-        workPreferences.length ? workPreferences.map(w => '𐀔 ' + w).join('\n') : '𐀔 Custom design consultation',
-        '',
-        '══════❀══════',
-        "  DESIGN NOTES / MEASUREMENTS ",
-        '══════❀══════',
-        '“' + notes + '”',
-        '',
-        '━━━━━━━━━━━━━━',
-        ' 𓆩♡𓆪 STATUS: AWAITING STUDIO CONFIRMATION',
-        '━━━━━━━━━━━━━━',
-        '_Thank you for contacting Bhuvana’s Designer Blouse Studio, Salem._'
-      ].join('\n');
+      // Map service names to catalog IDs
+      let mappedIds = rawServices.map(name => {
+        const key = name.toLowerCase().trim();
+        return BLOUSE_SERVICE_MAP[key] || null;
+      }).filter(Boolean);
 
-      const waUrl = 'https://wa.me/' + ARTIST_WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
-      window.open(waUrl, '_blank', 'noopener');
+      if (mappedIds.length === 0) {
+        mappedIds = ['custom-blouse-designs'];
+      }
+
+      // Build requirements object
+      const requirements = {
+        blouseDesignType: fabricDetails ? `Fabric: ${fabricDetails}` : 'Custom Designer Pattern',
+        blouseStitchType: 'Custom Stitching & Fit',
+        aariWorkType: workPreferences.length ? workPreferences.join(', ') : 'Custom Hand Embroidery',
+        specificNotes: notes
+      };
+
+      // Build contact details object
+      const contact = {
+        name: clientName,
+        mobile: mobile,
+        email: email,
+        eventDate: rawDeliveryDate,
+        location: 'Salem Studio / Local Delivery',
+        message: notes
+      };
+
+      // Persist to unified booking state
+      saveBookingState(mappedIds, requirements, contact);
 
       if (statusEl) {
         statusEl.className = 'form-status is-ready full';
-        statusEl.innerHTML = '<strong>Your blouse enquiry is prepared!</strong> WhatsApp has opened with your order details. Please press <strong>Send</strong> in WhatsApp to share your request with Bhuvaneshwari. <br><span style="display:block;margin-top:0.35rem">Did WhatsApp not open? <a href="' + waUrl + '" target="_blank" rel="noopener" style="text-decoration:underline;color:inherit;font-weight:600">Tap here to open WhatsApp directly</a>.</span>';
+        statusEl.innerHTML = '<strong>Order details saved!</strong> Taking you to review your order and generate your official booking poster...';
       }
+
+      // Every booking route must lead to the review and poster generation flow
+      setTimeout(function () {
+        window.location.href = 'review.html';
+      }, 350);
     });
   }
 

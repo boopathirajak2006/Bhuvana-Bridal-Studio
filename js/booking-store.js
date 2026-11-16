@@ -291,6 +291,7 @@
   root.BBS_STORE = {
     getSelectedIds: getSelectedServiceIds,
     setSelectedIds: setSelectedServiceIds,
+    setSelectedServiceIds: setSelectedServiceIds,
     getFirstId: getFirstServiceId,
     setFirstId: setFirstServiceId,
     addService: addServiceId,

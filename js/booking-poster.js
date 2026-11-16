@@ -428,12 +428,13 @@
 
   /**
    * Helper to share generated booking poster PNG directly via Web Share API.
+   * Accepts an optional custom captionText for rich WhatsApp messaging.
    * Returns:
    *  { supported: true, shared: true } if user completed the share sheet
    *  { supported: true, shared: false, cancelled: true } if user cancelled/dismissed share sheet
    *  { supported: false, shared: false } if direct file sharing is unsupported on this browser
    */
-  async function sharePosterFile(canvas, ref, customerName) {
+  async function sharePosterFile(canvas, ref, customerName, captionText) {
     const blob = await canvasToBlob(canvas);
     if (!blob) {
       throw new Error('Unable to create image blob from poster canvas');
@@ -442,12 +443,14 @@
     const filename = `Bhuvana-Booking-${ref || 'Details'}.png`;
     const file = new File([blob], filename, { type: 'image/png' });
 
+    const shareText = captionText || `Booking Enquiry for ${customerName || 'Client'} (Ref: ${ref || 'BBS'}) - Bhuvana's Bridal & Tailoring Studio, Salem`;
+
     if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
           files: [file],
           title: "Bhuvana's Bridal & Tailoring Studio Booking",
-          text: `Booking Enquiry for ${customerName || 'Client'} (Ref: ${ref || 'BBS'}) - Bhuvana's Bridal & Tailoring Studio, Salem`
+          text: shareText
         });
         return { supported: true, shared: true };
       } catch (err) {
