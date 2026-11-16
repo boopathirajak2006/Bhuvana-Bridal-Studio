@@ -4,6 +4,11 @@
 .env.*.local
 *.key
 *.pem
+.dev.vars
+.dev.vars.*
+service-account*.json
+firebase-admin*.json
+.wrangler/
 
 # Local configuration overrides containing sensitive tokens
 env-config.js
@@ -24,3 +29,6 @@ node_modules/
 dist/
 build/
 *.log
+
+# Scratch & temporary test scripts
+scratch/

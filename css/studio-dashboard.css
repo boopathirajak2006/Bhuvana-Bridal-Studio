@@ -1,0 +1,499 @@
+/* ==============================================================================
+   BHUVANA'S BRIDAL & TAILORING STUDIO
+   Owner Portal & Dashboard Stylesheet
+   Palette: Royal Burgundy (#7A1C30), Gold (#C8A46B), Deep Ink (#3B2416), Ivory (#FEF6ED)
+   ============================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Jost:wght@400;500;600;700&display=swap');
+
+:root {
+  --burgundy: #7A1C30;
+  --burgundy-dark: #540D1D;
+  --burgundy-light: #9B2D46;
+  --gold: #C8A46B;
+  --gold-dark: #8A6230;
+  --gold-light: #E8D5BC;
+  --ink: #3B2416;
+  --ink-light: #5D4037;
+  --ivory: #FEF6ED;
+  --ivory-alt: #FBF8F3;
+  --white: #FFFFFF;
+  --border: #E8D5BC;
+  --success: #2E7D32;
+  --warning: #ED6C02;
+  --danger: #D32F2F;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Jost', sans-serif;
+  color: var(--ink);
+  background-color: #F8F4EE;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ==========================================
+   LOGIN PAGE STYLES
+   ========================================== */
+.studio-login-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(247, 219, 217, 0.4) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(200, 164, 107, 0.2) 0%, transparent 40%),
+    linear-gradient(180deg, #FEF8F2 0%, #F5EDE4 100%);
+}
+
+.studio-login-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--white);
+  border: 2px solid var(--gold);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(59, 47, 42, 0.12);
+  padding: 2.5rem 2.2rem;
+  text-align: center;
+  position: relative;
+}
+
+.studio-login-logo {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  margin-bottom: 1rem;
+}
+
+.studio-login-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--burgundy);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.25rem;
+}
+
+.studio-login-sub {
+  font-size: 0.9rem;
+  color: var(--gold-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 2rem;
+}
+
+.login-form-group {
+  text-align: left;
+  margin-bottom: 1.25rem;
+}
+
+.login-form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.login-input-wrap {
+  position: relative;
+}
+
+.login-form-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: 'Jost', sans-serif;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--ivory-alt);
+  transition: all 0.2s ease;
+}
+
+.login-form-input:focus {
+  outline: none;
+  border-color: var(--burgundy);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(122, 28, 48, 0.12);
+}
+
+.btn-login {
+  width: 100%;
+  padding: 0.95rem;
+  background: linear-gradient(135deg, var(--burgundy) 0%, var(--burgundy-dark) 100%);
+  color: var(--white);
+  font-family: 'Jost', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  border: 1.5px solid var(--gold);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.btn-login:hover {
+  background: linear-gradient(135deg, var(--burgundy-light) 0%, var(--burgundy) 100%);
+  box-shadow: 0 6px 20px rgba(122, 28, 48, 0.3);
+}
+
+/* ==========================================
+   DASHBOARD TOP NAV
+   ========================================== */
+.dash-header {
+  background: var(--white);
+  border-bottom: 1.5px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(59, 47, 42, 0.05);
+}
+
+.dash-nav {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dash-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  text-decoration: none;
+}
+
+.dash-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.dash-brand-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--burgundy);
+  line-height: 1.1;
+}
+
+.dash-brand-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-family: 'Jost', sans-serif;
+  font-weight: 600;
+  color: var(--gold-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dash-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dash-user-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--ivory);
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* ==========================================
+   METRICS CARDS
+   ========================================= */
+.dash-main {
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+.dash-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.dash-metric-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem 1.25rem;
+  box-shadow: 0 4px 16px rgba(59, 47, 42, 0.04);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dash-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 47, 42, 0.08);
+}
+
+.metric-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-light);
+  margin-bottom: 0.5rem;
+}
+
+.metric-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.metric-card-pending {
+  border-left: 5px solid var(--warning);
+}
+.metric-card-pending .metric-value {
+  color: var(--warning);
+}
+
+.metric-card-approved {
+  border-left: 5px solid var(--success);
+}
+.metric-card-approved .metric-value {
+  color: var(--success);
+}
+
+.metric-card-rejected {
+  border-left: 5px solid var(--danger);
+}
+.metric-card-rejected .metric-value {
+  color: var(--danger);
+}
+
+/* ==========================================
+   TOOLBAR & FILTER BAR
+   ========================================== */
+.dash-toolbar {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dash-filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-tab {
+  padding: 0.5rem 1rem;
+  background: var(--ivory);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-tab.active {
+  background: var(--burgundy);
+  color: var(--white);
+  border-color: var(--burgundy);
+}
+
+.dash-search-input {
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.9rem;
+  min-width: 260px;
+}
+
+.dash-search-input:focus {
+  outline: none;
+  border-color: var(--burgundy);
+}
+
+/* ==========================================
+   BOOKINGS TABLE & BADGES
+   ========================================== */
+.dash-table-wrapper {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(59, 47, 42, 0.04);
+}
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.dash-table th {
+  background: #FDF9F5;
+  padding: 1rem 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-light);
+  border-bottom: 1.5px solid var(--border);
+}
+
+.dash-table td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #F0E6D8;
+  vertical-align: middle;
+}
+
+.dash-table tr:hover {
+  background: #FAF6F0;
+}
+
+.badge-status {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.badge-pending {
+  background: #FFF3E0;
+  color: #E65100;
+  border: 1px solid #FFE0B2;
+}
+
+.badge-approved {
+  background: #E8F5E9;
+  color: #2E7D32;
+  border: 1px solid #C8E6C9;
+}
+
+.badge-rejected {
+  background: #FFEBEE;
+  color: #C62828;
+  border: 1px solid #FFCDD2;
+}
+
+/* Action Buttons */
+.dash-btn {
+  padding: 0.45rem 0.95rem;
+  border-radius: 6px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.dash-btn-primary {
+  background: var(--burgundy);
+  color: var(--white);
+  border-color: var(--gold);
+}
+
+.dash-btn-primary:hover {
+  background: var(--burgundy-light);
+}
+
+.dash-btn-success {
+  background: #2E7D32;
+  color: var(--white);
+}
+
+.dash-btn-danger {
+  background: #C62828;
+  color: var(--white);
+}
+
+.dash-btn-outline {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+.dash-btn-outline:hover {
+  background: var(--ivory);
+  border-color: var(--gold-dark);
+}
+
+/* Detail Modal */
+.dash-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 20, 15, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.dash-modal-content {
+  background: var(--white);
+  border-radius: 16px;
+  border: 2px solid var(--gold);
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 2rem;
+  position: relative;
+}
+
+.dash-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1.5px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dash-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--ink-light);
+}

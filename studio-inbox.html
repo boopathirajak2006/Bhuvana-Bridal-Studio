@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Owner Studio Inbox | Bhuvana's Bridal &amp; Tailoring Studio</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
+
+  <!-- Fonts & Stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Jost:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/studio-dashboard.css">
+</head>
+
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="dash-header">
+    <div class="dash-nav">
+      <a href="studio-inbox.html" class="dash-brand">
+        <img src="assets/images/logo.png" alt="Bhuvana's Bridal Studio Logo" class="dash-logo">
+        <div>
+          <div class="dash-brand-title">Bhuvana's Studio</div>
+          <div class="dash-brand-badge">Owner Management Portal</div>
+        </div>
+      </a>
+
+      <div class="dash-actions">
+        <button id="btn-push-toggle" class="dash-btn dash-btn-outline" title="Enable browser push notifications">
+          <span>🔔</span>
+          <span id="push-status-label">Push Alerts</span>
+        </button>
+
+        <button id="btn-export-backup" class="dash-btn dash-btn-outline" title="Export offline database backup">
+          <span>💾</span>
+          <span>Export Backup</span>
+        </button>
+
+        <div class="dash-user-pill">
+          <span>👤</span>
+          <span id="owner-name-label">Bhuvaneshwari</span>
+        </div>
+
+        <button id="btn-owner-logout" class="dash-btn dash-btn-outline" title="Sign out of portal">
+          <span>🚪</span>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="dash-main">
+
+    <!-- KPI Metric Cards -->
+    <div class="dash-metrics-grid">
+      <div class="dash-metric-card">
+        <div class="metric-label">Total Enquiries</div>
+        <div class="metric-value" id="kpi-total">0</div>
+      </div>
+      <div class="dash-metric-card metric-card-pending">
+        <div class="metric-label">Pending Approval</div>
+        <div class="metric-value" id="kpi-pending">0</div>
+      </div>
+      <div class="dash-metric-card metric-card-approved">
+        <div class="metric-label">Approved Bookings</div>
+        <div class="metric-value" id="kpi-approved">0</div>
+      </div>
+      <div class="dash-metric-card metric-card-rejected">
+        <div class="metric-label">Rejected / Cancelled</div>
+        <div class="metric-value" id="kpi-rejected">0</div>
+      </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="dash-toolbar">
+      <div class="dash-filter-tabs">
+        <button class="filter-tab active" data-status="all">All Enquiries</button>
+        <button class="filter-tab" data-status="pending">Pending</button>
+        <button class="filter-tab" data-status="approved">Approved</button>
+        <button class="filter-tab" data-status="rejected">Rejected</button>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <input type="text" id="dash-search-input" class="dash-search-input" placeholder="Search ref, customer, phone, venue...">
+        <button id="btn-refresh" class="dash-btn dash-btn-outline" title="Refresh list">
+          <span>🔄</span>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="dash-table-wrapper">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th>Booking Ref</th>
+            <th>Customer Name</th>
+            <th>Phone / WhatsApp</th>
+            <th>Event Date</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Poster</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="bookings-table-body">
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 3rem; color: var(--ink-light);">
+              Loading studio bookings...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <!-- Detail & Decision Modal -->
+  <div class="dash-modal-backdrop" id="booking-detail-modal" style="display: none;" role="dialog" aria-modal="true">
+    <div class="dash-modal-content">
+      <div class="dash-modal-header">
+        <div>
+          <h2 style="font-family:'Cormorant Garamond', serif; font-size:1.85rem; color:var(--burgundy);" id="detail-modal-title">
+            Booking Details
+          </h2>
+          <div style="font-size:0.9rem; color:var(--gold-dark);" id="detail-modal-sub">
+            Reference: BBS-2026-XXXXXX
+          </div>
+        </div>
+        <button class="dash-close-btn" id="btn-close-detail-modal" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <!-- Left Column: Information -->
+        <div>
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--ink);">Customer &amp; Event</h3>
+          <div style="background: var(--ivory); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.95rem; line-height: 1.6;" id="detail-customer-box">
+            <!-- Injected by JS -->
+          </div>
+
+          <h3 style="font-size: 1.1rem; margin: 1.25rem 0 0.75rem; color: var(--ink);">Selected Services &amp; Requirements</h3>
+          <div style="background: var(--ivory); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; line-height: 1.6;" id="detail-services-box">
+            <!-- Injected by JS -->
+          </div>
+
+          <div style="margin-top: 1rem; padding: 0.85rem; border-radius: 8px; font-size: 0.9rem;" id="detail-consent-box">
+            <!-- WhatsApp Consent Status -->
+          </div>
+        </div>
+
+        <!-- Right Column: Poster Preview -->
+        <div>
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--ink);">Generated Customer Poster</h3>
+          <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #000; text-align: center;">
+            <img id="detail-poster-img" src="" alt="Booking Poster" style="max-width: 100%; max-height: 380px; object-fit: contain; display: block; margin: 0 auto;">
+          </div>
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <a id="btn-download-detail-poster" href="#" target="_blank" class="dash-btn dash-btn-outline" style="font-size: 0.8rem;">
+              <span>🔍</span>
+              <span>Open Full Size Poster</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Decision Bar -->
+      <div style="border-top: 1.5px solid var(--border); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;" id="detail-action-buttons">
+        <button class="dash-btn dash-btn-danger" id="btn-trigger-reject">
+          <span>✕</span>
+          <span>Reject Booking</span>
+        </button>
+        <button class="dash-btn dash-btn-success" id="btn-trigger-approve">
+          <span>✓</span>
+          <span>Approve Booking</span>
+        </button>
+      </div>
+
+      <!-- Audit Trail Section -->
+      <div style="margin-top: 2rem; border-top: 1px dashed var(--border); padding-top: 1rem;">
+        <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--ink-light); margin-bottom: 0.5rem;">Audit Trail &amp; History</h4>
+        <div id="detail-audit-trail" style="font-size: 0.8rem; color: var(--ink-light); font-family: monospace;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rejection Reason Modal -->
+  <div class="dash-modal-backdrop" id="reject-reason-modal" style="display: none;" role="dialog" aria-modal="true">
+    <div class="dash-modal-content" style="max-width: 520px;">
+      <div class="dash-modal-header">
+        <h3 style="font-family:'Cormorant Garamond', serif; font-size:1.6rem; color:var(--danger);">
+          Reject Booking Enquiry
+        </h3>
+        <button class="dash-close-btn" id="btn-close-reject-modal">&times;</button>
+      </div>
+
+      <p style="font-size: 0.9rem; color: var(--ink-light); margin-bottom: 1rem;">
+        Please specify the reason for declining this booking. If the customer opted into WhatsApp updates, this reason will be courteously communicated to them.
+      </p>
+
+      <div class="login-form-group">
+        <label for="reject-reason-select">Select Reason</label>
+        <select id="reject-reason-select" class="login-form-input">
+          <option value="Requested event date is already fully booked">Requested event date is already fully booked</option>
+          <option value="Studio artists and artisans are unavailable on this date">Studio artists and artisans are unavailable on this date</option>
+          <option value="Venue location is outside our operational service area">Venue location is outside our operational service area</option>
+          <option value="Customer requested cancellation via phone">Customer requested cancellation via phone</option>
+          <option value="Custom">Other (Specify below)...</option>
+        </select>
+      </div>
+
+      <div class="login-form-group" id="custom-reason-wrap" style="display: none;">
+        <label for="reject-custom-reason">Custom Reason Details</label>
+        <textarea id="reject-custom-reason" class="login-form-input" rows="3" placeholder="Provide specific explanation for rejection..."></textarea>
+      </div>
+
+      <div class="login-form-group">
+        <label for="reject-internal-notes">Internal Studio Notes (Private)</label>
+        <input type="text" id="reject-internal-notes" class="login-form-input" placeholder="Optional internal notes for studio reference">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+        <button class="dash-btn dash-btn-outline" id="btn-cancel-reject">Cancel</button>
+        <button class="dash-btn dash-btn-danger" id="btn-confirm-reject">
+          <span>Confirm Rejection</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/cloudflare-config.js"></script>
+  <script src="js/studio-auth.js"></script>
+  <script src="js/studio-dashboard.js"></script>
+</body>
+
+</html>

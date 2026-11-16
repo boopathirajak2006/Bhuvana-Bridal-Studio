@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio Owner Portal | Bhuvana's Bridal &amp; Tailoring Studio</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
+
+  <!-- Fonts & Stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Jost:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/studio-dashboard.css">
+</head>
+
+<body class="studio-login-body">
+
+  <div class="studio-login-card">
+    <img src="assets/images/logo.png" alt="Bhuvana's Bridal Studio Logo" class="studio-login-logo">
+    <h1 class="studio-login-title">Bhuvana's Studio</h1>
+    <div class="studio-login-sub">Private Owner Portal</div>
+
+    <div id="login-alert" style="display:none; padding:0.75rem 1rem; border-radius:8px; margin-bottom:1.25rem; font-size:0.9rem;" role="alert"></div>
+
+    <form id="login-form">
+      <div class="login-form-group">
+        <label for="username">Owner Username</label>
+        <div class="login-input-wrap">
+          <input type="text" id="username" name="username" class="login-form-input" required autocomplete="username" placeholder="admin">
+        </div>
+      </div>
+
+      <div class="login-form-group">
+        <label for="password">Security Password</label>
+        <div class="login-input-wrap">
+          <input type="password" id="password" name="password" class="login-form-input" required autocomplete="current-password" placeholder="••••••••••••">
+        </div>
+      </div>
+
+      <button type="submit" id="btn-submit-login" class="btn-login">
+        <span>Sign In to Dashboard</span>
+      </button>
+    </form>
+
+    <div style="margin-top: 1.75rem; font-size: 0.8rem; color: #8A6230;">
+      <span>🔒 Authorized Personnel Only &middot; Bhuvana Bridal Studio &copy; 2026</span>
+    </div>
+  </div>
+
+  <script src="js/cloudflare-config.js"></script>
+  <script src="js/studio-auth.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      // If already logged in, redirect to inbox
+      if (window.BBS_AUTH && window.BBS_AUTH.isAuthenticated()) {
+        window.location.href = 'studio-inbox.html';
+        return;
+      }
+
+      const loginForm = document.getElementById('login-form');
+      const alertBox = document.getElementById('login-alert');
+      const submitBtn = document.getElementById('btn-submit-login');
+
+      function showAlert(msg, isError) {
+        if (!alertBox) return;
+        alertBox.style.display = 'block';
+        alertBox.style.background = isError ? '#FFEBEE' : '#E8F5E9';
+        alertBox.style.color = isError ? '#C62828' : '#2E7D32';
+        alertBox.style.border = `1px solid ${isError ? '#FFCDD2' : '#C8E6C9'}`;
+        alertBox.textContent = msg;
+      }
+
+      if (loginForm) {
+        loginForm.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          const username = document.getElementById('username').value.trim();
+          const password = document.getElementById('password').value;
+
+          if (!username || !password) {
+            showAlert('Please provide both username and password.', true);
+            return;
+          }
+
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Verifying credentials...';
+
+          try {
+            const authResult = await window.BBS_AUTH.login(username, password);
+            if (authResult && authResult.success) {
+              showAlert('Login successful! Redirecting to studio inbox...', false);
+              setTimeout(() => {
+                window.location.href = 'studio-inbox.html';
+              }, 600);
+            } else {
+              throw new Error(authResult.message || 'Login failed');
+            }
+          } catch (err) {
+            console.error('Login error:', err);
+            showAlert(err.message || 'Invalid username or password. Please verify.', true);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Sign In to Dashboard';
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bhuvanas-bridal-backend",
+  "main": "src/index.js",
+  "compatibility_date": "2024-11-01",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "vars": {
+    "ENVIRONMENT": "production",
+    "CORS_ORIGINS": "https://boopathirajak2006.github.io,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080",
+    "MAX_POSTER_SIZE_BYTES": "5242880",
+    "WHATSAPP_API_VERSION": "v21.0",
+    "WHATSAPP_PHONE_NUMBER_ID": "REPLACE_WITH_YOUR_PHONE_NUMBER_ID"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "bhuvanas-bridal-d1",
+      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "POSTERS",
+      "bucket_name": "bhuvanas-bridal-posters"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
