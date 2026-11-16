@@ -321,20 +321,43 @@
   }
 
   /**
-   * Waits for all images inside target element to complete loading
+   * Pre-checks and waits for all images inside target element to finish loading.
+   * Logs the exact image path if any image fails to load.
    */
-  function waitForImages(element) {
+  async function waitForImages(element) {
     const images = Array.from(element.querySelectorAll('img'));
-    const promises = images.map(img => {
-      if (img.complete && img.naturalHeight !== 0) {
-        return Promise.resolve();
-      }
+    const results = await Promise.all(images.map(img => {
       return new Promise(resolve => {
-        img.addEventListener('load', resolve, { once: true });
-        img.addEventListener('error', resolve, { once: true });
+        const srcPath = img.getAttribute('src') || img.src || '(no src)';
+        if (img.complete) {
+          if (img.naturalHeight === 0 || img.naturalWidth === 0) {
+            console.error(`[BBS Poster] Image failed to load or has 0 dimensions: ${srcPath}`);
+            resolve({ img, src: srcPath, ok: false });
+          } else {
+            resolve({ img, src: srcPath, ok: true });
+          }
+          return;
+        }
+        img.addEventListener('load', () => {
+          if (img.naturalHeight === 0 || img.naturalWidth === 0) {
+            console.error(`[BBS Poster] Image loaded but has 0 dimensions: ${srcPath}`);
+            resolve({ img, src: srcPath, ok: false });
+          } else {
+            resolve({ img, src: srcPath, ok: true });
+          }
+        }, { once: true });
+        img.addEventListener('error', () => {
+          console.error(`[BBS Poster] Failed to load poster image: ${srcPath}`);
+          resolve({ img, src: srcPath, ok: false });
+        }, { once: true });
       });
-    });
-    return Promise.all(promises);
+    }));
+
+    const failed = results.filter(r => !r.ok);
+    if (failed.length > 0) {
+      console.warn(`[BBS Poster] Warning: ${failed.length} image(s) failed to load properly:`, failed.map(f => f.src));
+    }
+    return results;
   }
 
   /**
@@ -350,7 +373,7 @@
       await document.fonts.ready;
     }
 
-    // Wait for images
+    // Pre-check and wait for images, logging any failed paths
     await waitForImages(targetElement);
 
     // Give DOM a micro-tick to compute layout
@@ -359,7 +382,7 @@
     const canvas = await html2canvas(targetElement, {
       scale: 2, // 2x retina sharpness (2160px rendered)
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false,
       backgroundColor: '#FEF6ED',
       width: 1080,
       logging: false,
@@ -391,29 +414,51 @@
   }
 
   /**
-   * Helper to share via Web Share API
+   * Checks whether the current browser supports sharing files via Web Share API
+   */
+  function canShareFiles() {
+    if (typeof navigator === 'undefined' || !navigator.canShare) return false;
+    try {
+      const testFile = new File([''], 'test.png', { type: 'image/png' });
+      return navigator.canShare({ files: [testFile] });
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Helper to share generated booking poster PNG directly via Web Share API.
+   * Returns:
+   *  { supported: true, shared: true } if user completed the share sheet
+   *  { supported: true, shared: false, cancelled: true } if user cancelled/dismissed share sheet
+   *  { supported: false, shared: false } if direct file sharing is unsupported on this browser
    */
   async function sharePosterFile(canvas, ref, customerName) {
     const blob = await canvasToBlob(canvas);
-    if (!blob) return false;
+    if (!blob) {
+      throw new Error('Unable to create image blob from poster canvas');
+    }
 
     const filename = `Bhuvana-Booking-${ref || 'Details'}.png`;
     const file = new File([blob], filename, { type: 'image/png' });
 
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
           files: [file],
           title: "Bhuvana's Bridal & Tailoring Studio Booking",
           text: `Booking Enquiry for ${customerName || 'Client'} (Ref: ${ref || 'BBS'}) - Bhuvana's Bridal & Tailoring Studio, Salem`
         });
-        return true;
+        return { supported: true, shared: true };
       } catch (err) {
-        if (err.name === 'AbortError') return false; // user cancelled
+        if (err.name === 'AbortError') {
+          return { supported: true, shared: false, cancelled: true };
+        }
         throw err;
       }
     }
-    return false;
+
+    return { supported: false, shared: false };
   }
 
   // Export to global scope
@@ -422,6 +467,7 @@
     renderToCanvas: renderPosterToCanvas,
     downloadPNG: downloadCanvasAsPNG,
     toBlob: canvasToBlob,
+    canShare: canShareFiles,
     shareFile: sharePosterFile
   };
 

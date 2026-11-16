@@ -255,29 +255,26 @@
 
             const customerName = contact.name || contact.fullName || 'Valued Client';
             try {
-              const shared = await posterModule.shareFile(generatedCanvas, ref, customerName);
-              if (shared) {
-                showAlert('✓ Booking poster shared successfully!', true);
+              const result = await posterModule.shareFile(generatedCanvas, ref, customerName);
+
+              if (result && result.supported && result.shared) {
+                showAlert('✓ Share dialog completed. Please finish sending the poster in your selected app (e.g. WhatsApp).', true);
+              } else if (result && result.cancelled) {
+                showAlert('Image sharing was cancelled. You can try again or use the Download Image button.', false);
               } else {
-                // Fallback: download PNG & guide to attach in WhatsApp
-                const filename = `Bhuvana-Booking-${ref}.png`;
-                posterModule.downloadPNG(generatedCanvas, filename);
+                // Direct file sharing is not supported on this browser (e.g. desktop browsers)
                 showAlert(`
-                  <strong>Image Downloaded for WhatsApp Sharing:</strong><br>
-                  Your booking poster was saved to your device. Opening WhatsApp chat with Bhuvaneshwari now &mdash; please tap the <strong>attachment / paperclip icon</strong> in WhatsApp to send the image!
-                `, true);
-                setTimeout(function () {
-                  window.location.href = store.getWhatsAppUrl();
-                }, 2200);
+                  <strong>Direct Image Sharing Unsupported on this Browser:</strong><br>
+                  Direct file sharing via Web Share is supported on modern mobile browsers (such as Google Chrome on Android or Safari on iOS).<br>
+                  To send your poster from this device: please click <strong>Download Image</strong> to save the poster, then click <strong>Continue to WhatsApp</strong> to attach it manually.
+                `, false);
               }
             } catch (err) {
               console.warn('Share error:', err);
-              // Fallback
-              const filename = `Bhuvana-Booking-${ref}.png`;
-              posterModule.downloadPNG(generatedCanvas, filename);
               showAlert(`
-                Poster downloaded. Tap the attachment icon in WhatsApp to send it to Bhuvaneshwari.
-              `, true);
+                <strong>Direct Image Sharing Unsupported:</strong><br>
+                Please use a supported mobile browser to share directly, or use the <strong>Download Image</strong> button to save the poster and attach it in WhatsApp.
+              `, false);
             }
           });
         }
