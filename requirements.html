@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Service Requirements | Bhuvana's Bridal Studio</title>
+  <meta name="description"
+    content="Specify your styling preferences, event specifics, and tailoring requirements for Bhuvana's Bridal Studio in Salem.">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
+  <link rel="shortcut icon" href="assets/images/favicon.png">
+
+  <!-- Fonts & Stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="wrap nav">
+      <a class="logo-link" href="index.html" aria-label="Bhuvana's Bridal Studio Home">
+        <img class="logo-img" src="assets/images/logo.png" alt="Bhuvana's Bridal Studio logo" width="54" height="54">
+        <div class="brand-text">
+          <span class="brand-title">Bhuvana's Bridal Studio</span>
+          <span class="brand-sub">Service Requirements</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav aria-label="Main Navigation">
+        <ul class="nav-menu">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="select-service.html">Select Service</a></li>
+          <li><a href="bridal-beauty.html">Bridal &amp; Beauty</a></li>
+          <li><a href="designer-blouse.html">Designer Blouse</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="btn sm ghost" href="additional-services.html" title="Edit Selected Services">
+          <span>Edit Selection</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="bg-ivory space-lg">
+    <div class="wrap-narrow">
+      <!-- Progress Bar (Step 3 of 5) -->
+      <div id="progress-bar-container"></div>
+
+      <div class="center" style="margin-bottom:2rem;">
+        <span class="eyebrow">Tailored Consultation</span>
+        <h1>Service Requirements</h1>
+        <p class="lead">
+          Please provide specific styling, timing, and tailoring preferences for your selected services. Only fields relevant to your chosen services are displayed below.
+        </p>
+      </div>
+
+      <form id="requirements-form">
+        <!-- 1. Makeup Requirements -->
+        <div class="enquiry-container" id="sec-req-makeup" style="display:none; margin-bottom:1.5rem;">
+          <h3 style="font-size:1.35rem; border-bottom:1px solid var(--border); padding-bottom:0.6rem; margin-bottom:1rem;">
+            Makeup Preferences
+          </h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="req-makeupStyle">Preferred Makeup Style</label>
+              <select class="form-control" id="req-makeupStyle" name="makeupStyle">
+                <option value="Traditional Auspicious Muhurtham">Traditional Auspicious Muhurtham</option>
+                <option value="HD Camera-Ready Finish">HD Camera-Ready Finish</option>
+                <option value="Dewy Radiant Glow">Dewy Radiant Glow</option>
+                <option value="Soft Glam Natural">Soft Glam Natural</option>
+                <option value="Full Matte Glam">Full Matte Glam</option>
+                <option value="Need Recommendation during consultation">Need Recommendation during consultation</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="req-eventType">Celebration / Event Type</label>
+              <select class="form-control" id="req-eventType" name="eventType">
+                <option value="Wedding / Muhurtham Ceremony">Wedding / Muhurtham Ceremony</option>
+                <option value="Evening Reception">Evening Reception</option>
+                <option value="Engagement Ceremony">Engagement Ceremony</option>
+                <option value="Puberty Function (Manjal Neerattu Vizha)">Puberty Function (Manjal Neerattu Vizha)</option>
+                <option value="Baby Shower (Valaikappu / Seemantham)">Baby Shower (Valaikappu / Seemantham)</option>
+                <option value="Photoshoot / Pre-Wedding">Photoshoot / Pre-Wedding</option>
+                <option value="Festive Party / Family Event">Festive Party / Family Event</option>
+              </select>
+            </div>
+
+            <div class="form-group full">
+              <label for="req-makeupPeople">Total People Requiring Makeup</label>
+              <input class="form-control" type="number" id="req-makeupPeople" name="makeupPeople" min="1" max="50" value="1" placeholder="1">
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Hair & Styling Requirements -->
+        <div class="enquiry-container" id="sec-req-hair" style="display:none; margin-bottom:1.5rem;">
+          <h3 style="font-size:1.35rem; border-bottom:1px solid var(--border); padding-bottom:0.6rem; margin-bottom:1rem;">
+            Hair &amp; Saree Styling Preferences
+          </h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="req-hairStyle">Hairstyle Preference</label>
+              <select class="form-control" id="req-hairStyle" name="hairStyle">
+                <option value="Traditional South Indian Long Braid (Poola Jada)">Traditional South Indian Long Braid (Poola Jada)</option>
+                <option value="Classic Bridal Bun with Fresh Jasmine Veni">Classic Bridal Bun with Fresh Jasmine Veni</option>
+                <option value="Modern Textured Messy Bun">Modern Textured Messy Bun</option>
+                <option value="Hollywood Waves / Open Curls">Hollywood Waves / Open Curls</option>
+                <option value="Half-up Braided Floral Crown">Half-up Braided Floral Crown</option>
+                <option value="Flexible / Artist Recommendation">Flexible / Artist Recommendation</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="req-drapingType">Saree Draping / Setting</label>
+              <select class="form-control" id="req-drapingType" name="drapingType">
+                <option value="Knife-Sharp Pleating with Oddiyanam Belt">Knife-Sharp Pleating with Oddiyanam Belt</option>
+                <option value="Advance Saree Pre-pleating Box Fold">Advance Saree Pre-pleating Box Fold</option>
+                <option value="Bridal Jewellery Anchoring">Bridal Jewellery Anchoring</option>
+                <option value="Fresh Floral Veni & Petal Setting">Fresh Floral Veni & Petal Setting</option>
+                <option value="Standard Saree Draping">Standard Saree Draping</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Mehndi Requirements -->
+        <div class="enquiry-container" id="sec-req-mehndi" style="display:none; margin-bottom:1.5rem;">
+          <h3 style="font-size:1.35rem; border-bottom:1px solid var(--border); padding-bottom:0.6rem; margin-bottom:1rem;">
+            Mehndi Artistry Preferences
+          </h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="req-mehndiStyle">Henna Design Aesthetic</label>
+              <select class="form-control" id="req-mehndiStyle" name="mehndiStyle">
+                <option value="Full Bridal Henna (Elbows & Feet)">Full Bridal Henna (Elbows & Feet)</option>
+                <option value="Traditional Cultural Peacock & Kalash">Traditional Cultural Peacock & Kalash</option>
+                <option value="Arabic Flowing Floral Vines">Arabic Flowing Floral Vines</option>
+                <option value="Contemporary Minimalist Mandala">Contemporary Minimalist Mandala</option>
+                <option value="Botanical Lotus & Roses">Botanical Lotus & Roses</option>
+                <option value="Western Lace Glove Style">Western Lace Glove Style</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Blouse Designing Requirements -->
+        <div class="enquiry-container" id="sec-req-blouse-design" style="display:none; margin-bottom:1.5rem;">
+          <h3 style="font-size:1.35rem; border-bottom:1px solid var(--border); padding-bottom:0.6rem; margin-bottom:1rem;">
+            Blouse Designing Preferences
+          </h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="req-blouseDesignType">Neckline &amp; Cut</label>
+              <select class="form-control" id="req-blouseDesignType" name="blouseDesignType">
+                <option value="Sweetheart Neckline with Piped Border">Sweetheart Neckline with Piped Border</option>
+                <option value="Deep U / Pot Neck with Latkans">Deep U / Pot Neck with Latkans</option>
+                <option value="Boat Neck with Scallop Cut-Work">Boat Neck with Scallop Cut-Work</option>
+                <option value="Traditional Auspicious Square Cut">Traditional Auspicious Square Cut</option>
+                <option value="Custom Bridal Statement Design">Custom Bridal Statement Design</option>
+                <option value="Discuss during design consultation">Discuss during design consultation</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Blouse Stitching Requirements -->
+        <div class="enquiry-container" id="sec-req-blouse-stitch" style="display:none; margin-bottom:1.5rem;">
+          <h3 style="font-size:1.35rem; border-bottom:1px solid var(--border); padding-bottom:0.6rem; margin-bottom:1rem;">
+            Blouse Stitching &amp; Fitting Details
+          </h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="req-blouseStitchType">Stitching Type &amp; Lining</label>
+              <select class="form-control" id="req-blouseStitchType" name="blouseStitchType">
+                <option value="Padded Princess Cut with Premium Lining">Padded Princess Cut with Premium Lining</option>
+                <option value="Standard Non-Padded with Soft Lining">Standard Non-Padded with Soft Lining</option>
+                <option value="Concealed Side-Zipper Closure">Concealed Side-Zipper Closure</option>
+                <option value="Traditional Back Hook / Eye Closure">Traditional Back Hook / Eye Closure</option>
+                <option value="Sample Blouse Provided for Reference">Sample Blouse Provided for Reference</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. Aari Work Requirements -->
+        <div class="enquiry-container" id="sec-req-aari" style="display:none; margin-bottom:1.5rem;">
+          <h3 style="font-size:1.35rem; border-bottom:1px solid var(--border); padding-bottom:0.6rem; margin-bottom:1rem;">
+            Aari Work &amp; Embroidery Preferences
+          </h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="req-aariWorkType">Hand Embroidery Style</label>
+              <select class="form-control" id="req-aariWorkType" name="aariWorkType">
+                <option value="Heavy Bridal Aari Sleeves (Zardozi & Kundan)">Heavy Bridal Aari Sleeves (Zardozi & Kundan)</option>
+                <option value="Neckline Border & Sleeve Edge Work">Neckline Border & Sleeve Edge Work</option>
+                <option value="Traditional Mango & Temple Zari Embroidery">Traditional Mango & Temple Zari Embroidery</option>
+                <option value="Silk Thread Shading & Delicate Cut-Beads">Silk Thread Shading & Delicate Cut-Beads</option>
+                <option value="Custom Pattern matched to Saree Pallu">Custom Pattern matched to Saree Pallu</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. Common Specific Notes -->
+        <div class="enquiry-container" style="margin-bottom:2rem;">
+          <h3 style="font-size:1.35rem; border-bottom:1px solid var(--border); padding-bottom:0.6rem; margin-bottom:1rem;">
+            Additional Specific Instructions
+          </h3>
+          <div class="form-group">
+            <label for="req-specificNotes">Any specific muhurtham times, outfit shades, or custom requests</label>
+            <textarea class="form-control" id="req-specificNotes" name="specificNotes" rows="3" placeholder="e.g. Saree color is golden-yellow with maroon border, muhurtham is at 7:30 AM..."></textarea>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="action-btn-row">
+          <button class="btn ghost" id="btn-back-prev" type="button">&larr; Back</button>
+          <button class="btn gold" type="submit">Continue to Contact Details &rarr;</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer id="contact">
+    <div class="wrap">
+      <div class="footer-bottom" style="margin-top:0; border-top:none;">
+        <div>&copy; 2026 Bhuvana's Bridal Studio. Salem, Tamil Nadu.</div>
+        <div>Multi-Service Customer Selection System</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script src="js/services-data.js"></script>
+  <script src="js/booking-store.js"></script>
+  <script src="js/requirements.js"></script>
+</body>
+
+</html>

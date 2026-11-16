@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Customer Contact Details | Bhuvana's Bridal Studio</title>
+  <meta name="description"
+    content="Customer enquiry form for bridal makeup and designer blouse tailoring at Bhuvana's Bridal Studio in Salem.">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
+  <link rel="shortcut icon" href="assets/images/favicon.png">
+
+  <!-- Fonts & Stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="wrap nav">
+      <a class="logo-link" href="index.html" aria-label="Bhuvana's Bridal Studio Home">
+        <img class="logo-img" src="assets/images/logo.png" alt="Bhuvana's Bridal Studio logo" width="54" height="54">
+        <div class="brand-text">
+          <span class="brand-title">Bhuvana's Bridal Studio</span>
+          <span class="brand-sub">Contact Details</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav aria-label="Main Navigation">
+        <ul class="nav-menu">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="select-service.html">Select Service</a></li>
+          <li><a href="bridal-beauty.html">Bridal &amp; Beauty</a></li>
+          <li><a href="designer-blouse.html">Designer Blouse</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="btn sm ghost" href="additional-services.html" title="Edit Selected Services">
+          <span>Edit Selection</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="bg-ivory space-lg">
+    <div class="wrap-narrow">
+      <!-- Progress Bar (Step 4 of 5) -->
+      <div id="progress-bar-container"></div>
+
+      <div class="center" style="margin-bottom:2rem;">
+        <span class="eyebrow">Step 4 &middot; Your Details</span>
+        <h1>Contact Information</h1>
+        <p class="lead">
+          Please provide your name, WhatsApp number, and event details so Bhuvaneshwari can review availability and prepare your personalized quotation.
+        </p>
+      </div>
+
+      <!-- Services summary -->
+      <div class="selection-summary-card">
+        <div class="selection-summary-header" style="margin-bottom:0.5rem; padding-bottom:0.5rem;">
+          <strong style="color:var(--ink);">Enquiring for Services:</strong>
+          <a href="additional-services.html" style="font-size:0.82rem; color:var(--gold-dark); text-decoration:underline;">+ Add / Edit Services</a>
+        </div>
+        <div id="enquiry-services-summary" style="display:flex; flex-wrap:wrap; gap:0.4rem;">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Form Container -->
+      <div class="enquiry-container">
+        <form id="contact-enquiry-form" novalidate>
+          <div class="form-grid">
+            <!-- Full Name -->
+            <div class="form-group">
+              <label for="c-name">Bride / Client Full Name *</label>
+              <input class="form-control" type="text" id="c-name" name="name" placeholder="e.g. Ananya Ramesh" required autocomplete="name">
+              <span class="err-msg"></span>
+            </div>
+
+            <!-- Mobile -->
+            <div class="form-group">
+              <label for="c-mobile">Mobile Number (WhatsApp) *</label>
+              <input class="form-control" type="tel" id="c-mobile" name="mobile" placeholder="10-digit mobile number" required inputmode="tel" autocomplete="tel">
+              <span class="err-msg"></span>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+              <label for="c-email">Email Address (Optional)</label>
+              <input class="form-control" type="email" id="c-email" name="email" placeholder="name@example.com" autocomplete="email">
+              <span class="err-msg"></span>
+            </div>
+
+            <!-- Event / Delivery Date -->
+            <div class="form-group">
+              <label for="c-eventDate">Event Date / Delivery Required By *</label>
+              <input class="form-control" type="date" id="c-eventDate" name="eventDate" required>
+              <span class="err-msg"></span>
+            </div>
+
+            <!-- Location -->
+            <div class="form-group full">
+              <label for="c-location">Event Venue / Location in Salem *</label>
+              <input class="form-control" type="text" id="c-location" name="location" placeholder="e.g. Erumbalai, Steel Plant Road, Salem or Mandapam Name" required>
+              <span class="err-msg"></span>
+            </div>
+
+            <!-- Message -->
+            <div class="form-group full">
+              <label for="c-message">Additional Message or Questions (Optional)</label>
+              <textarea class="form-control" id="c-message" name="message" rows="3" placeholder="Tell us if you have special muhurtham timings, multiple ceremony dates, or custom requests..."></textarea>
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="action-btn-row">
+            <button class="btn ghost" id="btn-back-prev" type="button">&larr; Back</button>
+            <button class="btn gold" type="submit">Review Enquiry Details &rarr;</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer id="contact">
+    <div class="wrap">
+      <div class="footer-bottom" style="margin-top:0; border-top:none;">
+        <div>&copy; 2026 Bhuvana's Bridal Studio. Salem, Tamil Nadu.</div>
+        <div>Multi-Service Customer Selection System</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script src="js/services-data.js"></script>
+  <script src="js/booking-store.js"></script>
+  <script src="js/enquiry-form.js"></script>
+</body>
+
+</html>

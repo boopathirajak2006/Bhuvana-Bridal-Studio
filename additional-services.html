@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Additional Services Selection | Bhuvana's Bridal Studio</title>
+  <meta name="description"
+    content="Select multiple services across Bridal &amp; Beauty Studio and Designer Blouse Studio for a combined enquiry in Salem.">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
+  <link rel="shortcut icon" href="assets/images/favicon.png">
+
+  <!-- Fonts & Stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="wrap nav">
+      <a class="logo-link" href="index.html" aria-label="Bhuvana's Bridal Studio Home">
+        <img class="logo-img" src="assets/images/logo.png" alt="Bhuvana's Bridal Studio logo" width="54" height="54">
+        <div class="brand-text">
+          <span class="brand-title">Bhuvana's Bridal Studio</span>
+          <span class="brand-sub">Multi-Service Selection</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav aria-label="Main Navigation">
+        <ul class="nav-menu">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="select-service.html">Select Service</a></li>
+          <li><a href="bridal-beauty.html">Bridal &amp; Beauty</a></li>
+          <li><a href="designer-blouse.html">Designer Blouse</a></li>
+          <li><a href="pricing.html">Pricing</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="btn sm gold" href="#summary-section" title="Current Selection">
+          <span>Selection (<span id="selected-summary-count">0</span>)</span>
+        </a>
+        <button class="menu-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer Menu -->
+  <div class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation Menu">
+    <ul class="mobile-nav-list">
+      <li><a href="index.html">Home <span>&rarr;</span></a></li>
+      <li><a href="select-service.html">Select Your Service <span>&rarr;</span></a></li>
+      <li><a href="bridal-beauty.html">Bridal &amp; Beauty Studio <span>&rarr;</span></a></li>
+      <li><a href="designer-blouse.html">Designer Blouse Studio <span>&rarr;</span></a></li>
+      <li><a href="pricing.html">Pricing Overview <span>&rarr;</span></a></li>
+      <li><a href="contact.html">Contact &amp; Location <span>&rarr;</span></a></li>
+    </ul>
+  </div>
+
+  <main class="bg-ivory space-lg">
+    <div class="wrap-narrow">
+      <!-- Progress Bar (Step 2 of 5) -->
+      <div id="progress-bar-container"></div>
+
+      <div class="center" style="margin-bottom:2rem;">
+        <span class="eyebrow">Multi-Service Selection</span>
+        <h1>Select Additional Services</h1>
+        <p class="lead">
+          You may select multiple services from both <strong>Bridal &amp; Beauty Studio</strong> and <strong>Designer Blouse Studio</strong>. All selections will be retained in one unified customer enquiry.
+        </p>
+      </div>
+
+      <!-- Selection Summary Card -->
+      <div class="selection-summary-card" id="summary-section">
+        <div class="selection-summary-header">
+          <div>
+            <strong style="font-size:1.15rem; color:var(--ink);">Your Current Selection</strong>
+            <div style="font-size:0.82rem; color:var(--muted);">All selected services will be carried forward</div>
+          </div>
+          <span class="badge primary">Review Below</span>
+        </div>
+        <div class="selected-service-list" id="selected-summary-list">
+          <!-- Dynamically populated by JS -->
+        </div>
+      </div>
+
+      <!-- =========================================================
+           DIVISION A: BRIDAL & BEAUTY STUDIO CHECKBOXES
+           ========================================================= -->
+      <div style="background:var(--white); border:1.5px solid var(--border); border-radius:var(--radius-lg); padding:clamp(1.5rem, 4vw, 2.5rem); box-shadow:var(--shadow-sm); margin-bottom:2rem;">
+        <div style="border-bottom:1px solid var(--border); padding-bottom:0.8rem; margin-bottom:1.5rem;">
+          <span class="badge primary" style="margin-bottom:0.4rem;">Division A</span>
+          <h2 style="font-size:1.6rem; color:var(--ink);">Bridal &amp; Beauty Studio</h2>
+          <p style="font-size:0.9rem; color:var(--muted); margin:0;">Check any additional makeup, hair styling, or mehndi services you require.</p>
+        </div>
+
+        <!-- Group: Makeup Services -->
+        <fieldset class="checkbox-group" style="margin-bottom:1.5rem;">
+          <legend>Makeup Services</legend>
+          <div class="checkbox-options cols-3">
+            <label class="checkbox-label"><input type="checkbox" data-service-id="bridal-makeup"> Bridal Makeup</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="puberty-function-makeup"> Puberty Function Makeup</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="baby-shower-makeup"> Baby Shower Makeup</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="party-makeup"> Party Makeup</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="hd-makeup"> HD Makeup</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="traditional-bridal-makeup"> Traditional Bridal Makeup</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="reception-makeup"> Reception Makeup</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="photoshoot-makeup"> Photoshoot Makeup</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="engagement-makeup"> Engagement Makeup</label>
+          </div>
+        </fieldset>
+
+        <!-- Group: Hair & Styling -->
+        <fieldset class="checkbox-group" style="margin-bottom:1.5rem;">
+          <legend>Hair &amp; Bridal Styling</legend>
+          <div class="checkbox-options cols-3">
+            <label class="checkbox-label"><input type="checkbox" data-service-id="bridal-hairstyling"> Bridal Hairstyling</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="hair-styling"> Hair Styling</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="saree-draping"> Saree Draping</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="saree-pre-pleating"> Saree Pre-pleating</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="bridal-jewellery-setting"> Bridal Jewellery Setting</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="flower-setting"> Flower Setting</label>
+          </div>
+        </fieldset>
+
+        <!-- Group: Mehndi Services -->
+        <fieldset class="checkbox-group">
+          <legend>Mehndi Services</legend>
+          <div class="checkbox-options cols-3">
+            <label class="checkbox-label"><input type="checkbox" data-service-id="traditional-mehndi"> Traditional Mehndi</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="bridal-mehndi"> Bridal Mehndi</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="arabic-mehndi"> Arabic Mehndi</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="contemporary-mehndi"> Contemporary Mehndi</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="floral-mehndi"> Floral Mehndi</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="western-mehndi"> Western Mehndi</label>
+          </div>
+        </fieldset>
+      </div>
+
+      <!-- =========================================================
+           DIVISION B: DESIGNER BLOUSE STUDIO CHECKBOXES
+           ========================================================= -->
+      <div style="background:var(--white); border:1.5px solid var(--border); border-radius:var(--radius-lg); padding:clamp(1.5rem, 4vw, 2.5rem); box-shadow:var(--shadow-sm); margin-bottom:2.5rem;">
+        <div style="border-bottom:1px solid var(--border); padding-bottom:0.8rem; margin-bottom:1.5rem;">
+          <span class="badge primary" style="margin-bottom:0.4rem;">Division B</span>
+          <h2 style="font-size:1.6rem; color:var(--ink);">Designer Blouse Studio</h2>
+          <p style="font-size:0.9rem; color:var(--muted); margin:0;">Check any custom designing, blouse stitching, or Aari hand embroidery services.</p>
+        </div>
+
+        <!-- Group: Blouse Designing -->
+        <fieldset class="checkbox-group" style="margin-bottom:1.5rem;">
+          <legend>Blouse Designing</legend>
+          <div class="checkbox-options cols-3">
+            <label class="checkbox-label"><input type="checkbox" data-service-id="custom-blouse-designs"> Custom Blouse Designs</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="traditional-blouse-designs"> Traditional Blouse Designs</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="custom-bridal-blouse-designs"> Custom Bridal Blouse Designs</label>
+          </div>
+        </fieldset>
+
+        <!-- Group: Blouse Stitching -->
+        <fieldset class="checkbox-group" style="margin-bottom:1.5rem;">
+          <legend>Blouse Stitching</legend>
+          <div class="checkbox-options cols-3">
+            <label class="checkbox-label"><input type="checkbox" data-service-id="blouse-stitching"> Blouse Stitching</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="custom-stitching-requirements"> Custom Stitching Requirements</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="customer-design-based-stitching"> Customer Design-Based Stitching</label>
+          </div>
+        </fieldset>
+
+        <!-- Group: Aari Work -->
+        <fieldset class="checkbox-group">
+          <legend>Aari Work &amp; Hand Embroidery</legend>
+          <div class="checkbox-options cols-3">
+            <label class="checkbox-label"><input type="checkbox" data-service-id="aari-work"> Aari Work</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="bridal-aari-embroidery"> Bridal Aari Embroidery</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="traditional-aari-designs"> Traditional Aari Designs</label>
+            <label class="checkbox-label"><input type="checkbox" data-service-id="custom-aari-designs"> Custom Aari Designs</label>
+          </div>
+        </fieldset>
+      </div>
+
+      <!-- Action Buttons Row -->
+      <div class="action-btn-row">
+        <button class="btn ghost" id="btn-back-prev" type="button">&larr; Back</button>
+        <button class="btn gold" id="btn-continue-req" type="button">Continue to Requirements &rarr;</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer id="contact">
+    <div class="wrap">
+      <div class="footer-bottom" style="margin-top:0; border-top:none;">
+        <div>&copy; 2026 Bhuvana's Bridal Studio. Salem, Tamil Nadu.</div>
+        <div>Multi-Service Customer Selection System</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script src="js/services-data.js"></script>
+  <script src="js/booking-store.js"></script>
+  <script src="js/additional-services.js"></script>
+</body>
+
+</html>

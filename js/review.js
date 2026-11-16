@@ -1,0 +1,109 @@
+/**
+ * Bhuvana's Bridal Studio — Review Details Controller
+ * Summarizes customer data, services, requirements, and handles final WhatsApp handoff
+ */
+
+(function () {
+  'use strict';
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.BBS_STORE || !window.BBS_CATALOG) return;
+
+    const store = window.BBS_STORE;
+    const services = store.getPopulated();
+    const contact = store.getContact();
+    const req = store.getRequirements();
+
+    // Render Progress Bar (Step 5 of 5)
+    store.renderProgressBar('progress-bar-container', 5);
+
+    if (services.length === 0) {
+      window.location.href = 'select-service.html';
+      return;
+    }
+
+    // Populate Client Info
+    const clientNameEl = document.getElementById('rev-client-name');
+    const clientMobileEl = document.getElementById('rev-client-mobile');
+    const clientEmailEl = document.getElementById('rev-client-email');
+    const eventDateEl = document.getElementById('rev-event-date');
+    const locationEl = document.getElementById('rev-location');
+
+    if (clientNameEl) clientNameEl.textContent = contact.name || 'Not provided';
+    if (clientMobileEl) clientMobileEl.textContent = contact.mobile || 'Not provided';
+    if (clientEmailEl) clientEmailEl.textContent = contact.email || 'Not provided';
+    if (eventDateEl) eventDateEl.textContent = contact.eventDate || 'Not specified';
+    if (locationEl) locationEl.textContent = contact.location || 'Salem / Nearby';
+
+    // Populate Divisions & Services
+    const divisions = [...new Set(services.map(s => s.division))];
+    const divisionsEl = document.getElementById('rev-divisions');
+    if (divisionsEl) divisionsEl.textContent = divisions.join(' & ');
+
+    const servicesListEl = document.getElementById('rev-services-list');
+    if (servicesListEl) {
+      servicesListEl.innerHTML = services.map(s => `
+        <div class="selected-service-item" style="margin-bottom:0.5rem;">
+          <div class="selected-service-info">
+            <span class="selected-service-title">${s.title}</span>
+            <span class="selected-service-meta">${s.division} &bull; ${s.category}</span>
+          </div>
+          <span class="selected-service-price">${s.pricingDisplay}</span>
+        </div>
+      `).join('');
+    }
+
+    // Populate Requirements
+    const reqListEl = document.getElementById('rev-requirements-list');
+    if (reqListEl) {
+      const items = [];
+      if (req.makeupStyle) items.push(`<li><strong>Makeup Style:</strong> ${req.makeupStyle}</li>`);
+      if (req.eventType) items.push(`<li><strong>Event Type:</strong> ${req.eventType}</li>`);
+      if (req.makeupPeople) items.push(`<li><strong>Makeup Headcount:</strong> ${req.makeupPeople} person(s)</li>`);
+      if (req.hairStyle) items.push(`<li><strong>Hairstyle:</strong> ${req.hairStyle}</li>`);
+      if (req.drapingType) items.push(`<li><strong>Saree Draping / Setting:</strong> ${req.drapingType}</li>`);
+      if (req.mehndiStyle) items.push(`<li><strong>Mehndi Style:</strong> ${req.mehndiStyle}</li>`);
+      if (req.blouseDesignType) items.push(`<li><strong>Blouse Design:</strong> ${req.blouseDesignType}</li>`);
+      if (req.blouseStitchType) items.push(`<li><strong>Blouse Stitching:</strong> ${req.blouseStitchType}</li>`);
+      if (req.aariWorkType) items.push(`<li><strong>Aari Work:</strong> ${req.aariWorkType}</li>`);
+      if (req.specificNotes) items.push(`<li><strong>Special Notes:</strong> ${req.specificNotes}</li>`);
+
+      if (items.length === 0) {
+        reqListEl.innerHTML = '<p style="color:var(--muted); font-size:0.9rem;">No custom requirements specified. To be discussed during consultation.</p>';
+      } else {
+        reqListEl.innerHTML = `<ul style="color:var(--ink); font-size:0.92rem; padding-left:1.2rem; display:flex; flex-direction:column; gap:0.4rem;">${items.join('')}</ul>`;
+      }
+    }
+
+    // Message
+    const msgEl = document.getElementById('rev-message');
+    if (msgEl) {
+      msgEl.textContent = contact.message ? `“${contact.message}”` : 'No additional message provided.';
+    }
+
+    // WhatsApp Action
+    const btnSendWhatsApp = document.getElementById('btn-send-whatsapp');
+    const statusEl = document.getElementById('whatsapp-handoff-status');
+
+    if (btnSendWhatsApp) {
+      btnSendWhatsApp.addEventListener('click', function () {
+        const waUrl = store.getWhatsAppUrl();
+        window.open(waUrl, '_blank', 'noopener');
+
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.innerHTML = `
+            <strong>Your WhatsApp enquiry is prepared!</strong>
+            <p style="margin-top:0.4rem; font-size:0.9rem;">
+              WhatsApp has opened in a new tab with your pre-filled enquiry. Please click <strong>Send</strong> in WhatsApp to deliver your enquiry directly to Bhuvaneshwari (+91 63740 36629).
+            </p>
+            <p style="margin-top:0.4rem; font-size:0.85rem;">
+              If WhatsApp did not open automatically, <a href="${waUrl}" target="_blank" rel="noopener" style="text-decoration:underline; font-weight:700; color:inherit;">click here to open WhatsApp</a>.
+            </p>
+          `;
+        }
+      });
+    }
+  });
+
+})();
