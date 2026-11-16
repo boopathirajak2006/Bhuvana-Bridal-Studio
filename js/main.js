@@ -57,4 +57,25 @@
     }
   });
 
+  // Compact Sticky Header Scroll State
+  const header = document.querySelector('header');
+  if (header) {
+    let ticking = false;
+    function updateHeaderOnScroll() {
+      if (window.scrollY > 20) {
+        header.classList.add('is-scrolled');
+      } else {
+        header.classList.remove('is-scrolled');
+      }
+      ticking = false;
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) {
+        window.requestAnimationFrame(updateHeaderOnScroll);
+        ticking = true;
+      }
+    }, { passive: true });
+    updateHeaderOnScroll();
+  }
+
 })();
