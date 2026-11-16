@@ -20,6 +20,29 @@
     specificNotes: 'Special Request'
   };
 
+  /**
+   * Escape HTML special characters to prevent HTML & script injection
+   * while completely preserving Tamil, English, and Unicode text.
+   */
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /**
+   * Escape HTML while converting newlines into <br> tags
+   * to preserve line breaks and multi-line formatting.
+   */
+  function escapeHtmlWithBreaks(str) {
+    if (str === null || str === undefined) return '';
+    return escapeHtml(str).replace(/\r?\n/g, '<br>');
+  }
+
   function formatDate(isoStr) {
     if (!isoStr) return 'Not specified';
     const parts = isoStr.split('-').map(Number);
@@ -36,12 +59,18 @@
     const contact = data.contact || {};
     const services = (data.services || []).filter(Boolean);
     const requirements = data.requirements || {};
-    const ref = data.ref || 'BBS-2026-ENQ';
 
-    const customerName = contact.name || contact.fullName || 'Valued Client';
-    const customerMobile = contact.mobile || contact.phone || 'Not provided';
-    const eventDate = formatDate(contact.eventDate || contact.preferredDate);
-    const location = contact.location || 'Salem / Nearby Venue';
+    const rawCustomerName = contact.name || contact.fullName || 'Valued Client';
+    const rawCustomerMobile = contact.mobile || contact.phone || 'Not provided';
+    const rawEventDate = formatDate(contact.eventDate || contact.preferredDate);
+    const rawLocation = contact.location || 'Salem / Nearby Venue';
+    const rawRef = data.ref || 'BBS-2026-ENQ';
+
+    const customerName = escapeHtml(rawCustomerName);
+    const customerMobile = escapeHtml(rawCustomerMobile);
+    const eventDate = escapeHtml(rawEventDate);
+    const location = escapeHtmlWithBreaks(rawLocation);
+    const ref = escapeHtml(rawRef);
 
     // Separate services into divisions
     const bridalServices = services.filter(s => s.divisionId === 'bridal-beauty');
@@ -68,8 +97,8 @@
         <li class="service-item-row">
           <span class="check-circle">✓</span>
           <div class="service-item-details">
-            <span class="service-title">${s.title}</span>
-            <span class="service-price-tag ${s.pricingType === 'quote' ? 'quote' : ''}">${getPriceDisplay(s)}</span>
+            <span class="service-title">${escapeHtml(s.title)}</span>
+            <span class="service-price-tag ${s.pricingType === 'quote' ? 'quote' : ''}">${escapeHtml(getPriceDisplay(s))}</span>
           </div>
         </li>
       `).join('');
@@ -96,8 +125,8 @@
         <li class="service-item-row">
           <span class="check-circle">✓</span>
           <div class="service-item-details">
-            <span class="service-title">${s.title}</span>
-            <span class="service-price-tag ${s.pricingType === 'quote' ? 'quote' : ''}">${getPriceDisplay(s)}</span>
+            <span class="service-title">${escapeHtml(s.title)}</span>
+            <span class="service-price-tag ${s.pricingType === 'quote' ? 'quote' : ''}">${escapeHtml(getPriceDisplay(s))}</span>
           </div>
         </li>
       `).join('');
@@ -140,13 +169,19 @@
     Object.keys(REQ_LABELS).forEach(key => {
       const val = requirements[key];
       if (val && String(val).trim().length > 0) {
-        reqEntries.push({ label: REQ_LABELS[key], value: String(val).trim() });
+        reqEntries.push({
+          label: escapeHtml(REQ_LABELS[key]),
+          value: escapeHtmlWithBreaks(String(val).trim())
+        });
       }
     });
 
     // Also include client message if present and not already shown
     if (contact.message && String(contact.message).trim().length > 0 && !requirements.specificNotes) {
-      reqEntries.push({ label: 'Client Special Note', value: String(contact.message).trim() });
+      reqEntries.push({
+        label: 'Client Special Note',
+        value: escapeHtmlWithBreaks(String(contact.message).trim())
+      });
     }
 
     let reqSectionHTML = '';

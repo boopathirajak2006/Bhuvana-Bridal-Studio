@@ -53,20 +53,30 @@
       `).join('');
     }
 
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     // Populate Requirements
     const reqListEl = document.getElementById('rev-requirements-list');
     if (reqListEl) {
       const items = [];
-      if (req.makeupStyle) items.push(`<li><strong>Makeup Style:</strong> ${req.makeupStyle}</li>`);
-      if (req.eventType) items.push(`<li><strong>Event Type:</strong> ${req.eventType}</li>`);
-      if (req.makeupPeople) items.push(`<li><strong>Makeup Headcount:</strong> ${req.makeupPeople} person(s)</li>`);
-      if (req.hairStyle) items.push(`<li><strong>Hairstyle:</strong> ${req.hairStyle}</li>`);
-      if (req.drapingType) items.push(`<li><strong>Saree Draping / Setting:</strong> ${req.drapingType}</li>`);
-      if (req.mehndiStyle) items.push(`<li><strong>Mehndi Style:</strong> ${req.mehndiStyle}</li>`);
-      if (req.blouseDesignType) items.push(`<li><strong>Blouse Design:</strong> ${req.blouseDesignType}</li>`);
-      if (req.blouseStitchType) items.push(`<li><strong>Blouse Stitching:</strong> ${req.blouseStitchType}</li>`);
-      if (req.aariWorkType) items.push(`<li><strong>Aari Work:</strong> ${req.aariWorkType}</li>`);
-      if (req.specificNotes) items.push(`<li><strong>Special Notes:</strong> ${req.specificNotes}</li>`);
+      if (req.makeupStyle) items.push(`<li><strong>Makeup Style:</strong> ${escapeHtml(req.makeupStyle)}</li>`);
+      if (req.eventType) items.push(`<li><strong>Event Type:</strong> ${escapeHtml(req.eventType)}</li>`);
+      if (req.makeupPeople) items.push(`<li><strong>Makeup Headcount:</strong> ${escapeHtml(req.makeupPeople)} person(s)</li>`);
+      if (req.hairStyle) items.push(`<li><strong>Hairstyle:</strong> ${escapeHtml(req.hairStyle)}</li>`);
+      if (req.drapingType) items.push(`<li><strong>Saree Draping / Setting:</strong> ${escapeHtml(req.drapingType)}</li>`);
+      if (req.mehndiStyle) items.push(`<li><strong>Mehndi Style:</strong> ${escapeHtml(req.mehndiStyle)}</li>`);
+      if (req.blouseDesignType) items.push(`<li><strong>Blouse Design:</strong> ${escapeHtml(req.blouseDesignType)}</li>`);
+      if (req.blouseStitchType) items.push(`<li><strong>Blouse Stitching:</strong> ${escapeHtml(req.blouseStitchType)}</li>`);
+      if (req.aariWorkType) items.push(`<li><strong>Aari Work:</strong> ${escapeHtml(req.aariWorkType)}</li>`);
+      if (req.specificNotes) items.push(`<li><strong>Special Notes:</strong> ${escapeHtml(req.specificNotes)}</li>`);
 
       if (items.length === 0) {
         reqListEl.innerHTML = '<p style="color:var(--muted); font-size:0.9rem;">No custom requirements specified. To be discussed during consultation.</p>';

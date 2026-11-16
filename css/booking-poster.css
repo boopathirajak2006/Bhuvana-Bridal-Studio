@@ -264,6 +264,7 @@
   font-weight: 600;
   color: #2C1E16;
   word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .customer-illustration-wrap {
@@ -443,6 +444,7 @@
   font-weight: 500;
   color: #2C1E16;
   word-break: break-word;
+  white-space: pre-wrap;
 }
 
 /* ---------- Final Status Banner Section ---------- */
