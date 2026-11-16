@@ -100,12 +100,16 @@ export class D1Service {
   }
 
   /**
-   * Step 2: Finalize booking submission with poster R2 key
+   * Step 2: Finalize booking submission with poster Cloudinary asset identifiers
    */
   static async submitBooking(env, data) {
     const nowIso = new Date().toISOString();
     const {
       bookingRef,
+      posterPublicId,
+      posterSecureUrl,
+      posterVersion,
+      posterAssetId,
       posterR2Key,
       posterFileSize,
       customerName,
@@ -121,6 +125,11 @@ export class D1Service {
       consentVersion,
       idempotencyKey
     } = data;
+
+    const publicId = posterPublicId || posterR2Key || null;
+    const secureUrl = posterSecureUrl || null;
+    const version = posterVersion ? String(posterVersion) : null;
+    const assetId = posterAssetId || null;
 
     // Check if booking already exists (from step 1 draft or idempotency)
     let booking = await this.getBookingByRef(env, bookingRef);
@@ -140,6 +149,10 @@ export class D1Service {
           selected_services_json = ?,
           requirements_json = ?,
           special_notes = ?,
+          poster_public_id = ?,
+          poster_secure_url = ?,
+          poster_version = ?,
+          poster_asset_id = ?,
           poster_r2_key = ?,
           poster_file_size = ?,
           booking_status = 'pending',
@@ -158,7 +171,11 @@ export class D1Service {
         selectedServicesJson,
         requirementsJson,
         specialNotes,
-        posterR2Key,
+        publicId,
+        secureUrl,
+        version,
+        assetId,
+        publicId,
         posterFileSize || 0,
         whatsappConsent ? 1 : 0,
         consentTimestamp || nowIso,
@@ -174,9 +191,10 @@ export class D1Service {
         INSERT INTO bookings (
           id, booking_ref, idempotency_key, customer_name, customer_mobile, customer_email,
           event_date, event_location, selected_services_json, requirements_json, special_notes,
-          poster_r2_key, poster_file_size, booking_status, whatsapp_consent, consent_timestamp,
+          poster_public_id, poster_secure_url, poster_version, poster_asset_id, poster_r2_key,
+          poster_file_size, booking_status, whatsapp_consent, consent_timestamp,
           consent_version, submitted_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)
       `).bind(
         id,
         bookingRef,
@@ -189,7 +207,11 @@ export class D1Service {
         selectedServicesJson,
         requirementsJson,
         specialNotes,
-        posterR2Key,
+        publicId,
+        secureUrl,
+        version,
+        assetId,
+        publicId,
         posterFileSize || 0,
         whatsappConsent ? 1 : 0,
         consentTimestamp || nowIso,

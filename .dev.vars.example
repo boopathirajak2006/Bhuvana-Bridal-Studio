@@ -1,0 +1,30 @@
+# ==============================================================================
+# Bhuvana's Bridal & Tailoring Studio — Cloudflare Worker Secrets Template
+# Copy this file to .dev.vars for local testing with `wrangler dev`.
+# DO NOT COMMIT ACTUAL SECRETS TO GIT.
+# ==============================================================================
+
+# 1. Environment & Security
+ENVIRONMENT="development"
+JWT_SECRET="replace-with-a-random-64-character-cryptographic-secret"
+
+# 2. Initial Owner Account Seed (Generated upon first run if table is empty)
+OWNER_INITIAL_USERNAME="admin"
+OWNER_INITIAL_PASSWORD="ChangeThisPassword123!"
+OWNER_INITIAL_NAME="Bhuvaneshwari"
+
+# 3. Cloudinary Private Image Storage (Replaces Cloudflare R2)
+CLOUDINARY_CLOUD_NAME="your_cloudinary_cloud_name"
+CLOUDINARY_API_KEY="your_cloudinary_api_key"
+CLOUDINARY_API_SECRET="your_cloudinary_api_secret"
+
+# 4. Meta WhatsApp Business Cloud API Secrets
+WHATSAPP_PHONE_NUMBER_ID="your_meta_phone_number_id"
+WHATSAPP_ACCESS_TOKEN="your_meta_system_user_permanent_access_token"
+WHATSAPP_APP_SECRET="your_meta_app_secret"
+WHATSAPP_VERIFY_TOKEN="your_custom_webhook_verify_token_string"
+
+# 5. Firebase Cloud Messaging (FCM HTTP v1) Service Account
+FIREBASE_PROJECT_ID="your-firebase-project-id"
+FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com"
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC...\n-----END PRIVATE KEY-----\n"

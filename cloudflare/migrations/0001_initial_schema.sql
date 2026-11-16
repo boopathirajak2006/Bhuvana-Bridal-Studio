@@ -17,7 +17,11 @@ CREATE TABLE IF NOT EXISTS bookings (
   selected_services_json TEXT NOT NULL,         -- JSON array of selected service objects/IDs
   requirements_json TEXT,                       -- JSON object of customer styling/tailoring preferences
   special_notes TEXT,                           -- Freeform customer note
-  poster_r2_key TEXT,                           -- Object key in Cloudflare R2 private bucket
+  poster_public_id TEXT,                        -- Cloudinary Public ID (e.g. bhuvana_posters/2026/BBS-2026-XXXXXX)
+  poster_secure_url TEXT,                       -- Cloudinary Secure Delivery URL
+  poster_version TEXT,                          -- Cloudinary Asset Version
+  poster_asset_id TEXT,                         -- Cloudinary Unique Asset ID
+  poster_r2_key TEXT,                           -- Legacy reference (kept for compatibility)
   poster_file_size INTEGER DEFAULT 0,           -- File size in bytes
   booking_status TEXT NOT NULL DEFAULT 'draft'  -- 'draft', 'pending', 'approved', 'rejected'
     CHECK (booking_status IN ('draft', 'pending', 'approved', 'rejected')),

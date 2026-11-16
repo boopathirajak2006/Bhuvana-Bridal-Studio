@@ -21,12 +21,6 @@
       "migrations_dir": "migrations"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "POSTERS",
-      "bucket_name": "bhuvanas-bridal-posters"
-    }
-  ],
   "observability": {
     "enabled": true
   }

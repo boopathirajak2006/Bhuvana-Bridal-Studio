@@ -6,7 +6,7 @@
 import { jsonResponse, errorResponse } from '../utils/response.js';
 import { validateBookingReservation, validateBookingSubmission } from '../middleware/validation.js';
 import { D1Service } from '../services/d1.js';
-import { R2Service } from '../services/r2.js';
+import { CloudinaryService } from '../services/cloudinary.js';
 import { FCMService } from '../services/fcm.js';
 
 export async function handleReserveBooking(request, env) {
@@ -72,22 +72,25 @@ export async function handleSubmitBooking(request, env) {
       return errorResponse(request, env, `Booking ${bookingRef} has already reached status '${existing.booking_status}'`, 409, 'CONFLICT');
     }
 
-    // Convert file to ArrayBuffer and upload to R2
+    // Convert file to ArrayBuffer and upload to Cloudinary (private/authenticated asset)
     const arrayBuffer = await posterFile.arrayBuffer();
-    const currentYear = new Date().getFullYear();
-    const r2Key = `posters/${currentYear}/${bookingRef}.png`;
+    const customerDisplayName = (customerData && customerData.customer_name) || existing.customer_name;
 
-    await R2Service.uploadPoster(env, r2Key, arrayBuffer, {
-      bookingRef,
-      customerName: (customerData && customerData.customer_name) || existing.customer_name
+    const cloudinaryResult = await CloudinaryService.uploadPoster(env, bookingRef, arrayBuffer, {
+      customerName: customerDisplayName,
+      eventDate: (customerData && customerData.event_date) || existing.event_date
     });
 
-    // Update D1 database
+    // Update D1 database with Cloudinary identifiers
     const submitPayload = {
       bookingRef,
-      posterR2Key: r2Key,
-      posterFileSize: arrayBuffer.byteLength,
-      customerName: (customerData && customerData.customer_name) || existing.customer_name,
+      posterPublicId: cloudinaryResult.public_id,
+      posterSecureUrl: cloudinaryResult.secure_url,
+      posterVersion: cloudinaryResult.version,
+      posterAssetId: cloudinaryResult.asset_id,
+      posterR2Key: cloudinaryResult.public_id, // keep synced for backward compatibility
+      posterFileSize: cloudinaryResult.bytes || arrayBuffer.byteLength,
+      customerName: customerDisplayName,
       customerMobile: (customerData && customerData.customer_phone) || existing.customer_mobile,
       customerEmail: (customerData && customerData.customer_email) || existing.customer_email,
       eventDate: (customerData && customerData.event_date) || existing.event_date,

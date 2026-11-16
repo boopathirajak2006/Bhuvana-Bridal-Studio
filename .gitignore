@@ -6,6 +6,8 @@
 *.pem
 .dev.vars
 .dev.vars.*
+!.dev.vars.example
+!*.dev.vars.example
 service-account*.json
 firebase-admin*.json
 .wrangler/

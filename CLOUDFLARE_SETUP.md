@@ -1,6 +1,6 @@
-# Bhuvana's Bridal & Tailoring Studio — Cloudflare Backend Setup & Deployment Guide
+# Bhuvana's Bridal & Tailoring Studio — Cloudflare & Cloudinary Backend Setup & Deployment Guide
 
-This guide provides end-to-end instructions for deploying the Bhuvana's Bridal & Tailoring Studio serverless backend on Cloudflare Workers, Cloudflare D1 (SQLite database), Cloudflare R2 (object storage), Firebase Cloud Messaging (FCM HTTP v1), and Meta WhatsApp Business Cloud API.
+This guide provides end-to-end instructions for deploying the Bhuvana's Bridal & Tailoring Studio serverless backend on Cloudflare Workers, Cloudflare D1 (SQLite database), Cloudinary (private image storage), Firebase Cloud Messaging (FCM HTTP v1), and Meta WhatsApp Business Cloud API.
 
 ---
 
@@ -15,7 +15,7 @@ This guide provides end-to-end instructions for deploying the Bhuvana's Bridal &
       ▼
 [ Cloudflare Workers Backend ]
       ├── Cloudflare D1 (Database: Bookings, Sessions, Audit Logs, Devices)
-      ├── Cloudflare R2 (Private Image Bucket: Customer Booking Posters)
+      ├── Cloudinary (Private Image Storage: Customer Booking Posters)
       ├── Firebase Cloud Messaging (Web Push Notifications to Studio Owner)
       └── Meta WhatsApp Business Cloud API (Official Status Templates to Customer)
       ▲
@@ -27,13 +27,13 @@ This guide provides end-to-end instructions for deploying the Bhuvana's Bridal &
 
 ## 2. Zero-Cost Free Plan Resource Allocation
 
-The entire backend is architected to run permanently on generous, zero-cost free plans:
+The entire backend is architected to run permanently on generous, zero-cost free plans without requiring paid card subscriptions:
 
 | Service | Free Tier Allocation | Studio Monthly Usage Estimate | Cost |
 | :--- | :--- | :--- | :--- |
 | **Cloudflare Workers** | 100,000 requests / day | ~2,000 – 5,000 requests / month | **$0.00** |
 | **Cloudflare D1** | 5 GB storage, 5M reads/day, 100k writes/day | < 50 MB, < 10k reads/month | **$0.00** |
-| **Cloudflare R2** | 10 GB storage, 1M Class A, 10M Class B ops/mo | < 2 GB, < 5,000 ops/month | **$0.00** |
+| **Cloudinary** | 25 Monthly Credits (~25 GB net storage / 25k transformations) | < 2 GB, < 500 poster uploads/month | **$0.00** |
 | **Firebase Cloud Messaging** | Unlimited push messages | < 500 owner push alerts/month | **$0.00** |
 | **Meta WhatsApp Cloud API** | 1,000 free service conversations / month | ~100 – 300 customer updates/month | **$0.00** |
 
@@ -43,8 +43,9 @@ The entire backend is architected to run permanently on generous, zero-cost free
 
 1. **Node.js** (v18 or higher) installed on your machine.
 2. A free **Cloudflare Account** ([dash.cloudflare.com](https://dash.cloudflare.com/)).
-3. A free **Firebase Account** ([console.firebase.google.com](https://console.firebase.google.com/)).
-4. A **Meta Developer Account** ([developers.facebook.com](https://developers.facebook.com/)) with WhatsApp Cloud API enabled.
+3. A free **Cloudinary Account** ([cloudinary.com](https://cloudinary.com/)) with your Cloud Name, API Key, and API Secret.
+4. A free **Firebase Account** ([console.firebase.google.com](https://console.firebase.google.com/)).
+5. A **Meta Developer Account** ([developers.facebook.com](https://developers.facebook.com/)) with WhatsApp Cloud API enabled.
 
 ---
 
@@ -83,7 +84,7 @@ Open `cloudflare/wrangler.jsonc` and replace the placeholder `database_id`:
 ---
 
 ### Step 4.3: Apply Database Migrations
-Execute the 3 schema migrations to create the required tables and indexes:
+Execute the schema migrations to create the required tables and indexes:
 ```bash
 # Migration 1: Initial schema (bookings, owners, sessions, devices)
 npx wrangler d1 execute bhuvana-bridal-db --file=cloudflare/migrations/0001_initial_schema.sql --remote
@@ -93,19 +94,14 @@ npx wrangler d1 execute bhuvana-bridal-db --file=cloudflare/migrations/0002_book
 
 # Migration 3: Notification jobs & audit logs
 npx wrangler d1 execute bhuvana-bridal-db --file=cloudflare/migrations/0003_notification_tables.sql --remote
+
+# Migration 4: Cloudinary image storage support
+npx wrangler d1 execute bhuvana-bridal-db --file=cloudflare/migrations/0004_cloudinary_storage.sql --remote
 ```
 
 ---
 
-### Step 4.4: Create Cloudflare R2 Storage Bucket
-Create the private R2 bucket for storing generated customer booking posters:
-```bash
-npx wrangler r2 bucket create bhuvana-bridal-posters
-```
-
----
-
-### Step 4.5: Configure Production Secrets
+### Step 4.4: Configure Cloudinary & Worker Production Secrets
 Set the required security and API credentials using `wrangler secret put`:
 
 ```bash
@@ -116,7 +112,17 @@ npx wrangler secret put OWNER_INITIAL_USERNAME
 npx wrangler secret put OWNER_INITIAL_PASSWORD
 # Enter: YourSecureOwnerPassword2026!
 
-# 2. Firebase Cloud Messaging (FCM HTTP v1)
+# 2. Cloudinary Private Image Storage
+npx wrangler secret put CLOUDINARY_CLOUD_NAME
+# Enter your Cloudinary Cloud Name
+
+npx wrangler secret put CLOUDINARY_API_KEY
+# Enter your Cloudinary API Key
+
+npx wrangler secret put CLOUDINARY_API_SECRET
+# Enter your Cloudinary API Secret
+
+# 3. Firebase Cloud Messaging (FCM HTTP v1)
 npx wrangler secret put FIREBASE_PROJECT_ID
 # Enter your Firebase project ID (e.g. bhuvana-bridal-studio)
 
@@ -126,7 +132,7 @@ npx wrangler secret put FIREBASE_CLIENT_EMAIL
 npx wrangler secret put FIREBASE_PRIVATE_KEY
 # Enter the private key from your Firebase service account JSON (including -----BEGIN PRIVATE KEY-----)
 
-# 3. Meta WhatsApp Business Cloud API
+# 4. Meta WhatsApp Business Cloud API
 npx wrangler secret put WHATSAPP_PHONE_NUMBER_ID
 # Enter your Meta Phone Number ID
 
@@ -142,7 +148,7 @@ npx wrangler secret put WHATSAPP_APP_SECRET
 
 ---
 
-### Step 4.6: Deploy the Cloudflare Worker
+### Step 4.5: Deploy the Cloudflare Worker
 Run the deployment command from the project root:
 ```bash
 cd cloudflare
@@ -154,7 +160,7 @@ Once deployed, Wrangler will output your live worker URL:
 
 ---
 
-### Step 4.7: Connect Frontend to Your Live Worker
+### Step 4.6: Connect Frontend to Your Live Worker
 Open `js/cloudflare-config.js` and set `PRODUCTION_WORKER_URL` to your live worker URL:
 ```javascript
 const PRODUCTION_WORKER_URL = 'https://bhuvana-bridal-studio.<your-subdomain>.workers.dev';
@@ -205,10 +211,23 @@ In the Meta WhatsApp Manager, register and approve two utility templates:
 
 ---
 
-## 6. Studio Owner Portal Usage
+## 6. Private Poster Image Security Model (Cloudinary)
+
+1. **Upload Privacy:** When a customer completes a booking, the poster PNG is uploaded to Cloudinary via the Cloudflare Worker with `type: 'authenticated'`.
+2. **Access Control:** Public access to the poster image is completely blocked by Cloudinary.
+3. **Zero Secret Leaks:** The `CLOUDINARY_API_SECRET` and `CLOUDINARY_API_KEY` reside exclusively in the Cloudflare Worker environment.
+4. **Owner Streaming:** When an authenticated owner views the poster on `studio-inbox.html`:
+   - The dashboard calls `GET /api/admin/bookings/:id/poster` with owner session credentials.
+   - The Cloudflare Worker validates the owner session.
+   - The Worker generates an authenticated signed delivery signature or streams the image bytes directly to the owner's browser.
+   - Unauthorized requests receive `401 Unauthorized`.
+
+---
+
+## 7. Studio Owner Portal Usage
 
 1. Open `studio-login.html` in your browser.
-2. Sign in with the owner credentials configured in Step 4.5.
+2. Sign in with the owner credentials configured in Step 4.4.
 3. In `studio-inbox.html`:
    - View real-time KPI counts (**Pending**, **Approved**, **Rejected**).
    - Filter and search incoming bookings.
@@ -219,7 +238,7 @@ In the Meta WhatsApp Manager, register and approve two utility templates:
 
 ---
 
-## 7. Verification & Health Check
+## 8. Verification & Health Check
 
 Test that your deployed worker is active:
 ```bash

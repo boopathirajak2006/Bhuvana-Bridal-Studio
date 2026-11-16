@@ -6,7 +6,7 @@
 import { jsonResponse, errorResponse, setCookieHeader, clearCookieHeader } from '../utils/response.js';
 import { AuthService } from '../services/auth.js';
 import { D1Service } from '../services/d1.js';
-import { R2Service } from '../services/r2.js';
+import { CloudinaryService } from '../services/cloudinary.js';
 import { WhatsAppService } from '../services/whatsapp.js';
 import { validateRejectionPayload } from '../middleware/validation.js';
 
@@ -161,7 +161,7 @@ export async function handleGetBookingDetails(request, env, auth, bookingId) {
 
 /**
  * GET /api/admin/bookings/:id/poster
- * Streams the private booking poster PNG from R2 bucket to authenticated owner only.
+ * Streams the private booking poster PNG from Cloudinary storage to authenticated owner only.
  */
 export async function handleGetBookingPoster(request, env, auth, bookingId) {
   try {
@@ -170,18 +170,17 @@ export async function handleGetBookingPoster(request, env, auth, bookingId) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     }
 
-    if (!booking.poster_r2_key) {
+    const publicId = booking.poster_public_id || booking.poster_r2_key;
+    if (!publicId && !booking.poster_secure_url) {
       return errorResponse(request, env, 'No poster image stored for this booking', 404, 'NOT_FOUND');
     }
 
-    const object = await R2Service.getPoster(env, booking.poster_r2_key);
-    if (!object) {
+    const streamResponse = await CloudinaryService.getPosterStream(env, booking);
+    if (!streamResponse) {
       return errorResponse(request, env, 'Poster image file missing from storage', 404, 'NOT_FOUND');
     }
 
     const headers = new Headers();
-    object.writeHttpMetadata(headers);
-    headers.set('etag', object.httpEtag);
     headers.set('Content-Type', 'image/png');
     headers.set('Cache-Control', 'private, max-age=3600');
     headers.set('Content-Disposition', `inline; filename="${booking.booking_ref}.png"`);
@@ -193,7 +192,7 @@ export async function handleGetBookingPoster(request, env, auth, bookingId) {
       headers.set('Access-Control-Allow-Credentials', 'true');
     }
 
-    return new Response(object.body, { headers });
+    return new Response(streamResponse.body, { headers });
   } catch (err) {
     console.error('[Route: BookingPoster] Error:', err);
     return errorResponse(request, env, 'Failed to retrieve poster image', 500, 'INTERNAL_ERROR');
