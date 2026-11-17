@@ -101,6 +101,9 @@ export class CloudinaryService {
     const timestamp = Math.floor(Date.now() / 1000);
     const type = 'authenticated'; // Assets cannot be accessed publicly without signature or owner auth
     const folder = `bhuvana_posters/${currentYear}`;
+    const context = metadata.customerName
+      ? `customer=${encodeURIComponent(metadata.customerName)}|ref=${bookingRef}`
+      : null;
 
     // Cloudinary signature parameters (alphabetical)
     const signParams = {
@@ -109,6 +112,7 @@ export class CloudinaryService {
       timestamp: String(timestamp),
       type
     };
+    if (context) signParams.context = context;
 
     const signature = await this.generateApiSignature(signParams, apiSecret);
 
@@ -123,9 +127,7 @@ export class CloudinaryService {
     formData.append('type', type);
     formData.append('signature', signature);
 
-    if (metadata.customerName) {
-      formData.append('context', `customer=${encodeURIComponent(metadata.customerName)}|ref=${bookingRef}`);
-    }
+    if (context) formData.append('context', context);
 
     const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
 
