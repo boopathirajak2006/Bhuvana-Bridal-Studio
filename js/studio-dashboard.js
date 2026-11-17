@@ -934,19 +934,38 @@
     return digits.length >= 10 ? digits : '';
   }
 
-  function buildBookingWhatsAppLink(booking, status = booking.booking_status, rejectionReason = '') {
+  function formatWhatsAppEventDate(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return 'To be confirmed';
+
+    const dateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const date = dateOnly
+      ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])))
+      : new Date(raw);
+
+    if (Number.isNaN(date.getTime())) return raw;
+    return new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC'
+    }).format(date);
+  }
+
+  function buildBookingWhatsAppLink(booking, status = booking.booking_status) {
     if (Number(booking.whatsapp_consent) !== 1) return null;
     const recipient = normalizeWhatsAppNumber(booking.customer_mobile);
     if (!recipient) return null;
 
     const name = booking.customer_name || 'Valued Client';
     const reference = booking.booking_ref || 'your booking';
+    const eventDate = formatWhatsAppEventDate(booking.event_date);
     let message = '';
 
     if (status === 'approved') {
-      message = `Hello ${name}, your booking request (${reference}) has been approved by Bhuvana's Bridal Studio. Event date: ${booking.event_date || 'to be confirmed'}. We will contact you to confirm the final timing. Thank you.`;
+      message = `Hello ${name}!\n\nYour booking enquiry has been approved by Bhuvana's Bridal Studio.\n\nEvent Date: ${eventDate}\n\nBooking Ref: ${reference}\n\nStatus: Booking Approved ✅\n\nThank you for choosing Bhuvana's Bridal Studio!`;
     } else if (status === 'rejected') {
-      message = `Hello ${name}, regarding your booking request (${reference}), we are unable to accept it. Reason: ${rejectionReason || booking.rejection_reason || 'Please contact the studio for details'}. Please contact Bhuvana's Bridal Studio if you would like to discuss another date.`;
+      message = `Hello ${name}!\n\nSorry, we are unable to accept your requested date.\n\nEvent Date: ${eventDate}\n\nBooking Ref: ${reference}\n\nPlease contact us to check another available date.\n\nThank you for choosing Bhuvana's Bridal Studio.`;
     }
 
     const baseUrl = `https://wa.me/${recipient}`;
@@ -1016,7 +1035,7 @@
       reason = customReasonInput.value.trim() || 'Custom studio scheduling conflict';
     }
 
-    const whatsappLink = Number(b.whatsapp_consent) === 1 ? buildBookingWhatsAppLink(b, 'rejected', reason) : null;
+    const whatsappLink = Number(b.whatsapp_consent) === 1 ? buildBookingWhatsAppLink(b, 'rejected') : null;
 
     const notes = internalNotesInput ? internalNotesInput.value.trim() : '';
 
