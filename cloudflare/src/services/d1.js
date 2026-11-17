@@ -3,7 +3,7 @@
  * Cloudflare D1 Database Access Layer
  */
 
-import { generateUUID, generateBookingRef, generateSalt, hashPassword, sha256 } from '../utils/security.js';
+import { generateUUID, generateBookingRef, generateSalt, hashPassword, sha256, verifyPassword } from '../utils/security.js';
 
 export class D1Service {
   /**
@@ -22,7 +22,7 @@ export class D1Service {
         return;
       }
 
-      const username = env.OWNER_INITIAL_USERNAME || 'admin';
+      const username = (env.OWNER_INITIAL_USERNAME || 'admin').toLowerCase().trim();
       const name = env.OWNER_INITIAL_NAME || 'Bhuvaneshwari';
 
       const salt = generateSalt();
@@ -64,14 +64,15 @@ export class D1Service {
     const requirementsJson = JSON.stringify(data.requirements || {});
     const specialNotes = data.specialNotes || '';
     const idempotencyKey = data.idempotencyKey || null;
+    const reservationTokenHash = await sha256(reservationToken);
 
     // Insert draft booking reservation
     await env.DB.prepare(`
       INSERT INTO bookings (
         id, booking_ref, idempotency_key, customer_name, customer_mobile, customer_email,
         event_date, event_location, selected_services_json, requirements_json, special_notes,
-        booking_status, reservation_expires_at, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)
+        booking_status, reservation_expires_at, reservation_token_hash, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)
     `).bind(
       id,
       bookingRef,
@@ -85,6 +86,7 @@ export class D1Service {
       requirementsJson,
       specialNotes,
       expiresAt,
+      reservationTokenHash,
       nowIso,
       nowIso
     ).run();
@@ -117,13 +119,12 @@ export class D1Service {
       posterVersion,
       posterAssetId,
       posterFileSize,
+      reservationToken,
       customerName,
       customerMobile,
       customerEmail,
       eventDate,
       eventLocation,
-      selectedServicesJson,
-      requirementsJson,
       specialNotes,
       whatsappConsent,
       consentTimestamp,
@@ -138,10 +139,23 @@ export class D1Service {
 
     // Check if booking already exists (from step 1 draft or idempotency)
     let booking = await this.getBookingByRef(env, bookingRef);
+    const selectedServicesJson = typeof data.selectedServicesJson === 'string'
+      ? data.selectedServicesJson
+      : JSON.stringify(data.selectedServices || []);
+    const requirementsJson = typeof data.requirementsJson === 'string'
+      ? data.requirementsJson
+      : JSON.stringify(data.requirements || {});
 
     if (booking) {
-      if (booking.booking_status !== 'draft' && booking.booking_status !== 'pending') {
-        throw new Error(`Booking ${bookingRef} has already been finalized with status: ${booking.booking_status}`);
+      if (booking.booking_status !== 'draft') {
+        throw new Error(`Booking ${bookingRef} has already been submitted`);
+      }
+      if (!reservationToken || !booking.reservation_token_hash ||
+          (await sha256(reservationToken)) !== booking.reservation_token_hash) {
+        throw new Error('Invalid reservation token');
+      }
+      if (booking.reservation_expires_at && booking.reservation_expires_at <= nowIso) {
+        throw new Error('Booking reservation has expired');
       }
 
       await env.DB.prepare(`
@@ -188,6 +202,7 @@ export class D1Service {
         bookingRef
       ).run();
     } else {
+      if (reservationToken) throw new Error('Booking reservation was not found');
       // Direct insertion if not pre-reserved
       const id = generateUUID();
       await env.DB.prepare(`
@@ -259,7 +274,7 @@ export class D1Service {
     if (!env.DB) return { bookings: [], total: 0 };
     const { status, search, limit = 50, offset = 0 } = options;
 
-    let query = 'SELECT * FROM bookings WHERE booking_status != "draft"';
+    let query = "SELECT * FROM bookings WHERE booking_status != 'draft'";
     const params = [];
 
     if (status && status !== 'all') {
@@ -279,7 +294,7 @@ export class D1Service {
     const { results } = await env.DB.prepare(query).bind(...params).all();
 
     // Query total count for pagination
-    let countQuery = 'SELECT COUNT(*) as total FROM bookings WHERE booking_status != "draft"';
+    let countQuery = "SELECT COUNT(*) as total FROM bookings WHERE booking_status != 'draft'";
     const countParams = [];
     if (status && status !== 'all') {
       countQuery += ' AND booking_status = ?';
@@ -485,6 +500,14 @@ export class D1Service {
     return results || [];
   }
 
+  static async getAuditLogsForBooking(env, bookingId) {
+    if (!env.DB) return [];
+    const { results } = await env.DB.prepare(`
+      SELECT * FROM booking_audit_logs WHERE booking_id = ? ORDER BY created_at DESC
+    `).bind(bookingId).all();
+    return results || [];
+  }
+
   static async getNotificationJobById(env, id) {
     if (!env.DB) return null;
     return await env.DB.prepare('SELECT * FROM notification_jobs WHERE id = ?').bind(id).first();
@@ -497,6 +520,28 @@ export class D1Service {
   static async findOwnerByUsername(env, username) {
     if (!env.DB || !username) return null;
     return await env.DB.prepare('SELECT * FROM owners WHERE username = ?').bind(username.toLowerCase().trim()).first();
+  }
+
+  static async updateOwnerPassword(env, ownerId, currentPassword, newPassword, currentToken) {
+    if (!env.DB) throw new Error('D1 database is unavailable');
+    if (typeof newPassword !== 'string' || newPassword.length < 12) {
+      throw new Error('New password must be at least 12 characters');
+    }
+    const owner = await env.DB.prepare('SELECT id, password_hash, salt FROM owners WHERE id = ?').bind(ownerId).first();
+    if (!owner || !await verifyPassword(currentPassword, owner.password_hash, owner.salt)) {
+      throw new Error('Current password is incorrect');
+    }
+    const salt = generateSalt();
+    const passwordHash = await hashPassword(newPassword, salt);
+    const nowIso = new Date().toISOString();
+    await env.DB.prepare(`
+      UPDATE owners SET password_hash = ?, salt = ?, updated_at = ? WHERE id = ?
+    `).bind(passwordHash, salt, nowIso, ownerId).run();
+    // Revoke sessions after a password change so old credentials stop working.
+    const currentTokenHash = currentToken ? await sha256(currentToken) : null;
+    await env.DB.prepare(`
+      DELETE FROM owner_sessions WHERE owner_id = ? AND (? IS NULL OR token_hash != ?)
+    `).bind(ownerId, currentTokenHash, currentTokenHash).run();
   }
 
   static async createOwnerSession(env, ownerId, token, ip, userAgent) {

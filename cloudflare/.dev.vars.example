@@ -6,32 +6,26 @@
 
 # 1. Environment & Basic Settings
 ENVIRONMENT="development"
-JWT_SECRET="replace-with-a-random-64-character-cryptographic-secret"
 
-# 2. Supabase Integration (Primary Database & Owner Authentication)
-SUPABASE_URL="https://your-project-id.supabase.co"
-SUPABASE_ANON_KEY="your-supabase-anon-public-key"
-SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-secret-key"
-OWNER_EMAIL="bhuvanasbridal@gmail.com"
-
-# 3. Optional D1 Local Seed (Used ONLY if Supabase is unconfigured)
-# Note: Production never seeds accounts with default passwords.
+# 2. Optional D1 Owner Seed
+# Set a strong password only for a new, empty D1 database. Existing owner
+# accounts and password hashes are never replaced.
 OWNER_INITIAL_USERNAME="admin"
 OWNER_INITIAL_PASSWORD=""
 OWNER_INITIAL_NAME="Bhuvaneshwari"
 
-# 4. Meta WhatsApp Business Cloud API Secrets
+# 3. Meta WhatsApp Business Cloud API Secrets
 WHATSAPP_PHONE_NUMBER_ID="your_meta_phone_number_id"
 WHATSAPP_ACCESS_TOKEN="your_meta_system_user_permanent_access_token"
 WHATSAPP_APP_SECRET="your_meta_app_secret"
 WHATSAPP_VERIFY_TOKEN="your_custom_webhook_verify_token_string"
 
-# 5. Firebase Cloud Messaging (FCM HTTP v1) Service Account
+# 4. Firebase Cloud Messaging (FCM HTTP v1) Service Account
 FIREBASE_PROJECT_ID="your-firebase-project-id"
 FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com"
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC...\n-----END PRIVATE KEY-----\n"
 
-# 6. Cloudinary Image Storage (Active Booking Poster Storage)
+# 5. Cloudinary Image Storage (Active Booking Poster Storage)
 CLOUDINARY_CLOUD_NAME="hcj8r6r4"
 CLOUDINARY_API_KEY="your-cloudinary-api-key"
 CLOUDINARY_API_SECRET="your-cloudinary-api-secret"

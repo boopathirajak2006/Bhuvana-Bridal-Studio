@@ -1,7 +1,7 @@
 /**
  * Bhuvana's Bridal & Tailoring Studio — Cloudflare Worker Entrypoint
  * Provides high-performance, serverless booking management on Cloudflare Workers,
- * Supabase (Database & Owner Auth), Cloudflare R2 (Private Image Storage), FCM & WhatsApp.
+ * Cloudflare D1, private Cloudinary image storage, FCM & WhatsApp.
  */
 
 import { handleOptions, errorResponse, jsonResponse } from './utils/response.js';
@@ -15,6 +15,7 @@ import {
   handleAdminLogin,
   handleAdminLogout,
   handleAdminMe,
+  handleChangePassword,
   handleListBookings,
   handleGetStats,
   handleGetBookingDetails,
@@ -68,6 +69,11 @@ export default {
         return await handleSubmitBooking(request, env);
       }
 
+      // Backwards-compatible route used by the current website frontend.
+      if (path === '/api/bookings' && method === 'POST') {
+        return await handleSubmitBooking(request, env);
+      }
+
       const statusMatch = path.match(/^\/api\/bookings\/status\/([A-Za-z0-9-]+)$/);
       if (statusMatch && method === 'GET') {
         return await handleGetBookingStatus(request, env, statusMatch[1]);
@@ -81,7 +87,8 @@ export default {
       }
 
       if (path === '/api/auth/logout' && method === 'POST') {
-        const { auth } = await requireOwnerAuth(request, env);
+        const { auth, errorResponse: authErr } = await requireOwnerAuth(request, env);
+        if (authErr) return authErr;
         return await handleAdminLogout(request, env, auth);
       }
 
@@ -109,6 +116,10 @@ export default {
       if (path.startsWith('/api/admin/')) {
         const { auth, errorResponse: authErr } = await requireOwnerAuth(request, env);
         if (authErr) return authErr;
+
+        if (path === '/api/admin/change-password' && method === 'POST') {
+          return await handleChangePassword(request, env, auth);
+        }
 
         // Statistics
         if (path === '/api/admin/bookings/stats' && method === 'GET') {

@@ -82,16 +82,16 @@ export async function validateBookingSubmission(formData) {
   const errors = [];
 
   const reservationToken = formData.get('reservation_token');
-  if (!reservationToken || typeof reservationToken !== 'string') {
-    errors.push('Missing reservation token');
+  if (reservationToken && typeof reservationToken !== 'string') {
+    errors.push('Invalid reservation token');
   }
 
   const bookingRef = formData.get('booking_ref');
-  if (!bookingRef || !/^BBS-2026-[2-9A-HJ-NP-Z]{6}$/.test(bookingRef)) {
-    errors.push('Valid booking reference (BBS-2026-XXXXXX) is required');
+  if (!bookingRef || !/^BBS-\d{4}-[2-9A-HJ-NP-Z]{4,6}$/.test(bookingRef)) {
+    errors.push('Valid booking reference (BBS-YYYY-XXXX) is required');
   }
 
-  const posterFile = formData.get('poster');
+  const posterFile = formData.get('poster') || formData.get('poster_image');
   if (!posterFile) {
     errors.push('Generated booking poster image file is required');
   } else {

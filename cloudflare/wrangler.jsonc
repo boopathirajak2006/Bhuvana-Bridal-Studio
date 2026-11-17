@@ -9,18 +9,10 @@
   "vars": {
     "ENVIRONMENT": "production",
     "CORS_ORIGINS": "https://boopathirajak2006.github.io,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080,http://localhost:8787",
-    "SUPABASE_URL": "https://YOUR_PROJECT_ID.supabase.co",
     "CLOUDINARY_CLOUD_NAME": "hcj8r6r4",
-    "R2_POSTER_BUCKET": "bhuvana-posters-bucket",
     "MAX_POSTER_SIZE_BYTES": "5242880",
     "WHATSAPP_API_VERSION": "v21.0"
   },
-  "r2_buckets": [
-    {
-      "binding": "BUCKET",
-      "bucket_name": "bhuvana-posters-bucket"
-    }
-  ],
   "d1_databases": [
     {
       "binding": "DB",

@@ -5,6 +5,10 @@
  */
 
 export class CloudinaryService {
+  static isPlaceholder(value) {
+    return typeof value !== 'string' || !value.trim() || /your[-_ ]|replace[-_ ]|placeholder/i.test(value);
+  }
+
   /**
    * Helper to compute SHA-1 hex digest
    */
@@ -56,7 +60,7 @@ export class CloudinaryService {
   static async generateSignedDeliveryUrl(env, publicId, version = null, format = 'png') {
     const cloudName = env.CLOUDINARY_CLOUD_NAME;
     const apiSecret = env.CLOUDINARY_API_SECRET;
-    if (!cloudName || !apiSecret) return null;
+    if (this.isPlaceholder(cloudName) || this.isPlaceholder(apiSecret)) return null;
 
     const signature = await this.generateDeliverySignature(publicId, version, apiSecret);
     const versionPart = version ? `v${version}/` : '';
@@ -80,11 +84,11 @@ export class CloudinaryService {
     const apiSecret = env.CLOUDINARY_API_SECRET;
 
     // Strict validation: Credentials MUST be present. No fake or mock success.
-    if (!cloudName || !apiKey || !apiSecret) {
+    if (this.isPlaceholder(cloudName) || this.isPlaceholder(apiKey) || this.isPlaceholder(apiSecret)) {
       const missing = [];
-      if (!cloudName) missing.push('CLOUDINARY_CLOUD_NAME');
-      if (!apiKey) missing.push('CLOUDINARY_API_KEY');
-      if (!apiSecret) missing.push('CLOUDINARY_API_SECRET');
+      if (this.isPlaceholder(cloudName)) missing.push('CLOUDINARY_CLOUD_NAME');
+      if (this.isPlaceholder(apiKey)) missing.push('CLOUDINARY_API_KEY');
+      if (this.isPlaceholder(apiSecret)) missing.push('CLOUDINARY_API_SECRET');
       throw new Error(`Cloudinary configuration error: Missing required credentials (${missing.join(', ')}). Image upload cannot proceed.`);
     }
 
@@ -167,7 +171,7 @@ export class CloudinaryService {
     }
 
     // Require credentials for retrieval
-    if (!cloudName || !apiKey || !apiSecret) {
+    if (this.isPlaceholder(cloudName) || this.isPlaceholder(apiKey) || this.isPlaceholder(apiSecret)) {
       throw new Error('Cloudinary credentials missing in worker environment');
     }
 

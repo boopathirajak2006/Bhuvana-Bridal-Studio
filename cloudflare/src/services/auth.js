@@ -1,69 +1,83 @@
 /**
- * Bhuvana's Bridal & Tailoring Studio — Cloudflare Backend
- * Studio Owner Authentication Service
- * 
- * Authentication Mechanism: Supabase Auth (GoTrue) + RBAC via public.user_roles ONLY.
- * No D1 session fallback is permitted.
+ * D1-backed studio owner authentication.
+ * Password hashes and hashed session tokens are stored in D1.
  */
 
-import { SupabaseService } from './supabase.js';
+import { D1Service } from './d1.js';
+import { generateRandomHex, verifyPassword } from '../utils/security.js';
 
 export class AuthService {
-  /**
-   * Authenticate studio owner with username/email and password via Supabase Auth
-   */
   static async login(env, username, password, ip, userAgent) {
-    if (!username || !password) {
-      throw new Error('Username or email and password are required');
+    if (!env.DB) throw new Error('D1 database is unavailable');
+    if (!username || !password) throw new Error('Username and password are required');
+
+    const normalizedUsername = String(username).trim().toLowerCase();
+    let owner = await D1Service.findOwnerByUsername(env, normalizedUsername);
+    if (!owner && normalizedUsername.includes('@')) {
+      owner = await D1Service.findOwnerByUsername(env, normalizedUsername.split('@')[0]);
     }
 
-    if (!SupabaseService.isConfigured(env)) {
-      throw new Error('Supabase Auth is not configured. Please configure SUPABASE_URL and SUPABASE_ANON_KEY.');
+    // Optional first-owner setup is allowed only when an explicit password secret is set.
+    if (!owner) {
+      await D1Service.seedInitialOwnerIfEmpty(env);
+      owner = await D1Service.findOwnerByUsername(env, normalizedUsername);
     }
 
-    // Authenticate exclusively via Supabase Auth
-    return await SupabaseService.loginOwner(env, username, password);
+    if (!owner || !await verifyPassword(password, owner.password_hash, owner.salt)) {
+      throw new Error('Invalid username or password');
+    }
+
+    const token = generateRandomHex(32);
+    const session = await D1Service.createOwnerSession(env, owner.id, token, ip, userAgent);
+    if (!session) throw new Error('Could not create owner session');
+
+    return {
+      token,
+      expiresAt: session.expiresAt,
+      owner: {
+        id: owner.id,
+        username: owner.username,
+        name: owner.name,
+        role: owner.role
+      }
+    };
   }
 
-  /**
-   * Log out owner by revoking session
-   */
   static async logout(env, token) {
-    // Supabase tokens are stateless JWTs on the backend; client clears local token
+    if (token) await D1Service.deleteOwnerSession(env, token);
   }
 
-  /**
-   * Extract and verify session token from Request
-   * Validates Supabase JWT Bearer token or cookie via Supabase Auth exclusively
-   */
   static async authenticateRequest(request, env) {
-    if (!SupabaseService.isConfigured(env)) {
-      return null;
-    }
+    if (!env.DB) return null;
 
     let token = null;
-
-    // 1. Check Authorization header
     const authHeader = request.headers.get('Authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7).trim();
+      token = authHeader.slice(7).trim();
     }
 
-    // 2. Check Cookie header
     if (!token) {
-      const cookieHeader = request.headers.get('Cookie');
-      if (cookieHeader) {
-        const cookies = cookieHeader.split(';').map(c => c.trim());
-        const sessionCookie = cookies.find(c => c.startsWith('bbs_session='));
-        if (sessionCookie) {
-          token = sessionCookie.split('=')[1];
-        }
+      const cookieHeader = request.headers.get('Cookie') || '';
+      const sessionCookie = cookieHeader.split(';').map(value => value.trim())
+        .find(value => value.startsWith('bbs_session='));
+      if (sessionCookie) {
+        token = decodeURIComponent(sessionCookie.slice('bbs_session='.length));
       }
     }
-
     if (!token) return null;
 
-    // Verify exclusively via Supabase Auth
-    return await SupabaseService.verifyOwnerToken(env, token);
+    const session = await D1Service.getOwnerBySessionToken(env, token);
+    if (!session) return null;
+
+    return {
+      token,
+      expiresAt: session.expires_at,
+      owner: {
+        id: session.owner_id,
+        username: session.username,
+        name: session.name,
+        role: session.role
+      }
+    };
   }
 }
