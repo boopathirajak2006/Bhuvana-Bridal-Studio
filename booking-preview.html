@@ -355,31 +355,34 @@
 
               const formData = new FormData();
               formData.append('booking_ref', activeBookingRef);
-              formData.append('reservation_token', reservationToken || 'client-offline-token');
+              if (reservationToken) {
+                formData.append('reservation_token', reservationToken);
+              }
               formData.append('poster', generatedBlob, `${activeBookingRef}.png`);
               formData.append('booking_data', JSON.stringify(customerPayload));
 
               let submitSuccess = false;
 
               if (config && config.url) {
+                let submitRes;
                 try {
-                  const submitRes = await fetch(config.url('/api/bookings/submit'), {
+                  submitRes = await fetch(config.url('/api/bookings/submit'), {
                     method: 'POST',
                     body: formData
                   });
-                  const json = await submitRes.json();
-                  if (submitRes.ok && json.success) {
-                    submitSuccess = true;
-                  } else {
-                    throw new Error(json.error || 'Submission failed');
-                  }
                 } catch (netErr) {
                   console.warn('[Booking Submission] Direct worker upload error:', netErr);
-                  // If worker is not reachable, fallback gracefully
+                  throw new Error('Could not reach the booking server. Your booking was not submitted.');
+                }
+
+                const json = await submitRes.json().catch(() => ({}));
+                if (submitRes.ok && json.success) {
                   submitSuccess = true;
+                } else {
+                  throw new Error(json.error || `Booking submission failed (HTTP ${submitRes.status})`);
                 }
               } else {
-                submitSuccess = true;
+                throw new Error('Booking server configuration is unavailable');
               }
 
               if (submitSuccess) {
