@@ -1,6 +1,7 @@
 /**
  * Bhuvana's Bridal & Tailoring Studio — Cloudflare Backend
  * Meta WhatsApp Business Cloud API Integration Service
+ * Decoupled from mandatory D1 logging so dispatch functions independently.
  */
 
 import { D1Service } from './d1.js';
@@ -80,15 +81,23 @@ export class WhatsAppService {
 
   /**
    * Core Helper: Send WhatsApp Template via Meta Graph API v21.0
+   * Decoupled: Works seamlessly with or without D1 binding
    */
   static async sendTemplateMessage(env, bookingId, recipient, notificationType, templateName, languageCode, parameters) {
-    const jobId = await D1Service.createNotificationJob(env, {
-      bookingId,
-      type: notificationType,
-      recipient,
-      status: 'pending',
-      payload: { templateName, languageCode, parameters }
-    });
+    let jobId = null;
+    if (env.DB) {
+      try {
+        jobId = await D1Service.createNotificationJob(env, {
+          bookingId,
+          type: notificationType,
+          recipient,
+          status: 'pending',
+          payload: { templateName, languageCode, parameters }
+        });
+      } catch (e) {
+        // Non-blocking job logging
+      }
+    }
 
     const phoneNumberId = env.WHATSAPP_PHONE_NUMBER_ID;
     const accessToken = env.WHATSAPP_ACCESS_TOKEN;
@@ -107,10 +116,12 @@ export class WhatsAppService {
     if (!isConfigured) {
       const reason = 'Meta WhatsApp Cloud API credentials not configured in Worker environment';
       console.warn(`[WhatsApp] ${reason}. Notification skipped for recipient ${recipient}.`);
-      await D1Service.updateNotificationJob(env, jobId, {
-        status: 'failed',
-        error: reason
-      });
+      if (env.DB && jobId) {
+        await D1Service.updateNotificationJob(env, jobId, {
+          status: 'failed',
+          error: reason
+        }).catch(() => {});
+      }
       return {
         success: false,
         jobId,
@@ -152,27 +163,33 @@ export class WhatsAppService {
 
       if (res.ok && data.messages && data.messages.length > 0) {
         const messageId = data.messages[0].id;
-        await D1Service.updateNotificationJob(env, jobId, {
-          status: 'sent',
-          externalMessageId: messageId
-        });
-        return { jobId, messageId, status: 'sent' };
+        if (env.DB && jobId) {
+          await D1Service.updateNotificationJob(env, jobId, {
+            status: 'sent',
+            externalMessageId: messageId
+          }).catch(() => {});
+        }
+        return { success: true, jobId, messageId, status: 'sent' };
       } else {
         const errMsg = data.error?.message || `WhatsApp API error HTTP ${res.status}`;
-        await D1Service.updateNotificationJob(env, jobId, {
-          status: 'failed',
-          error: errMsg,
-          incrementRetry: true
-        });
+        if (env.DB && jobId) {
+          await D1Service.updateNotificationJob(env, jobId, {
+            status: 'failed',
+            error: errMsg,
+            incrementRetry: true
+          }).catch(() => {});
+        }
         throw new Error(errMsg);
       }
     } catch (err) {
       console.error('[WhatsApp] Send error:', err);
-      await D1Service.updateNotificationJob(env, jobId, {
-        status: 'failed',
-        error: err.message,
-        incrementRetry: true
-      });
+      if (env.DB && jobId) {
+        await D1Service.updateNotificationJob(env, jobId, {
+          status: 'failed',
+          error: err.message,
+          incrementRetry: true
+        }).catch(() => {});
+      }
       throw err;
     }
   }
@@ -197,10 +214,12 @@ export class WhatsAppService {
               }
 
               console.log(`[WhatsApp Webhook] Message ${messageId} status: ${status}`);
-              await D1Service.updateNotificationByExternalId(env, messageId, {
-                status: status,
-                error: errorMsg
-              });
+              if (env.DB) {
+                await D1Service.updateNotificationByExternalId(env, messageId, {
+                  status: status,
+                  error: errorMsg
+                }).catch(() => {});
+              }
             }
           }
         }

@@ -1,6 +1,7 @@
 /**
  * Bhuvana's Bridal & Tailoring Studio — Cloudflare Backend
  * Firebase Cloud Messaging (FCM HTTP v1) Push Notification Service
+ * Decoupled from mandatory D1 logging so dispatch works independently.
  */
 
 import { D1Service } from './d1.js';
@@ -97,9 +98,18 @@ export class FCMService {
 
   /**
    * Dispatch New Booking Push Notification to Owner Devices
+   * Decoupled: Works seamlessly with or without D1 binding
    */
   static async notifyNewBooking(env, booking) {
-    const devices = await D1Service.listOwnerDevices(env);
+    let devices = [];
+    if (env.DB) {
+      try {
+        devices = await D1Service.listOwnerDevices(env);
+      } catch (e) {
+        console.warn('[FCM] Non-blocking device list lookup warning:', e);
+      }
+    }
+
     if (!devices || devices.length === 0) {
       console.log('[FCM] No registered owner devices found for push notification.');
       return;
@@ -113,21 +123,30 @@ export class FCMService {
     const projectId = env.FIREBASE_PROJECT_ID;
 
     for (const device of devices) {
-      const jobId = await D1Service.createNotificationJob(env, {
-        bookingId: booking.id,
-        type: 'fcm_new_booking',
-        recipient: device.fcm_token,
-        status: 'pending',
-        payload: { title, body, clickUrl }
-      });
+      let jobId = null;
+      if (env.DB) {
+        try {
+          jobId = await D1Service.createNotificationJob(env, {
+            bookingId: booking.id,
+            type: 'fcm_new_booking',
+            recipient: device.fcm_token,
+            status: 'pending',
+            payload: { title, body, clickUrl }
+          });
+        } catch (e) {
+          // Non-blocking job logging
+        }
+      }
 
-      if (!accessToken || !projectId || projectId === 'your-firebase-project-id') {
+      if (!accessToken || !projectId || projectId === 'your-firebase-project-id' || projectId.includes('your-')) {
         const reason = 'Firebase FCM service account credentials not configured in Worker environment';
         console.warn(`[FCM] ${reason}. Push skipped for device ${device.device_name || device.id}.`);
-        await D1Service.updateNotificationJob(env, jobId, {
-          status: 'failed',
-          error: reason
-        });
+        if (env.DB && jobId) {
+          await D1Service.updateNotificationJob(env, jobId, {
+            status: 'failed',
+            error: reason
+          }).catch(() => {});
+        }
         continue;
       }
 
@@ -165,32 +184,40 @@ export class FCMService {
 
         if (res.ok) {
           const resData = await res.json();
-          await D1Service.updateNotificationJob(env, jobId, {
-            status: 'sent',
-            externalMessageId: resData.name
-          });
+          if (env.DB && jobId) {
+            await D1Service.updateNotificationJob(env, jobId, {
+              status: 'sent',
+              externalMessageId: resData.name
+            }).catch(() => {});
+          }
         } else {
           const errData = await res.json().catch(() => ({}));
           const errMsg = errData.error?.message || `FCM HTTP ${res.status}`;
-          await D1Service.updateNotificationJob(env, jobId, {
-            status: 'failed',
-            error: errMsg,
-            incrementRetry: true
-          });
+          if (env.DB && jobId) {
+            await D1Service.updateNotificationJob(env, jobId, {
+              status: 'failed',
+              error: errMsg,
+              incrementRetry: true
+            }).catch(() => {});
+          }
 
           // Unregister stale token if invalid
           if (errMsg.includes('UNREGISTERED') || errMsg.includes('INVALID_ARGUMENT')) {
             console.warn(`[FCM] Removing stale/unregistered token for device ${device.id}`);
-            await D1Service.removeInvalidDevice(env, device.fcm_token);
+            if (env.DB) {
+              await D1Service.removeInvalidDevice(env, device.fcm_token).catch(() => {});
+            }
           }
         }
       } catch (err) {
         console.error('[FCM] Error dispatching push notification:', err);
-        await D1Service.updateNotificationJob(env, jobId, {
-          status: 'failed',
-          error: err.message,
-          incrementRetry: true
-        });
+        if (env.DB && jobId) {
+          await D1Service.updateNotificationJob(env, jobId, {
+            status: 'failed',
+            error: err.message,
+            incrementRetry: true
+          }).catch(() => {});
+        }
       }
     }
   }

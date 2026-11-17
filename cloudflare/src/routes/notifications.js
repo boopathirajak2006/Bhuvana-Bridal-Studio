@@ -23,7 +23,11 @@ export async function handleRegisterDevice(request, env, auth) {
       return errorResponse(request, env, 'FCM token is required', 400, 'MISSING_TOKEN');
     }
 
-    await D1Service.registerOwnerDevice(env, auth.owner.id, fcmToken.trim(), deviceName || 'Owner Browser');
+    if (env.DB) {
+      await D1Service.registerOwnerDevice(env, auth.owner.id, fcmToken.trim(), deviceName || 'Owner Browser');
+    } else {
+      console.log('[Route: RegisterDevice] D1 binding absent; device registration skipped.');
+    }
 
     return jsonResponse(request, env, {
       success: true,

@@ -2,8 +2,9 @@
  * Protected Studio Owner / Admin Routes
  * Handles login, session management, booking reviews, private poster streaming from R2, and exports.
  * 
- * Storage: Cloudflare R2 (Private bucket streaming)
- * Database & Auth: Supabase Postgres & Supabase Auth
+ * Storage: Cloudflare R2 exclusively (Private bucket streaming)
+ * Database & Auth: Supabase Postgres & Supabase Auth exclusively (Zero D1 write mirrors)
+ * Historical: D1 read-only inspection strictly for older preserved records
  */
 
 import { jsonResponse, errorResponse, setCookieHeader, clearCookieHeader } from '../utils/response.js';
@@ -29,6 +30,10 @@ export async function handleAdminLogin(request, env) {
     const { username, password } = body || {};
     if (!username || !password) {
       return errorResponse(request, env, 'Username/Email and password are required', 400, 'MISSING_CREDENTIALS');
+    }
+
+    if (!SupabaseService.isConfigured(env)) {
+      return errorResponse(request, env, 'Supabase Auth is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
 
     const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || '127.0.0.1';
@@ -97,20 +102,17 @@ export async function handleAdminMe(request, env, auth) {
  */
 export async function handleListBookings(request, env, auth) {
   try {
+    if (!SupabaseService.isConfigured(env)) {
+      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
+    }
+
     const url = new URL(request.url);
     const status = url.searchParams.get('status') || 'all';
     const search = url.searchParams.get('search') || '';
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
     const offset = Math.max(parseInt(url.searchParams.get('offset') || '0', 10), 0);
 
-    let result;
-    if (SupabaseService.isConfigured(env)) {
-      result = await SupabaseService.listBookings(env, { status, search, limit, offset });
-    } else if (env.DB) {
-      result = await D1Service.listBookings(env, { status, search, limit, offset });
-    } else {
-      throw new Error('Database backend is not configured');
-    }
+    const result = await SupabaseService.listBookings(env, { status, search, limit, offset });
 
     return jsonResponse(request, env, {
       success: true,
@@ -130,14 +132,11 @@ export async function handleListBookings(request, env, auth) {
  */
 export async function handleGetStats(request, env, auth) {
   try {
-    let metrics;
-    if (SupabaseService.isConfigured(env)) {
-      metrics = await SupabaseService.getMetrics(env);
-    } else if (env.DB) {
-      metrics = await D1Service.getMetrics(env);
-    } else {
-      throw new Error('Database backend is not configured');
+    if (!SupabaseService.isConfigured(env)) {
+      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
+
+    const metrics = await SupabaseService.getMetrics(env);
 
     return jsonResponse(request, env, {
       success: true,
@@ -154,11 +153,20 @@ export async function handleGetStats(request, env, auth) {
  */
 export async function handleGetBookingDetails(request, env, auth, bookingId) {
   try {
-    let booking;
+    let booking = null;
+    let isHistorical = false;
+
+    // 1. Primary: Look up in Supabase
     if (SupabaseService.isConfigured(env)) {
       booking = await SupabaseService.getBookingById(env, bookingId);
-    } else if (env.DB) {
+    }
+
+    // 2. Read-only fallback: Look up in D1 historical archives
+    if (!booking && env.DB) {
       booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
+      if (booking) {
+        isHistorical = true;
+      }
     }
 
     if (!booking) {
@@ -178,7 +186,10 @@ export async function handleGetBookingDetails(request, env, auth, bookingId) {
 
     return jsonResponse(request, env, {
       success: true,
-      booking,
+      booking: {
+        ...booking,
+        is_historical: isHistorical
+      },
       auditLogs,
       notificationJobs
     });
@@ -191,11 +202,10 @@ export async function handleGetBookingDetails(request, env, auth, bookingId) {
 /**
  * GET /api/admin/bookings/:id/poster
  * Streams the private booking poster PNG from Cloudflare R2 storage to authenticated owner only.
- * Private bucket, zero direct public exposure.
  */
 export async function handleGetBookingPoster(request, env, auth, bookingId) {
   try {
-    let booking;
+    let booking = null;
     if (SupabaseService.isConfigured(env)) {
       booking = await SupabaseService.getBookingById(env, bookingId);
     }
@@ -248,30 +258,32 @@ export async function handleGetBookingPoster(request, env, auth, bookingId) {
  */
 export async function handleApproveBooking(request, env, auth, bookingId) {
   try {
-    let booking;
-    if (SupabaseService.isConfigured(env)) {
-      booking = await SupabaseService.getBookingById(env, bookingId);
+    if (!SupabaseService.isConfigured(env)) {
+      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
+
+    let booking = await SupabaseService.getBookingById(env, bookingId);
+
+    // If not found in Supabase, verify if it is an older D1 record
     if (!booking && env.DB) {
-      booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
+      const historical = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
+      if (historical) {
+        return errorResponse(
+          request,
+          env,
+          `Booking ${historical.booking_ref} is a historical D1 record and cannot be modified. It is preserved in read-only mode.`,
+          409,
+          'HISTORICAL_RECORD_READONLY'
+        );
+      }
     }
 
     if (!booking) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     }
 
-    let approvedBooking;
-    if (SupabaseService.isConfigured(env)) {
-      approvedBooking = await SupabaseService.approveBooking(env, booking.id, auth.owner);
-      // Safe mirror to D1 if present
-      if (env.DB) {
-        await D1Service.approveBooking(env, booking.id, auth.owner).catch(e => console.warn('[D1 Approve mirror]', e));
-      }
-    } else if (env.DB) {
-      approvedBooking = await D1Service.approveBooking(env, booking.id, auth.owner);
-    } else {
-      throw new Error('Database backend is not configured');
-    }
+    // Update Supabase exclusively (Zero mirrored writes to D1)
+    const approvedBooking = await SupabaseService.approveBooking(env, booking.id, auth.owner);
 
     // Trigger WhatsApp notification if customer opted in
     let whatsappResult = null;
@@ -311,47 +323,38 @@ export async function handleRejectBooking(request, env, auth, bookingId) {
       return errorResponse(request, env, validation.errors.join('; '), 400, 'VALIDATION_FAILED');
     }
 
-    let booking;
-    if (SupabaseService.isConfigured(env)) {
-      booking = await SupabaseService.getBookingById(env, bookingId);
+    if (!SupabaseService.isConfigured(env)) {
+      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
+
+    let booking = await SupabaseService.getBookingById(env, bookingId);
+
+    // If not found in Supabase, verify if it is an older D1 record
     if (!booking && env.DB) {
-      booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
+      const historical = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
+      if (historical) {
+        return errorResponse(
+          request,
+          env,
+          `Booking ${historical.booking_ref} is a historical D1 record and cannot be modified. It is preserved in read-only mode.`,
+          409,
+          'HISTORICAL_RECORD_READONLY'
+        );
+      }
     }
 
     if (!booking) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     }
 
-    let rejectedBooking;
-    if (SupabaseService.isConfigured(env)) {
-      rejectedBooking = await SupabaseService.rejectBooking(
-        env,
-        booking.id,
-        auth.owner,
-        validation.sanitized.reason,
-        validation.sanitized.notes
-      );
-      if (env.DB) {
-        await D1Service.rejectBooking(
-          env,
-          booking.id,
-          auth.owner,
-          validation.sanitized.reason,
-          validation.sanitized.notes
-        ).catch(e => console.warn('[D1 Reject mirror]', e));
-      }
-    } else if (env.DB) {
-      rejectedBooking = await D1Service.rejectBooking(
-        env,
-        booking.id,
-        auth.owner,
-        validation.sanitized.reason,
-        validation.sanitized.notes
-      );
-    } else {
-      throw new Error('Database backend is not configured');
-    }
+    // Update Supabase exclusively (Zero mirrored writes to D1)
+    const rejectedBooking = await SupabaseService.rejectBooking(
+      env,
+      booking.id,
+      auth.owner,
+      validation.sanitized.reason,
+      validation.sanitized.notes
+    );
 
     // Trigger WhatsApp notification if customer opted in
     let whatsappResult = null;
@@ -379,15 +382,11 @@ export async function handleRejectBooking(request, env, auth, bookingId) {
  */
 export async function handleExportBookings(request, env, auth) {
   try {
-    let allBookings;
-    if (SupabaseService.isConfigured(env)) {
-      allBookings = await SupabaseService.exportAllBookings(env);
-    } else if (env.DB) {
-      allBookings = await D1Service.exportAllBookings(env);
-    } else {
-      throw new Error('Database backend is not configured');
+    if (!SupabaseService.isConfigured(env)) {
+      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
 
+    const allBookings = await SupabaseService.exportAllBookings(env);
     const filename = `bhuvana_bookings_backup_${new Date().toISOString().split('T')[0]}.json`;
 
     return new Response(JSON.stringify(allBookings, null, 2), {

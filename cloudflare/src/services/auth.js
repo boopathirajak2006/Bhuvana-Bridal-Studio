@@ -2,85 +2,45 @@
  * Bhuvana's Bridal & Tailoring Studio — Cloudflare Backend
  * Studio Owner Authentication Service
  * 
- * Primary Authentication: Supabase Auth (GoTrue) + RBAC via public.user_roles
- * Secondary / Fallback: D1 Session Storage (if Supabase unconfigured)
+ * Authentication Mechanism: Supabase Auth (GoTrue) + RBAC via public.user_roles ONLY.
+ * No D1 session fallback is permitted.
  */
 
 import { SupabaseService } from './supabase.js';
-import { D1Service } from './d1.js';
-import { verifyPassword, generateRandomHex } from '../utils/security.js';
 
 export class AuthService {
   /**
-   * Authenticate studio owner with username/email and password
+   * Authenticate studio owner with username/email and password via Supabase Auth
    */
   static async login(env, username, password, ip, userAgent) {
     if (!username || !password) {
       throw new Error('Username or email and password are required');
     }
 
-    // 1. Primary: Authenticate via Supabase Auth if configured
-    if (SupabaseService.isConfigured(env)) {
-      try {
-        const result = await SupabaseService.loginOwner(env, username, password);
-        return result;
-      } catch (supaErr) {
-        // If Supabase rejected the credentials or RBAC, bubble up error
-        throw supaErr;
-      }
+    if (!SupabaseService.isConfigured(env)) {
+      throw new Error('Supabase Auth is not configured. Please configure SUPABASE_URL and SUPABASE_ANON_KEY.');
     }
 
-    // 2. Fallback: Authenticate via Cloudflare D1 if configured
-    if (env.DB) {
-      await D1Service.seedInitialOwnerIfEmpty(env);
-
-      const owner = await D1Service.findOwnerByUsername(env, username);
-      if (!owner) {
-        throw new Error('Invalid username or password');
-      }
-
-      const isValid = await verifyPassword(password, owner.password_hash, owner.salt);
-      if (!isValid) {
-        throw new Error('Invalid username or password');
-      }
-
-      const sessionToken = generateRandomHex(32);
-      const session = await D1Service.createOwnerSession(env, owner.id, sessionToken, ip, userAgent);
-
-      return {
-        token: session.token,
-        expiresAt: session.expiresAt,
-        owner: {
-          id: owner.id,
-          username: owner.username,
-          name: owner.name,
-          role: owner.role
-        }
-      };
-    }
-
-    throw new Error('Authentication service is not configured. Please configure Supabase Auth.');
+    // Authenticate exclusively via Supabase Auth
+    return await SupabaseService.loginOwner(env, username, password);
   }
 
   /**
    * Log out owner by revoking session
    */
   static async logout(env, token) {
-    if (!token) return;
-    if (env.DB) {
-      try {
-        await D1Service.deleteOwnerSession(env, token);
-      } catch (e) {
-        console.warn('[AuthService] D1 logout warning:', e);
-      }
-    }
+    // Supabase tokens are stateless JWTs on the backend; client clears local token
   }
 
   /**
    * Extract and verify session token from Request
-   * Validates Supabase JWT Bearer token or legacy session cookie
+   * Validates Supabase JWT Bearer token or cookie via Supabase Auth exclusively
    */
   static async authenticateRequest(request, env) {
+    if (!SupabaseService.isConfigured(env)) {
+      return null;
+    }
+
     let token = null;
 
     // 1. Check Authorization header
@@ -103,32 +63,7 @@ export class AuthService {
 
     if (!token) return null;
 
-    // Primary: Verify via Supabase Auth
-    if (SupabaseService.isConfigured(env)) {
-      const supaAuth = await SupabaseService.verifyOwnerToken(env, token);
-      if (supaAuth) {
-        return supaAuth;
-      }
-    }
-
-    // Secondary / Fallback: Verify via D1 session
-    if (env.DB) {
-      const ownerRecord = await D1Service.getOwnerBySessionToken(env, token);
-      if (ownerRecord) {
-        return {
-          token,
-          owner: {
-            id: ownerRecord.owner_id,
-            username: ownerRecord.username,
-            name: ownerRecord.name,
-            role: ownerRecord.role
-          },
-          sessionId: ownerRecord.session_id,
-          expiresAt: ownerRecord.expires_at
-        };
-      }
-    }
-
-    return null;
+    // Verify exclusively via Supabase Auth
+    return await SupabaseService.verifyOwnerToken(env, token);
   }
 }

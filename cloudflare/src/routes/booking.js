@@ -2,8 +2,9 @@
  * Public Booking Routes for Bhuvana's Bridal Studio
  * Handles reservation (Step 1), poster submission (Step 2), and public status lookup.
  * 
- * Storage: Cloudflare R2 (Private bucket)
- * Database: Supabase Postgres (Public & Service Role Access)
+ * Storage: Cloudflare R2 exclusively (Private bucket)
+ * Database: Supabase Postgres exclusively (Zero mirrored writes to D1)
+ * Historical: D1 read-only fallback strictly for status lookup of older records
  */
 
 import { jsonResponse, errorResponse } from '../utils/response.js';
@@ -27,6 +28,11 @@ export async function handleReserveBooking(request, env) {
       return errorResponse(request, env, validation.errors.join('; '), 400, 'VALIDATION_FAILED');
     }
 
+    // Require Supabase as the exclusive active booking database
+    if (!SupabaseService.isConfigured(env)) {
+      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
+    }
+
     const reservationPayload = {
       customerName: validation.sanitized.customer_name,
       customerMobile: validation.sanitized.customer_phone,
@@ -39,14 +45,7 @@ export async function handleReserveBooking(request, env) {
       idempotencyKey: body.idempotency_key || null
     };
 
-    let reservation;
-    if (SupabaseService.isConfigured(env)) {
-      reservation = await SupabaseService.reserveBooking(env, reservationPayload);
-    } else if (env.DB) {
-      reservation = await D1Service.reserveBooking(env, reservationPayload);
-    } else {
-      throw new Error('No database backend (Supabase or D1) is configured.');
-    }
+    const reservation = await SupabaseService.reserveBooking(env, reservationPayload);
 
     return jsonResponse(request, env, {
       success: true,
@@ -74,18 +73,23 @@ export async function handleSubmitBooking(request, env) {
       return errorResponse(request, env, validation.errors.join('; '), 400, 'VALIDATION_FAILED');
     }
 
+    // Require Supabase as the exclusive active booking database
+    if (!SupabaseService.isConfigured(env)) {
+      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
+    }
+
     const { bookingRef, posterFile, customerData } = validation.data;
     const customerDisplayName = (customerData && customerData.customer_name) || 'Valued Client';
     const eventDate = (customerData && customerData.event_date) || '';
 
-    // 1. Upload poster PNG image to private Cloudflare R2 bucket
+    // 1. Upload poster PNG image exclusively to private Cloudflare R2 bucket
     const arrayBuffer = await posterFile.arrayBuffer();
     const r2Result = await R2Service.uploadPoster(env, bookingRef, arrayBuffer, {
       customerName: customerDisplayName,
       eventDate: eventDate
     });
 
-    // 2. Persist booking enquiry in Supabase database
+    // 2. Persist booking enquiry exclusively in Supabase database (Zero D1 mirrored writes)
     const submitPayload = {
       bookingRef,
       posterKey: r2Result.key,
@@ -103,40 +107,7 @@ export async function handleSubmitBooking(request, env) {
       whatsappConsent: customerData ? (customerData.whatsapp_consent === 1 || customerData.whatsapp_consent === true) : false
     };
 
-    let finalizedBooking;
-    if (SupabaseService.isConfigured(env)) {
-      finalizedBooking = await SupabaseService.submitBooking(env, submitPayload);
-      // Safely mirror to D1 if present for zero data loss / migration continuity
-      if (env.DB) {
-        try {
-          const d1Payload = {
-            ...submitPayload,
-            posterPublicId: r2Result.key,
-            posterSecureUrl: `/api/admin/bookings/${bookingRef}/poster`,
-            selectedServicesJson: JSON.stringify(submitPayload.selectedServices),
-            requirementsJson: JSON.stringify(submitPayload.requirements),
-            consentTimestamp: new Date().toISOString(),
-            consentVersion: 'v1'
-          };
-          await D1Service.submitBooking(env, d1Payload).catch(e => console.warn('[D1 Mirror Warning]', e));
-        } catch (mirrorErr) {
-          console.warn('[D1 Mirror non-blocking error]', mirrorErr);
-        }
-      }
-    } else if (env.DB) {
-      const d1Payload = {
-        ...submitPayload,
-        posterPublicId: r2Result.key,
-        posterSecureUrl: `/api/admin/bookings/${bookingRef}/poster`,
-        selectedServicesJson: JSON.stringify(submitPayload.selectedServices),
-        requirementsJson: JSON.stringify(submitPayload.requirements),
-        consentTimestamp: new Date().toISOString(),
-        consentVersion: 'v1'
-      };
-      finalizedBooking = await D1Service.submitBooking(env, d1Payload);
-    } else {
-      throw new Error('Database backend is not configured.');
-    }
+    const finalizedBooking = await SupabaseService.submitBooking(env, submitPayload);
 
     // 3. Asynchronously dispatch FCM push notification to owner devices (non-blocking)
     try {
@@ -171,10 +142,15 @@ export async function handleGetBookingStatus(request, env, bookingRef) {
       return errorResponse(request, env, 'Booking reference is required', 400, 'MISSING_PARAM');
     }
 
-    let booking;
+    let booking = null;
+
+    // 1. Primary: Query Supabase
     if (SupabaseService.isConfigured(env)) {
       booking = await SupabaseService.getBookingByRef(env, bookingRef);
-    } else if (env.DB) {
+    }
+
+    // 2. Read-only historical fallback: Query D1 only if not found in Supabase
+    if (!booking && env.DB) {
       booking = await D1Service.getBookingByRef(env, bookingRef);
     }
 
