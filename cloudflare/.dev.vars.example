@@ -30,3 +30,8 @@ WHATSAPP_VERIFY_TOKEN="your_custom_webhook_verify_token_string"
 FIREBASE_PROJECT_ID="your-firebase-project-id"
 FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com"
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC...\n-----END PRIVATE KEY-----\n"
+
+# 6. Cloudinary Image Storage (Active Booking Poster Storage)
+CLOUDINARY_CLOUD_NAME="hcj8r6r4"
+CLOUDINARY_API_KEY="your-cloudinary-api-key"
+CLOUDINARY_API_SECRET="your-cloudinary-api-secret"

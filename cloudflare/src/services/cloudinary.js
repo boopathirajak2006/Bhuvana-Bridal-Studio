@@ -210,9 +210,10 @@ export class CloudinaryService {
     }
 
     // Method 3: If booking has secure_url, try direct fetch
-    if (booking.poster_secure_url) {
+    const secureUrl = booking.poster_secure_url || (booking.poster_url && booking.poster_url.startsWith('http') ? booking.poster_url : null);
+    if (secureUrl && secureUrl.startsWith('http')) {
       try {
-        const directRes = await fetch(booking.poster_secure_url);
+        const directRes = await fetch(secureUrl);
         if (directRes.ok) {
           return directRes;
         }

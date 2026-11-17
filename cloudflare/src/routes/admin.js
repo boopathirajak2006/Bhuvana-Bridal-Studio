@@ -10,6 +10,7 @@
 import { jsonResponse, errorResponse, setCookieHeader, clearCookieHeader } from '../utils/response.js';
 import { AuthService } from '../services/auth.js';
 import { SupabaseService } from '../services/supabase.js';
+import { CloudinaryService } from '../services/cloudinary.js';
 import { R2Service } from '../services/r2.js';
 import { D1Service } from '../services/d1.js';
 import { WhatsAppService } from '../services/whatsapp.js';
@@ -201,7 +202,8 @@ export async function handleGetBookingDetails(request, env, auth, bookingId) {
 
 /**
  * GET /api/admin/bookings/:id/poster
- * Streams the private booking poster PNG from Cloudflare R2 storage to authenticated owner only.
+ * Streams the private booking poster PNG to authenticated studio owner.
+ * Dynamically resolves storage provider (Cloudinary vs Cloudflare R2) from stored booking metadata.
  */
 export async function handleGetBookingPoster(request, env, auth, bookingId) {
   try {
@@ -217,26 +219,89 @@ export async function handleGetBookingPoster(request, env, auth, bookingId) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     }
 
-    const key = booking.poster_public_id || booking.poster_key || booking.booking_ref;
-    if (!key) {
+    const publicId = booking.poster_public_id || '';
+    const key = booking.poster_key || booking.poster_public_id || booking.booking_ref || '';
+    const secureUrl = booking.poster_secure_url || booking.poster_url || '';
+
+    if (!publicId && !key && !secureUrl) {
       return errorResponse(request, env, 'No poster image stored for this booking', 404, 'NOT_FOUND');
     }
 
-    const r2Object = await R2Service.getPoster(env, key);
-    if (!r2Object || !r2Object.body) {
-      return errorResponse(request, env, 'Poster image file missing from R2 storage', 404, 'NOT_FOUND');
+    let imageBody = null;
+    let contentLength = null;
+    let etag = null;
+
+    // Determine storage provider from actual metadata
+    const isCloudinary = Boolean(
+      (publicId && publicId.includes('bhuvana_posters')) ||
+      (secureUrl && secureUrl.includes('cloudinary.com')) ||
+      booking.poster_version
+    );
+
+    const isR2 = Boolean(
+      (publicId && publicId.startsWith('posters/')) ||
+      (booking.poster_key && booking.poster_key.startsWith('posters/'))
+    );
+
+    if (isCloudinary) {
+      // 1. Fetch from Cloudinary
+      const cdnRes = await CloudinaryService.getPosterStream(env, booking);
+      if (cdnRes && cdnRes.body) {
+        imageBody = cdnRes.body;
+        contentLength = cdnRes.headers.get('content-length');
+        etag = cdnRes.headers.get('etag');
+      }
+    } else if (isR2 && (env.BUCKET || env.POSTERS)) {
+      // 2. Fetch from Cloudflare R2
+      const r2Object = await R2Service.getPoster(env, key);
+      if (r2Object && r2Object.body) {
+        imageBody = r2Object.body;
+        if (r2Object.size) contentLength = String(r2Object.size);
+        if (r2Object.httpEtag) etag = r2Object.httpEtag;
+      }
+    } else {
+      // Fallback: Check Cloudinary first, then R2 if available
+      if (env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET) {
+        try {
+          const cdnRes = await CloudinaryService.getPosterStream(env, booking);
+          if (cdnRes && cdnRes.body) {
+            imageBody = cdnRes.body;
+            contentLength = cdnRes.headers.get('content-length');
+            etag = cdnRes.headers.get('etag');
+          }
+        } catch (e) {
+          // Cloudinary fallback error ignored
+        }
+      }
+
+      if (!imageBody && (env.BUCKET || env.POSTERS)) {
+        try {
+          const r2Object = await R2Service.getPoster(env, key);
+          if (r2Object && r2Object.body) {
+            imageBody = r2Object.body;
+            if (r2Object.size) contentLength = String(r2Object.size);
+            if (r2Object.httpEtag) etag = r2Object.httpEtag;
+          }
+        } catch (e) {
+          // R2 fallback error ignored
+        }
+      }
+    }
+
+    if (!imageBody) {
+      return errorResponse(request, env, 'Poster image file missing from storage', 404, 'NOT_FOUND');
     }
 
     const headers = new Headers();
     headers.set('Content-Type', 'image/png');
     headers.set('Cache-Control', 'private, max-age=3600');
-    headers.set('Content-Disposition', `inline; filename="${booking.booking_ref}.png"`);
+    headers.set('Content-Disposition', `inline; filename="${booking.booking_ref || 'poster'}.png"`);
 
-    if (r2Object.size) {
-      headers.set('Content-Length', String(r2Object.size));
+    if (contentLength) {
+      headers.set('Content-Length', contentLength);
     }
-    if (r2Object.httpEtag) {
-      headers.set('ETag', r2Object.httpEtag);
+    if (etag) {
+      headers.set('ETag', etag);
     }
 
     // CORS headers for authenticated owner requests
@@ -246,10 +311,10 @@ export async function handleGetBookingPoster(request, env, auth, bookingId) {
       headers.set('Access-Control-Allow-Credentials', 'true');
     }
 
-    return new Response(r2Object.body, { headers });
+    return new Response(imageBody, { headers });
   } catch (err) {
     console.error('[Route: BookingPoster] Error:', err);
-    return errorResponse(request, env, 'Failed to retrieve poster image from R2', 500, 'INTERNAL_ERROR');
+    return errorResponse(request, env, 'Failed to retrieve poster image from storage', 500, 'INTERNAL_ERROR');
   }
 }
 

@@ -104,9 +104,12 @@ export class SupabaseService {
       requirements: serviceDetails,
       customization_preferences: customPrefs,
       reference_images: Array.isArray(row.reference_images) ? row.reference_images : [],
-      poster_url: row.poster_url || null,
+      poster_url: row.poster_url || row.poster_secure_url || null,
       poster_public_id: row.poster_public_id || null,
       poster_key: row.poster_public_id || null,
+      poster_secure_url: row.poster_secure_url || row.poster_url || null,
+      poster_version: row.poster_version ? String(row.poster_version) : null,
+      poster_asset_id: row.poster_asset_id || null,
       status: status,
       booking_status: isApproved ? 'approved' : status,
       deposit_amount: row.deposit_amount || 0,
@@ -200,15 +203,20 @@ export class SupabaseService {
     }
 
     const nowIso = new Date().toISOString();
-    const posterKey = data.posterPublicId || data.posterKey || `posters/2026/${bookingRef}.png`;
-    const posterUrl = `/api/admin/bookings/${bookingRef}/poster`;
+    const posterKey = data.posterPublicId || data.posterKey || `bhuvana_posters/2026/${bookingRef}`;
+    const posterSecureUrl = data.posterSecureUrl || data.posterUrl || `/api/admin/bookings/${bookingRef}/poster`;
+    const posterVersion = data.posterVersion ? String(data.posterVersion) : null;
+    const posterAssetId = data.posterAssetId || null;
 
     // Check if booking already exists in Supabase
     const existing = await this.getBookingByRef(env, bookingRef);
 
     const updatePayload = {
       poster_public_id: posterKey,
-      poster_url: posterUrl,
+      poster_url: posterSecureUrl,
+      poster_secure_url: posterSecureUrl,
+      poster_version: posterVersion,
+      poster_asset_id: posterAssetId,
       status: 'pending',
       booking_status: 'pending',
       whatsapp_consent: data.whatsappConsent === true || data.whatsappConsent === 1,
@@ -268,7 +276,10 @@ export class SupabaseService {
         service_details: data.requirements || {},
         message: data.specialNotes || '',
         poster_public_id: posterKey,
-        poster_url: posterUrl,
+        poster_url: posterSecureUrl,
+        poster_secure_url: posterSecureUrl,
+        poster_version: posterVersion,
+        poster_asset_id: posterAssetId,
         status: 'pending',
         booking_status: 'pending',
         whatsapp_consent: data.whatsappConsent === true || data.whatsappConsent === 1,

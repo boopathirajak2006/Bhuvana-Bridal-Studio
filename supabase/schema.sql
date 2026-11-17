@@ -106,6 +106,9 @@ create table if not exists public.bookings (
   reference_images text[] default '{}',
   poster_url text,
   poster_public_id text,
+  poster_secure_url text,
+  poster_version text,
+  poster_asset_id text,
   rejection_reason text,
   rejection_notes text,
   customer_name text,
@@ -139,6 +142,9 @@ alter table public.bookings add column if not exists customization_preferences j
 alter table public.bookings add column if not exists reference_images text[] default '{}';
 alter table public.bookings add column if not exists poster_url text;
 alter table public.bookings add column if not exists poster_public_id text;
+alter table public.bookings add column if not exists poster_secure_url text;
+alter table public.bookings add column if not exists poster_version text;
+alter table public.bookings add column if not exists poster_asset_id text;
 alter table public.bookings add column if not exists rejection_reason text;
 alter table public.bookings add column if not exists rejection_notes text;
 alter table public.bookings add column if not exists customer_name text;
