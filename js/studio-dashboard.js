@@ -416,8 +416,8 @@
           ? 'badge-approved'
           : 'badge-rejected';
 
-        const cleanPhone = (b.customer_mobile || '').replace(/\D/g, '');
-        const waLink = cleanPhone ? `https://wa.me/91${cleanPhone.slice(-10)}` : '#';
+        const hasWhatsAppConsent = Number(b.whatsapp_consent) === 1;
+        const waLink = hasWhatsAppConsent ? buildBookingWhatsAppLink(b) : null;
 
         return `
           <tr>
@@ -434,7 +434,9 @@
               <div style="font-size: 0.8rem; margin-top: 2px;">
                 <a href="tel:${escapeHtml(b.customer_mobile)}" style="color: var(--burgundy); text-decoration: none;">📞 Call</a>
                 &middot;
-                <a href="${waLink}" target="_blank" rel="noopener" style="color: #128C7E; text-decoration: none;">💬 WhatsApp</a>
+                ${waLink
+                  ? `<a href="${escapeHtml(waLink)}" target="_blank" rel="noopener noreferrer" style="color: #128C7E; text-decoration: none;">💬 WhatsApp</a>`
+                  : `<span style="color:var(--muted);">${hasWhatsAppConsent ? 'Invalid WhatsApp number' : 'No WhatsApp consent'}</span>`}
               </div>
             </td>
             <td>${escapeHtml(b.event_date || '—')}</td>
@@ -837,11 +839,11 @@
 
       // Consent Box
       const consentBox = document.getElementById('detail-consent-box');
-      if (b.whatsapp_consent === 1) {
+      if (Number(b.whatsapp_consent) === 1) {
         consentBox.style.background = 'rgba(37, 211, 102, 0.12)';
         consentBox.style.border = '1px solid #25D366';
         consentBox.style.color = '#128C7E';
-        consentBox.innerHTML = `✓ Customer opted-in to receive automated WhatsApp notifications.`;
+        consentBox.innerHTML = `✓ Customer opted in to WhatsApp messages. After approving or rejecting, the studio owner can open a prepared message and press Send.`;
       } else {
         consentBox.style.background = '#F5EDE4';
         consentBox.style.border = '1px solid var(--border)';
@@ -925,6 +927,32 @@
     if (modal) modal.style.display = 'none';
   }
 
+  function normalizeWhatsAppNumber(value) {
+    let digits = String(value || '').replace(/\D/g, '');
+    if (digits.length === 10) digits = `91${digits}`;
+    else if (digits.length === 11 && digits.startsWith('0')) digits = `91${digits.slice(1)}`;
+    return digits.length >= 10 ? digits : '';
+  }
+
+  function buildBookingWhatsAppLink(booking, status = booking.booking_status, rejectionReason = '') {
+    if (Number(booking.whatsapp_consent) !== 1) return null;
+    const recipient = normalizeWhatsAppNumber(booking.customer_mobile);
+    if (!recipient) return null;
+
+    const name = booking.customer_name || 'Valued Client';
+    const reference = booking.booking_ref || 'your booking';
+    let message = '';
+
+    if (status === 'approved') {
+      message = `Hello ${name}, your booking request (${reference}) has been approved by Bhuvana's Bridal Studio. Event date: ${booking.event_date || 'to be confirmed'}. We will contact you to confirm the final timing. Thank you.`;
+    } else if (status === 'rejected') {
+      message = `Hello ${name}, regarding your booking request (${reference}), we are unable to accept it. Reason: ${rejectionReason || booking.rejection_reason || 'Please contact the studio for details'}. Please contact Bhuvana's Bridal Studio if you would like to discuss another date.`;
+    }
+
+    const baseUrl = `https://wa.me/${recipient}`;
+    return message ? `${baseUrl}?text=${encodeURIComponent(message)}` : baseUrl;
+  }
+
   // ==========================================
   // APPROVE & REJECT ACTIONS
   // ==========================================
@@ -932,8 +960,9 @@
     if (!activeSelectedBooking) return;
     const b = activeSelectedBooking;
 
-    const confirmMsg = `Approve booking ${b.booking_ref} for ${b.customer_name}?\n\nIf the client consented to WhatsApp, an official booking confirmation will be dispatched automatically.`;
+    const confirmMsg = `Approve booking ${b.booking_ref} for ${b.customer_name}?\n\nIf the customer opted into WhatsApp, you can open a prepared message after approval and press Send yourself.`;
     if (!confirm(confirmMsg)) return;
+    const whatsappLink = Number(b.whatsapp_consent) === 1 ? buildBookingWhatsAppLink(b, 'approved') : null;
 
     const btn = document.getElementById('btn-trigger-approve');
     btn.disabled = true;
@@ -947,7 +976,19 @@
         })
       });
 
-      alert(`Booking ${b.booking_ref} approved successfully!`);
+      if (res?.whatsappResult?.success) {
+        alert(`Booking ${b.booking_ref} approved and the WhatsApp message was sent.`);
+      } else if (whatsappLink) {
+        if (confirm(`Booking ${b.booking_ref} approved. Open WhatsApp with a prepared message? Review it and press Send to contact the customer.`)) {
+          const whatsappWindow = window.open(whatsappLink, '_blank');
+          if (whatsappWindow) whatsappWindow.opener = null;
+          else alert('WhatsApp could not open in a new tab. After the list refreshes, use the WhatsApp link beside this booking.');
+        }
+      } else {
+        alert(Number(b.whatsapp_consent) === 1
+          ? `Booking ${b.booking_ref} approved, but the WhatsApp number is invalid.`
+          : `Booking ${b.booking_ref} approved. The customer did not opt into WhatsApp; please contact them by phone.`);
+      }
       closeDetailModal();
       await loadMetrics();
       await loadBookings();
@@ -975,6 +1016,8 @@
       reason = customReasonInput.value.trim() || 'Custom studio scheduling conflict';
     }
 
+    const whatsappLink = Number(b.whatsapp_consent) === 1 ? buildBookingWhatsAppLink(b, 'rejected', reason) : null;
+
     const notes = internalNotesInput ? internalNotesInput.value.trim() : '';
 
     const btn = document.getElementById('btn-confirm-reject');
@@ -990,7 +1033,19 @@
         })
       });
 
-      alert(`Booking ${b.booking_ref} has been declined.`);
+      if (res?.whatsappResult?.success) {
+        alert(`Booking ${b.booking_ref} declined and the WhatsApp message was sent.`);
+      } else if (whatsappLink) {
+        if (confirm(`Booking ${b.booking_ref} declined. Open WhatsApp with a prepared message? Review it and press Send to contact the customer.`)) {
+          const whatsappWindow = window.open(whatsappLink, '_blank');
+          if (whatsappWindow) whatsappWindow.opener = null;
+          else alert('WhatsApp could not open in a new tab. After the list refreshes, use the WhatsApp link beside this booking.');
+        }
+      } else {
+        alert(Number(b.whatsapp_consent) === 1
+          ? `Booking ${b.booking_ref} declined, but the WhatsApp number is invalid.`
+          : `Booking ${b.booking_ref} declined. The customer did not opt into WhatsApp; please contact them by phone.`);
+      }
       closeRejectModal();
       closeDetailModal();
       await loadMetrics();

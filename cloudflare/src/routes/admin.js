@@ -153,9 +153,11 @@ export async function handleApproveBooking(request, env, auth, bookingId) {
     if (!booking) return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     if (booking.booking_status !== 'pending') return errorResponse(request, env, `Cannot approve booking in status "${booking.booking_status}"`, 409, 'INVALID_STATUS');
     const approvedBooking = await D1Service.approveBooking(env, booking.id, auth.owner);
-    let whatsappResult = null;
-    try { whatsappResult = await WhatsAppService.sendBookingApproved(env, approvedBooking); }
-    catch (err) { console.warn('[Route: Approve] WhatsApp dispatch error:', err); whatsappResult = { success: false, error: 'Notification could not be sent' }; }
+    let whatsappResult = { success: false, skipped: true, reason: 'MANUAL_SEND_ONLY' };
+    if (env.WHATSAPP_AUTOMATIC_SEND === 'true') {
+      try { whatsappResult = await WhatsAppService.sendBookingApproved(env, approvedBooking); }
+      catch (err) { console.warn('[Route: Approve] WhatsApp dispatch error:', err); whatsappResult = { success: false, error: 'Notification could not be sent' }; }
+    }
     return jsonResponse(request, env, { success: true, message: `Booking ${approvedBooking.booking_ref} approved successfully`, booking: approvedBooking, whatsappResult });
   } catch (err) {
     console.error('[Route: ApproveBooking] Error:', err);
@@ -174,9 +176,11 @@ export async function handleRejectBooking(request, env, auth, bookingId) {
     if (!booking) return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     if (booking.booking_status !== 'pending') return errorResponse(request, env, `Cannot reject booking in status "${booking.booking_status}"`, 409, 'INVALID_STATUS');
     const rejectedBooking = await D1Service.rejectBooking(env, booking.id, auth.owner, validation.sanitized.reason, validation.sanitized.notes);
-    let whatsappResult = null;
-    try { whatsappResult = await WhatsAppService.sendBookingRejected(env, rejectedBooking, validation.sanitized.reason); }
-    catch (err) { console.warn('[Route: Reject] WhatsApp dispatch error:', err); whatsappResult = { success: false, error: 'Notification could not be sent' }; }
+    let whatsappResult = { success: false, skipped: true, reason: 'MANUAL_SEND_ONLY' };
+    if (env.WHATSAPP_AUTOMATIC_SEND === 'true') {
+      try { whatsappResult = await WhatsAppService.sendBookingRejected(env, rejectedBooking, validation.sanitized.reason); }
+      catch (err) { console.warn('[Route: Reject] WhatsApp dispatch error:', err); whatsappResult = { success: false, error: 'Notification could not be sent' }; }
+    }
     return jsonResponse(request, env, { success: true, message: `Booking ${rejectedBooking.booking_ref} marked as rejected`, booking: rejectedBooking, whatsappResult });
   } catch (err) {
     console.error('[Route: RejectBooking] Error:', err);
