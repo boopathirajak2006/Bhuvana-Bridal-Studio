@@ -1,12 +1,16 @@
 /**
  * Protected Studio Owner / Admin Routes
- * Handles login, session management, booking reviews, private poster streaming, and exports.
+ * Handles login, session management, booking reviews, private poster streaming from R2, and exports.
+ * 
+ * Storage: Cloudflare R2 (Private bucket streaming)
+ * Database & Auth: Supabase Postgres & Supabase Auth
  */
 
 import { jsonResponse, errorResponse, setCookieHeader, clearCookieHeader } from '../utils/response.js';
 import { AuthService } from '../services/auth.js';
+import { SupabaseService } from '../services/supabase.js';
+import { R2Service } from '../services/r2.js';
 import { D1Service } from '../services/d1.js';
-import { CloudinaryService } from '../services/cloudinary.js';
 import { WhatsAppService } from '../services/whatsapp.js';
 import { validateRejectionPayload } from '../middleware/validation.js';
 
@@ -24,7 +28,7 @@ export async function handleAdminLogin(request, env) {
 
     const { username, password } = body || {};
     if (!username || !password) {
-      return errorResponse(request, env, 'Username and password are required', 400, 'MISSING_CREDENTIALS');
+      return errorResponse(request, env, 'Username/Email and password are required', 400, 'MISSING_CREDENTIALS');
     }
 
     const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || '127.0.0.1';
@@ -43,6 +47,7 @@ export async function handleAdminLogin(request, env) {
       success: true,
       message: 'Login successful',
       token: result.token,
+      refreshToken: result.refreshToken,
       expiresAt: result.expiresAt,
       owner: result.owner
     }, 200, {
@@ -98,17 +103,19 @@ export async function handleListBookings(request, env, auth) {
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
     const offset = Math.max(parseInt(url.searchParams.get('offset') || '0', 10), 0);
 
-    const { bookings, total } = await D1Service.listBookings(env, {
-      status,
-      search,
-      limit,
-      offset
-    });
+    let result;
+    if (SupabaseService.isConfigured(env)) {
+      result = await SupabaseService.listBookings(env, { status, search, limit, offset });
+    } else if (env.DB) {
+      result = await D1Service.listBookings(env, { status, search, limit, offset });
+    } else {
+      throw new Error('Database backend is not configured');
+    }
 
     return jsonResponse(request, env, {
       success: true,
-      bookings,
-      total,
+      bookings: result.bookings,
+      total: result.total,
       limit,
       offset
     });
@@ -123,7 +130,15 @@ export async function handleListBookings(request, env, auth) {
  */
 export async function handleGetStats(request, env, auth) {
   try {
-    const metrics = await D1Service.getMetrics(env);
+    let metrics;
+    if (SupabaseService.isConfigured(env)) {
+      metrics = await SupabaseService.getMetrics(env);
+    } else if (env.DB) {
+      metrics = await D1Service.getMetrics(env);
+    } else {
+      throw new Error('Database backend is not configured');
+    }
+
     return jsonResponse(request, env, {
       success: true,
       metrics
@@ -139,13 +154,27 @@ export async function handleGetStats(request, env, auth) {
  */
 export async function handleGetBookingDetails(request, env, auth, bookingId) {
   try {
-    const booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
+    let booking;
+    if (SupabaseService.isConfigured(env)) {
+      booking = await SupabaseService.getBookingById(env, bookingId);
+    } else if (env.DB) {
+      booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
+    }
+
     if (!booking) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     }
 
-    const auditLogs = await D1Service.getAuditLogsForBooking(env, booking.id);
-    const notificationJobs = await D1Service.listNotificationJobsForBooking(env, booking.id);
+    let auditLogs = [];
+    let notificationJobs = [];
+    if (env.DB) {
+      try {
+        auditLogs = await D1Service.getAuditLogsForBooking(env, booking.id).catch(() => []);
+        notificationJobs = await D1Service.listNotificationJobsForBooking(env, booking.id).catch(() => []);
+      } catch (e) {
+        // non-blocking
+      }
+    }
 
     return jsonResponse(request, env, {
       success: true,
@@ -161,23 +190,31 @@ export async function handleGetBookingDetails(request, env, auth, bookingId) {
 
 /**
  * GET /api/admin/bookings/:id/poster
- * Streams the private booking poster PNG from Cloudinary storage to authenticated owner only.
+ * Streams the private booking poster PNG from Cloudflare R2 storage to authenticated owner only.
+ * Private bucket, zero direct public exposure.
  */
 export async function handleGetBookingPoster(request, env, auth, bookingId) {
   try {
-    const booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
+    let booking;
+    if (SupabaseService.isConfigured(env)) {
+      booking = await SupabaseService.getBookingById(env, bookingId);
+    }
+    if (!booking && env.DB) {
+      booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
+    }
+
     if (!booking) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     }
 
-    const publicId = booking.poster_public_id;
-    if (!publicId && !booking.poster_secure_url) {
+    const key = booking.poster_public_id || booking.poster_key || booking.booking_ref;
+    if (!key) {
       return errorResponse(request, env, 'No poster image stored for this booking', 404, 'NOT_FOUND');
     }
 
-    const streamResponse = await CloudinaryService.getPosterStream(env, booking);
-    if (!streamResponse) {
-      return errorResponse(request, env, 'Poster image file missing from storage', 404, 'NOT_FOUND');
+    const r2Object = await R2Service.getPoster(env, key);
+    if (!r2Object || !r2Object.body) {
+      return errorResponse(request, env, 'Poster image file missing from R2 storage', 404, 'NOT_FOUND');
     }
 
     const headers = new Headers();
@@ -185,17 +222,24 @@ export async function handleGetBookingPoster(request, env, auth, bookingId) {
     headers.set('Cache-Control', 'private, max-age=3600');
     headers.set('Content-Disposition', `inline; filename="${booking.booking_ref}.png"`);
 
-    // Add CORS
+    if (r2Object.size) {
+      headers.set('Content-Length', String(r2Object.size));
+    }
+    if (r2Object.httpEtag) {
+      headers.set('ETag', r2Object.httpEtag);
+    }
+
+    // CORS headers for authenticated owner requests
     const origin = request.headers.get('Origin');
     if (origin) {
       headers.set('Access-Control-Allow-Origin', origin);
       headers.set('Access-Control-Allow-Credentials', 'true');
     }
 
-    return new Response(streamResponse.body, { headers });
+    return new Response(r2Object.body, { headers });
   } catch (err) {
     console.error('[Route: BookingPoster] Error:', err);
-    return errorResponse(request, env, 'Failed to retrieve poster image', 500, 'INTERNAL_ERROR');
+    return errorResponse(request, env, 'Failed to retrieve poster image from R2', 500, 'INTERNAL_ERROR');
   }
 }
 
@@ -204,19 +248,30 @@ export async function handleGetBookingPoster(request, env, auth, bookingId) {
  */
 export async function handleApproveBooking(request, env, auth, bookingId) {
   try {
-    let body = {};
-    try {
-      body = await request.json();
-    } catch {
-      // Body is optional for approve
+    let booking;
+    if (SupabaseService.isConfigured(env)) {
+      booking = await SupabaseService.getBookingById(env, bookingId);
+    }
+    if (!booking && env.DB) {
+      booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
     }
 
-    const booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
     if (!booking) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     }
 
-    const approvedBooking = await D1Service.approveBooking(env, booking.id, auth.owner);
+    let approvedBooking;
+    if (SupabaseService.isConfigured(env)) {
+      approvedBooking = await SupabaseService.approveBooking(env, booking.id, auth.owner);
+      // Safe mirror to D1 if present
+      if (env.DB) {
+        await D1Service.approveBooking(env, booking.id, auth.owner).catch(e => console.warn('[D1 Approve mirror]', e));
+      }
+    } else if (env.DB) {
+      approvedBooking = await D1Service.approveBooking(env, booking.id, auth.owner);
+    } else {
+      throw new Error('Database backend is not configured');
+    }
 
     // Trigger WhatsApp notification if customer opted in
     let whatsappResult = null;
@@ -248,7 +303,7 @@ export async function handleRejectBooking(request, env, auth, bookingId) {
     try {
       body = await request.json();
     } catch {
-      return errorResponse(request, env, 'Rejection requires a JSON body', 400, 'INVALID_JSON');
+      return errorResponse(request, env, 'Rejection requires a JSON body with reason', 400, 'INVALID_JSON');
     }
 
     const validation = validateRejectionPayload(body);
@@ -256,18 +311,47 @@ export async function handleRejectBooking(request, env, auth, bookingId) {
       return errorResponse(request, env, validation.errors.join('; '), 400, 'VALIDATION_FAILED');
     }
 
-    const booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
+    let booking;
+    if (SupabaseService.isConfigured(env)) {
+      booking = await SupabaseService.getBookingById(env, bookingId);
+    }
+    if (!booking && env.DB) {
+      booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
+    }
+
     if (!booking) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     }
 
-    const rejectedBooking = await D1Service.rejectBooking(
-      env,
-      booking.id,
-      auth.owner,
-      validation.sanitized.reason,
-      validation.sanitized.notes
-    );
+    let rejectedBooking;
+    if (SupabaseService.isConfigured(env)) {
+      rejectedBooking = await SupabaseService.rejectBooking(
+        env,
+        booking.id,
+        auth.owner,
+        validation.sanitized.reason,
+        validation.sanitized.notes
+      );
+      if (env.DB) {
+        await D1Service.rejectBooking(
+          env,
+          booking.id,
+          auth.owner,
+          validation.sanitized.reason,
+          validation.sanitized.notes
+        ).catch(e => console.warn('[D1 Reject mirror]', e));
+      }
+    } else if (env.DB) {
+      rejectedBooking = await D1Service.rejectBooking(
+        env,
+        booking.id,
+        auth.owner,
+        validation.sanitized.reason,
+        validation.sanitized.notes
+      );
+    } else {
+      throw new Error('Database backend is not configured');
+    }
 
     // Trigger WhatsApp notification if customer opted in
     let whatsappResult = null;
@@ -292,11 +376,18 @@ export async function handleRejectBooking(request, env, auth, bookingId) {
 
 /**
  * GET /api/admin/bookings/export
- * D1 offline data export
  */
 export async function handleExportBookings(request, env, auth) {
   try {
-    const allBookings = await D1Service.exportAllBookings(env);
+    let allBookings;
+    if (SupabaseService.isConfigured(env)) {
+      allBookings = await SupabaseService.exportAllBookings(env);
+    } else if (env.DB) {
+      allBookings = await D1Service.exportAllBookings(env);
+    } else {
+      throw new Error('Database backend is not configured');
+    }
+
     const filename = `bhuvana_bookings_backup_${new Date().toISOString().split('T')[0]}.json`;
 
     return new Response(JSON.stringify(allBookings, null, 2), {
@@ -317,12 +408,14 @@ export async function handleExportBookings(request, env, auth) {
  */
 export async function handleRetryNotification(request, env, auth, jobId) {
   try {
+    if (!env.DB) {
+      return errorResponse(request, env, 'Notification jobs are currently stored in D1', 400, 'UNSUPPORTED');
+    }
     const job = await D1Service.getNotificationJobById(env, jobId);
     if (!job) {
       return errorResponse(request, env, `Notification job ${jobId} not found`, 404, 'NOT_FOUND');
     }
 
-    // Reset status to pending and increment retry count
     await D1Service.updateNotificationJob(env, jobId, {
       status: 'pending',
       retry_count: (job.retry_count || 0) + 1

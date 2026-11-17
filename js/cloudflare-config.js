@@ -77,14 +77,17 @@
     },
 
     // Firebase Web Push Configuration for Studio Owner
-    firebaseConfig: {
-      apiKey: "AIzaSy_BHUVANA_STUDIO_FCM_API_KEY",
-      authDomain: "bhuvana-bridal-studio.firebaseapp.com",
-      projectId: "bhuvana-bridal-studio",
-      storageBucket: "bhuvana-bridal-studio.appspot.com",
-      messagingSenderId: "123456789012",
-      appId: "1:123456789012:web:abcdef123456",
-      vapidKey: "BHUVANA_STUDIO_VAPID_PUBLIC_KEY"
+    // Real credentials must be provided via window.__ENV or injected upon deployment.
+    // Placeholders have been removed to prevent unauthorized or failing network calls.
+    firebaseConfig: (typeof window !== 'undefined' && window.__ENV && window.__ENV.FIREBASE_CONFIG) || null,
+
+    isFirebaseConfigured: function () {
+      return Boolean(
+        this.firebaseConfig &&
+        this.firebaseConfig.apiKey &&
+        this.firebaseConfig.projectId &&
+        this.firebaseConfig.vapidKey
+      );
     }
   };
 

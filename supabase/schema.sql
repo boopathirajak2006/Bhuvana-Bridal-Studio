@@ -108,7 +108,12 @@ create table if not exists public.bookings (
   poster_public_id text,
   rejection_reason text,
   rejection_notes text,
-  status text not null default 'pending' check (status in ('pending', 'confirmed', 'completed', 'declined', 'cancelled')),
+  customer_name text,
+  customer_mobile text,
+  customer_email text,
+  event_location text,
+  booking_status text default 'pending',
+  status text not null default 'pending' check (status in ('draft', 'pending', 'confirmed', 'completed', 'declined', 'cancelled')),
   deposit_amount numeric(10,2) default 0.00 check (deposit_amount >= 0),
   total_quote numeric(10,2) default 0.00 check (total_quote >= 0),
   admin_notes text,
@@ -136,6 +141,11 @@ alter table public.bookings add column if not exists poster_url text;
 alter table public.bookings add column if not exists poster_public_id text;
 alter table public.bookings add column if not exists rejection_reason text;
 alter table public.bookings add column if not exists rejection_notes text;
+alter table public.bookings add column if not exists customer_name text;
+alter table public.bookings add column if not exists customer_mobile text;
+alter table public.bookings add column if not exists customer_email text;
+alter table public.bookings add column if not exists event_location text;
+alter table public.bookings add column if not exists booking_status text default 'pending';
 
 -- Indexes for fast filtering and searching in the admin dashboard
 create index if not exists idx_bookings_status on public.bookings (status);
@@ -263,12 +273,9 @@ create policy "Public can submit booking enquiries"
   for insert
   to anon, authenticated
   with check (
-    status = 'pending'
-    and length(trim(client_name)) >= 2
-    and length(trim(mobile)) >= 10
-    and length(trim(location)) >= 2
-    and array_length(services, 1) >= 1
-    and array_length(preferences, 1) >= 1
+    status in ('pending', 'draft')
+    and length(trim(coalesce(client_name, customer_name, ''))) >= 2
+    and length(trim(coalesce(mobile, customer_mobile, ''))) >= 10
   );
 
 -- 2. Admin Access: Authenticated admins can view, update, and manage all bookings.

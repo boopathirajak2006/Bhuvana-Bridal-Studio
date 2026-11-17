@@ -7,7 +7,8 @@ import { generateUUID, generateBookingRef, generateSalt, hashPassword, sha256 } 
 
 export class D1Service {
   /**
-   * Automatically seed initial owner account if owners table is empty
+   * Seed initial owner account ONLY if explicit password is provided in environment variables
+   * Secure: Never falls back to a hardcoded default password.
    */
   static async seedInitialOwnerIfEmpty(env) {
     if (!env.DB) return;
@@ -15,8 +16,13 @@ export class D1Service {
       const existing = await env.DB.prepare('SELECT COUNT(*) as count FROM owners').first();
       if (existing && existing.count > 0) return;
 
+      const password = env.OWNER_INITIAL_PASSWORD;
+      if (!password) {
+        console.warn('[D1] No initial owner configured. OWNER_INITIAL_PASSWORD environment variable must be set explicitly.');
+        return;
+      }
+
       const username = env.OWNER_INITIAL_USERNAME || 'admin';
-      const password = env.OWNER_INITIAL_PASSWORD || 'BhuvanaStudio2026!';
       const name = env.OWNER_INITIAL_NAME || 'Bhuvaneshwari';
 
       const salt = generateSalt();
@@ -29,7 +35,7 @@ export class D1Service {
         VALUES (?, ?, ?, ?, ?, 'owner', ?, ?)
       `).bind(id, username, passwordHash, salt, name, now, now).run();
 
-      console.log(`[D1] Initial studio owner seeded: ${username}`);
+      console.log(`[D1] Initial studio owner seeded securely from environment variables: ${username}`);
     } catch (err) {
       console.error('[D1] Error seeding owner account:', err);
     }

@@ -28,7 +28,7 @@ export class WhatsAppService {
     // 1. Check customer consent
     if (booking.whatsapp_consent !== 1) {
       console.log(`[WhatsApp] Customer ${booking.booking_ref} did not opt in for WhatsApp updates. Skipping notification.`);
-      return { skipped: true, reason: 'NO_CONSENT' };
+      return { success: false, skipped: true, reason: 'NO_CONSENT' };
     }
 
     const recipient = this.formatPhoneNumber(booking.customer_mobile);
@@ -56,7 +56,7 @@ export class WhatsAppService {
     // 1. Check customer consent
     if (booking.whatsapp_consent !== 1) {
       console.log(`[WhatsApp] Customer ${booking.booking_ref} did not opt in for WhatsApp updates. Skipping notification.`);
-      return { skipped: true, reason: 'NO_CONSENT' };
+      return { success: false, skipped: true, reason: 'NO_CONSENT' };
     }
 
     const recipient = this.formatPhoneNumber(booking.customer_mobile);
@@ -112,6 +112,7 @@ export class WhatsAppService {
         error: reason
       });
       return {
+        success: false,
         jobId,
         dispatched: false,
         status: 'unconfigured',
