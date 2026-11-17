@@ -83,12 +83,31 @@ create table if not exists public.bookings (
   mobile text not null check (length(trim(mobile)) >= 10),
   email text,
   event_date date not null,
-  makeup_date date not null,
+  makeup_date date,
   location text not null check (length(trim(location)) >= 2),
   people_count int not null default 1 check (people_count >= 1 and people_count <= 50),
-  services text[] not null check (array_length(services, 1) >= 1),
-  preferences text[] not null check (array_length(preferences, 1) >= 1),
+  services text[] default '{}',
+  preferences text[] default '{}',
   message text,
+  booking_category text default 'bridal-beauty',
+  whatsapp_number text,
+  full_address text,
+  preferred_contact text default 'WhatsApp',
+  whatsapp_consent boolean default false,
+  event_name text,
+  event_type text,
+  event_time text,
+  getting_ready_time text,
+  venue_name text,
+  venue_address text,
+  function_location text,
+  service_details jsonb default '{}'::jsonb,
+  customization_preferences jsonb default '{}'::jsonb,
+  reference_images text[] default '{}',
+  poster_url text,
+  poster_public_id text,
+  rejection_reason text,
+  rejection_notes text,
   status text not null default 'pending' check (status in ('pending', 'confirmed', 'completed', 'declined', 'cancelled')),
   deposit_amount numeric(10,2) default 0.00 check (deposit_amount >= 0),
   total_quote numeric(10,2) default 0.00 check (total_quote >= 0),
@@ -96,6 +115,27 @@ create table if not exists public.bookings (
   created_at timestamptz default timezone('utc'::text, now()) not null,
   updated_at timestamptz default timezone('utc'::text, now()) not null
 );
+
+-- Backward compatibility column additions for existing tables
+alter table public.bookings add column if not exists booking_category text default 'bridal-beauty';
+alter table public.bookings add column if not exists whatsapp_number text;
+alter table public.bookings add column if not exists full_address text;
+alter table public.bookings add column if not exists preferred_contact text default 'WhatsApp';
+alter table public.bookings add column if not exists whatsapp_consent boolean default false;
+alter table public.bookings add column if not exists event_name text;
+alter table public.bookings add column if not exists event_type text;
+alter table public.bookings add column if not exists event_time text;
+alter table public.bookings add column if not exists getting_ready_time text;
+alter table public.bookings add column if not exists venue_name text;
+alter table public.bookings add column if not exists venue_address text;
+alter table public.bookings add column if not exists function_location text;
+alter table public.bookings add column if not exists service_details jsonb default '{}'::jsonb;
+alter table public.bookings add column if not exists customization_preferences jsonb default '{}'::jsonb;
+alter table public.bookings add column if not exists reference_images text[] default '{}';
+alter table public.bookings add column if not exists poster_url text;
+alter table public.bookings add column if not exists poster_public_id text;
+alter table public.bookings add column if not exists rejection_reason text;
+alter table public.bookings add column if not exists rejection_notes text;
 
 -- Indexes for fast filtering and searching in the admin dashboard
 create index if not exists idx_bookings_status on public.bookings (status);

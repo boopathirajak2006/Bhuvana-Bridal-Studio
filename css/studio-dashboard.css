@@ -497,3 +497,250 @@ body {
   cursor: pointer;
   color: var(--ink-light);
 }
+
+/* ==========================================
+   9-SECTION DASHBOARD SHELL & SIDEBAR
+   ========================================== */
+.dash-shell {
+  display: flex;
+  min-height: calc(100vh - 65px);
+  max-width: 1560px;
+  margin: 0 auto;
+}
+
+.dash-sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  background: var(--white);
+  border-right: 1.5px solid var(--border);
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dash-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink-light);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.dash-nav-btn .nav-icon {
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+}
+
+.dash-nav-btn:hover {
+  background: var(--ivory);
+  color: var(--burgundy);
+}
+
+.dash-nav-btn.active {
+  background: var(--burgundy);
+  color: var(--white);
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(122, 28, 48, 0.2);
+}
+
+.dash-content-area {
+  flex: 1;
+  padding: 2rem;
+  min-width: 0;
+  background: #F8F4EE;
+}
+
+.dash-section {
+  display: none;
+}
+
+.dash-section.active {
+  display: block;
+  animation: fadeInSection 0.25s ease-out;
+}
+
+@keyframes fadeInSection {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 900px) {
+  .dash-shell {
+    flex-direction: column;
+  }
+  .dash-sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1.5px solid var(--border);
+    padding: 0.75rem;
+  }
+  .dash-nav-btn {
+    white-space: nowrap;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.85rem;
+  }
+  .dash-content-area {
+    padding: 1.25rem 1rem;
+  }
+}
+
+/* ==========================================
+   CALENDAR STYLING (SECTION 3)
+   ========================================== */
+.calendar-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  background: var(--white);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+}
+
+.calendar-day-header {
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--ink-light);
+  padding: 0.5rem;
+  text-transform: uppercase;
+}
+
+.calendar-cell {
+  min-height: 95px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  background: var(--ivory-alt);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calendar-cell.other-month {
+  opacity: 0.4;
+  background: #f0ebe4;
+}
+
+.calendar-cell.is-today {
+  border-color: var(--gold-dark);
+  background: #FFFDF9;
+}
+
+.calendar-cell.is-blocked {
+  background: #FDEDEC;
+  border-color: #F5B7B1;
+}
+
+.calendar-cell-date {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.calendar-booking-pill {
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.pill-approved {
+  background: #E8F5E9;
+  color: #2E7D32;
+  border: 1px solid #A5D6A7;
+}
+
+.pill-pending {
+  background: #FFF8E1;
+  color: #F57F17;
+  border: 1px solid #FFE082;
+}
+
+.pill-blocked {
+  background: #FFEBEE;
+  color: #C62828;
+  border: 1px solid #FFCDD2;
+}
+
+.conflict-badge {
+  background: #D32F2F;
+  color: white;
+  font-size: 0.68rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+/* ==========================================
+   GALLERY & SERVICES CARDS (SECTIONS 5 & 6)
+   ========================================== */
+.studio-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.studio-item-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.gallery-grid-owner {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.gallery-card-owner {
+  background: var(--white);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+}
+
+.gallery-card-owner img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.gallery-card-meta {
+  padding: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

@@ -43,7 +43,7 @@ export class D1Service {
    * Step 1: Reserve a unique booking reference
    */
   static async reserveBooking(env, data) {
-    const bookingRef = generateBookingRef();
+    const bookingRef = data.bookingRef || generateBookingRef();
     const id = generateUUID();
     const reservationToken = generateUUID();
     const now = new Date();

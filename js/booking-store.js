@@ -11,6 +11,9 @@
   const STORAGE_KEY_REQ = 'bbs_booking_requirements';
   const STORAGE_KEY_CONTACT = 'bbs_contact_details';
   const STORAGE_KEY_REF = 'bbs_booking_ref';
+  const STORAGE_KEY_PACKAGE = 'bbs_package_type';
+  const STORAGE_KEY_EVENT = 'bbs_event_details';
+  const STORAGE_KEY_CUSTOMIZATION = 'bbs_customization_details';
   const ARTIST_WHATSAPP_NUMBER = '916374036629';
 
   // Safe Storage access with in-memory fallback
@@ -99,6 +102,9 @@
     storage.remove(STORAGE_KEY_REQ);
     storage.remove(STORAGE_KEY_CONTACT);
     storage.remove(STORAGE_KEY_REF);
+    storage.remove(STORAGE_KEY_PACKAGE);
+    storage.remove(STORAGE_KEY_EVENT);
+    storage.remove(STORAGE_KEY_CUSTOMIZATION);
     updateGlobalBadges();
   }
 
@@ -117,6 +123,10 @@
     return ref;
   }
 
+  function setBookingRef(ref) {
+    if (ref) storage.set(STORAGE_KEY_REF, ref);
+  }
+
   function clearBookingRef() {
     storage.remove(STORAGE_KEY_REF);
   }
@@ -125,6 +135,45 @@
     const catalog = root.BBS_CATALOG ? root.BBS_CATALOG.services : {};
     const ids = getSelectedServiceIds();
     return ids.map(id => catalog[id]).filter(Boolean);
+  }
+
+  // --- Package Type Management ---
+  function getPackageType() {
+    return storage.get(STORAGE_KEY_PACKAGE) || 'bridal-beauty';
+  }
+
+  function setPackageType(pkg) {
+    storage.set(STORAGE_KEY_PACKAGE, pkg);
+  }
+
+  // --- Event Details Management ---
+  function getEventDetails() {
+    const raw = storage.get(STORAGE_KEY_EVENT);
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function setEventDetails(data) {
+    storage.set(STORAGE_KEY_EVENT, JSON.stringify(data || {}));
+  }
+
+  // --- Customization Management ---
+  function getCustomization() {
+    const raw = storage.get(STORAGE_KEY_CUSTOMIZATION);
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function setCustomization(data) {
+    storage.set(STORAGE_KEY_CUSTOMIZATION, JSON.stringify(data || {}));
   }
 
   // --- Requirements Management ---
@@ -145,12 +194,16 @@
   // --- Contact Details Management ---
   function getContactDetails() {
     const raw = storage.get(STORAGE_KEY_CONTACT);
-    if (!raw) return {};
-    try {
-      return JSON.parse(raw) || {};
-    } catch (e) {
-      return {};
+    let contact = {};
+    if (raw) {
+      try {
+        contact = JSON.parse(raw) || {};
+      } catch (e) {
+        contact = {};
+      }
     }
+    const event = getEventDetails();
+    return Object.assign({}, event, contact);
   }
 
   function setContactDetails(data) {
@@ -173,11 +226,11 @@
     if (!container) return;
 
     const steps = [
-      { step: 1, label: 'Select Service' },
-      { step: 2, label: 'Additional Services' },
-      { step: 3, label: 'Requirements' },
-      { step: 4, label: 'Contact Details' },
-      { step: 5, label: 'Review & Send' }
+      { step: 1, label: 'Personal Details' },
+      { step: 2, label: 'Event Details' },
+      { step: 3, label: 'Service Details' },
+      { step: 4, label: 'Customization' },
+      { step: 5, label: 'Review & Confirm' }
     ];
 
     let html = '<div class="booking-progress"><div class="booking-steps">';
@@ -299,6 +352,12 @@
     hasService: hasServiceId,
     getPopulated: getPopulatedServices,
     clear: clearAll,
+    getPackageType: getPackageType,
+    setPackageType: setPackageType,
+    getEventDetails: getEventDetails,
+    setEventDetails: setEventDetails,
+    getCustomization: getCustomization,
+    setCustomization: setCustomization,
     getRequirements: getRequirements,
     setRequirements: setRequirements,
     getContact: getContactDetails,
@@ -308,6 +367,7 @@
     buildMessage: buildWhatsAppMessage,
     getWhatsAppUrl: getWhatsAppUrl,
     getRef: getBookingRef,
+    setRef: setBookingRef,
     clearRef: clearBookingRef,
     whatsappNumber: ARTIST_WHATSAPP_NUMBER
   };

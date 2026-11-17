@@ -37,20 +37,14 @@
       <!-- Desktop Nav -->
       <nav aria-label="Main Navigation">
         <ul class="nav-menu">
-          <li><a href="index.html">Home</a></li>
-          <li><a href="select-service.html" class="active">Select Service</a></li>
-          <li><a href="bridal-beauty.html">Bridal &amp; Beauty</a></li>
-          <li><a href="designer-blouse.html">Designer Blouse</a></li>
+          <li><a href="about.html">About</a></li>
           <li><a href="pricing.html">Pricing</a></li>
           <li><a href="contact.html">Contact</a></li>
         </ul>
       </nav>
 
       <div class="nav-actions">
-        <a class="btn sm ghost" href="additional-services.html" title="Current Selection">
-          <span>Selection</span>
-          <span class="selection-count-badge" style="display:none;">0</span>
-        </a>
+        <a class="btn sm gold btn-booking-nav" href="select-service.html">Booking</a>
         <button class="menu-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false">
           <span></span>
           <span></span>
@@ -63,111 +57,123 @@
   <!-- Mobile Drawer Menu -->
   <div class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation Menu">
     <ul class="mobile-nav-list">
-      <li><a href="index.html">Home <span>&rarr;</span></a></li>
-      <li><a href="select-service.html" class="active">Select Your Service <span>&rarr;</span></a></li>
-      <li><a href="bridal-beauty.html">Bridal &amp; Beauty Studio <span>&rarr;</span></a></li>
-      <li><a href="designer-blouse.html">Designer Blouse Studio <span>&rarr;</span></a></li>
-      <li><a href="pricing.html">Pricing Overview <span>&rarr;</span></a></li>
-      <li><a href="about.html">About Bhuvaneshwari <span>&rarr;</span></a></li>
-      <li><a href="gallery.html">Studio Gallery <span>&rarr;</span></a></li>
-      <li><a href="faq.html">FAQ <span>&rarr;</span></a></li>
-      <li><a href="contact.html">Contact &amp; Location <span>&rarr;</span></a></li>
+      <li><a href="about.html">About <span>&rarr;</span></a></li>
+      <li><a href="pricing.html">Pricing <span>&rarr;</span></a></li>
+      <li><a href="contact.html">Contact <span>&rarr;</span></a></li>
+      <li><a href="select-service.html" class="mobile-booking-link">Booking <span>&rarr;</span></a></li>
     </ul>
   </div>
 
-  <main class="bg-ivory space-lg">
+    <main class="bg-ivory space-lg">
     <div class="wrap">
       <div class="center" style="margin-bottom:3rem;">
-        <span class="eyebrow">Step 1 of Consultation</span>
-        <h1>Select Your Service Division</h1>
+        <span class="eyebrow">Studio Consultation &middot; Step 1 of 5</span>
+        <h1>Choose Your Bridal Experience</h1>
         <p class="lead">
-          Bhuvana's Bridal Studio is organized into two dedicated specialist divisions. Choose a division below to browse its dedicated service catalog. You can easily combine services from both divisions during your booking.
+          Bhuvana's Bridal Studio is organized into two dedicated specialist studios in Salem. Choose the experience tailored to your celebration, or combine both for an all-inclusive luxury bridal transformation.
         </p>
       </div>
 
-      <div class="division-grid">
-        <!-- Division A Card -->
-        <article class="division-card">
-          <div class="division-card-header">
-            <img src="images/demo/package-bridal.jpg" alt="Bridal &amp; Beauty Studio styling showcase" loading="lazy">
-            <span class="division-tag">Division A</span>
-          </div>
-          <div class="division-card-body">
-            <span class="eyebrow" style="margin-bottom:0;">Artistry &amp; Rituals</span>
-            <h3>Bridal &amp; Beauty Studio</h3>
-            <p>
-              Dedicated bridal makeover and ceremony styling. Crafted to celebrate your natural beauty with camera-ready HD coverage and lasting wear.
-            </p>
-
-            <div style="margin-top:0.5rem;">
-              <strong style="font-size:0.9rem; color:var(--ink);">Categories in this division:</strong>
-              <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.6rem;">
-                <a href="makeup-services.html" class="btn sm ghost" style="justify-content:space-between;">
-                  <span>1. Makeup Services (9 Services)</span>
-                  <span>&rarr;</span>
-                </a>
-                <a href="hair-styling.html" class="btn sm ghost" style="justify-content:space-between;">
-                  <span>2. Hair &amp; Bridal Styling (6 Services)</span>
-                  <span>&rarr;</span>
-                </a>
-                <a href="mehndi-services.html" class="btn sm ghost" style="justify-content:space-between;">
-                  <span>3. Mehndi Services (6 Services)</span>
-                  <span>&rarr;</span>
-                </a>
-              </div>
+      <div class="division-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+        <!-- Option 1: Bridal Beauty Experience -->
+        <article class="division-card" style="display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div class="division-card-header">
+              <img src="images/demo/package-bridal.jpg" alt="Bridal &amp; Beauty Studio styling showcase" loading="lazy">
+              <span class="division-tag">Option 1</span>
             </div>
+            <div class="division-card-body">
+              <span class="eyebrow" style="margin-bottom:0;">Artistry &amp; Rituals</span>
+              <h3>Bridal Beauty Experience</h3>
+              <p>
+                Dedicated bridal makeover and ceremony styling. Crafted to celebrate your natural beauty with camera-ready HD coverage, authentic South Indian mehndi, and long-lasting wear.
+              </p>
 
-            <a class="btn gold" href="bridal-beauty.html" style="margin-top:1.5rem;">
-              Explore Bridal &amp; Beauty Hub &rarr;
+              <ul style="list-style:none; padding:0; margin:1rem 0; display:flex; flex-direction:column; gap:0.45rem; font-size:0.9rem; color:var(--ink-light);">
+                <li>✨ <strong>Makeup:</strong> HD Camera-Ready &amp; Auspicious Muhurtham</li>
+                <li>🌸 <strong>Hairstyling:</strong> Poola Jada Braid or Fresh Jasmine Bun</li>
+                <li>🌿 <strong>Mehndi:</strong> Full Bridal Henna &amp; Traditional Mandalas</li>
+                <li>🥻 <strong>Draping:</strong> Knife-Sharp Saree Pleating &amp; Jewellery Anchoring</li>
+              </ul>
+            </div>
+          </div>
+          <div style="padding: 0 1.75rem 1.75rem;">
+            <a class="btn gold full" href="enquiry.html?package=bridal-beauty">
+              Choose Bridal Beauty &rarr;
             </a>
           </div>
         </article>
 
-        <!-- Division B Card -->
-        <article class="division-card">
-          <div class="division-card-header">
-            <img src="images/demo/portfolio-draping.jpg" alt="Designer Blouse Studio craftsmanship showcase" loading="lazy">
-            <span class="division-tag">Division B</span>
-          </div>
-          <div class="division-card-body">
-            <span class="eyebrow" style="margin-bottom:0;">Tailoring &amp; Embroidery</span>
-            <h3>Designer Blouse Studio</h3>
-            <p>
-              Bespoke bridal blouse tailoring and handcrafted Aari needlework. Custom designed to harmonize with your Kanchipuram silk sarees.
-            </p>
-
-            <div style="margin-top:0.5rem;">
-              <strong style="font-size:0.9rem; color:var(--ink);">Categories in this division:</strong>
-              <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.6rem;">
-                <a href="blouse-designing.html" class="btn sm ghost" style="justify-content:space-between;">
-                  <span>1. Blouse Designing (3 Services)</span>
-                  <span>&rarr;</span>
-                </a>
-                <a href="blouse-stitching.html" class="btn sm ghost" style="justify-content:space-between;">
-                  <span>2. Blouse Stitching (3 Services)</span>
-                  <span>&rarr;</span>
-                </a>
-                <a href="aari-work.html" class="btn sm ghost" style="justify-content:space-between;">
-                  <span>3. Aari Work &amp; Embroidery (4 Services)</span>
-                  <span>&rarr;</span>
-                </a>
-              </div>
+        <!-- Option 2: Designer Blouse Atelier -->
+        <article class="division-card" style="display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div class="division-card-header">
+              <img src="images/demo/portfolio-draping.jpg" alt="Designer Blouse Studio craftsmanship showcase" loading="lazy">
+              <span class="division-tag">Option 2</span>
             </div>
+            <div class="division-card-body">
+              <span class="eyebrow" style="margin-bottom:0;">Tailoring &amp; Embroidery</span>
+              <h3>Designer Blouse Atelier</h3>
+              <p>
+                Bespoke bridal blouse tailoring and handcrafted Aari needlework. Custom designed to harmonize with your Kanchipuram silk sarees and fit with impeccable precision.
+              </p>
 
-            <a class="btn gold" href="designer-blouse.html" style="margin-top:1.5rem;">
-              Explore Designer Blouse Hub &rarr;
+              <ul style="list-style:none; padding:0; margin:1rem 0; display:flex; flex-direction:column; gap:0.45rem; font-size:0.9rem; color:var(--ink-light);">
+                <li>✂ <strong>Designing:</strong> Signature Necklines, Back Cuts &amp; Sleeves</li>
+                <li>🪡 <strong>Stitching:</strong> Padded Princess Cut with Premium Soft Lining</li>
+                <li>🪞 <strong>Aari Work:</strong> Zardozi, Cut-Beads, Kundan &amp; Silk Thread</li>
+                <li>📐 <strong>Fitting:</strong> Custom Studio Measurements or Sample Reference</li>
+              </ul>
+            </div>
+          </div>
+          <div style="padding: 0 1.75rem 1.75rem;">
+            <a class="btn gold full" href="enquiry.html?package=designer-blouse">
+              Choose Designer Blouse &rarr;
+            </a>
+          </div>
+        </article>
+
+        <!-- Option 3: Complete Bridal Experience -->
+        <article class="division-card" style="display:flex; flex-direction:column; justify-content:space-between; border:2px solid var(--gold);">
+          <div>
+            <div class="division-card-header">
+              <img src="images/demo/hero-bridal.jpg" alt="Complete Bridal Experience luxury showcase" loading="lazy">
+              <span class="division-tag" style="background:var(--burgundy); color:var(--gold-light);">Option 3 &middot; Signature</span>
+            </div>
+            <div class="division-card-body">
+              <span class="eyebrow" style="margin-bottom:0; color:var(--burgundy);">Signature Combined Luxury</span>
+              <h3 style="color:var(--burgundy);">Complete Bridal Experience</h3>
+              <p>
+                The ultimate all-in-one celebration sanctuary. Seamlessly coordinates your custom designer blouse, handcrafted Aari embroidery, and sacred bridal makeover under one unified artistic direction.
+              </p>
+
+              <ul style="list-style:none; padding:0; margin:1rem 0; display:flex; flex-direction:column; gap:0.45rem; font-size:0.9rem; color:var(--ink-light);">
+                <li>👑 <strong>Complete Package:</strong> Both Bridal Beauty &amp; Tailoring Divisions</li>
+                <li>✨ <strong>Coordinated Aesthetics:</strong> Blouse pattern matched to makeup &amp; saree</li>
+                <li>⏰ <strong>Dedicated Priority Timeline:</strong> Muhurtham schedule guarantee</li>
+                <li>🎁 <strong>Special Package Value:</strong> Combined consultation &amp; pricing</li>
+              </ul>
+            </div>
+          </div>
+          <div style="padding: 0 1.75rem 1.75rem;">
+            <a class="btn full" href="enquiry.html?package=complete-bridal" style="background:var(--burgundy); color:var(--white);">
+              Choose Complete Bridal &rarr;
             </a>
           </div>
         </article>
       </div>
 
-      <!-- Quick Option: Jump directly to multi-service picker -->
+      <!-- Quick Option: Browse individual service catalogs -->
       <div class="center" style="margin-top:3.5rem; padding:2rem; background:var(--white); border:1px solid var(--border); border-radius:var(--radius);">
-        <h3>Prefer to pick multiple services directly?</h3>
-        <p class="lead" style="margin-inline:auto; font-size:0.95rem;">
-          You can select services across both divisions at once using our multi-service selection checklist.
+        <h3>Want to explore specific service categories?</h3>
+        <p class="lead" style="margin-inline:auto; font-size:0.95rem; margin-bottom:1.25rem;">
+          You can inspect our individual catalogs for Makeup, Hairstyling, Mehndi, Blouse Stitching, and Aari Work.
         </p>
-        <a class="btn" href="additional-services.html">Open Multi-Service Selection Checklist &rarr;</a>
+        <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+          <a class="btn sm ghost" href="bridal-beauty.html">Bridal Beauty Catalog &rarr;</a>
+          <a class="btn sm ghost" href="designer-blouse.html">Designer Blouse Catalog &rarr;</a>
+          <a class="btn sm ghost" href="additional-services.html">Multi-Service Checklist &rarr;</a>
+        </div>
       </div>
     </div>
   </main>

@@ -62,10 +62,21 @@ export async function handleSubmitBooking(request, env) {
 
     const { bookingRef, posterFile, customerData } = validation.data;
 
-    // Check if booking exists in D1
-    const existing = await D1Service.getBookingByRef(env, bookingRef);
+    // Check if booking exists in D1; if not, auto-create draft record
+    let existing = await D1Service.getBookingByRef(env, bookingRef);
     if (!existing) {
-      return errorResponse(request, env, `Booking reference ${bookingRef} not found or expired`, 404, 'NOT_FOUND');
+      await D1Service.reserveBooking(env, {
+        bookingRef: bookingRef,
+        customerName: (customerData && customerData.customer_name) || 'Valued Client',
+        customerMobile: (customerData && customerData.customer_phone) || '',
+        customerEmail: (customerData && customerData.customer_email) || '',
+        eventDate: (customerData && customerData.event_date) || '',
+        eventLocation: (customerData && customerData.location) || 'Salem',
+        selectedServices: (customerData && customerData.service_ids) || [],
+        requirements: (customerData && customerData.additional_requirements) || {},
+        specialNotes: (customerData && customerData.notes) || ''
+      });
+      existing = await D1Service.getBookingByRef(env, bookingRef);
     }
 
     if (existing.booking_status !== 'draft' && existing.booking_status !== 'pending') {

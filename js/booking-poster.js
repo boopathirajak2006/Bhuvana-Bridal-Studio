@@ -8,15 +8,25 @@
 
   // Label dictionary for customer requirements
   const REQ_LABELS = {
-    makeupStyle: 'Makeup Style',
+    eventName: 'Occasion / Event',
     eventType: 'Event Type',
+    eventTime: 'Function Time',
+    gettingReadyTime: 'Getting Ready By',
+    venueName: 'Venue / Mandapam',
+    functionLocation: 'Function Setting',
+    makeupStyle: 'Makeup Style',
     makeupPeople: 'People for Makeup',
     hairStyle: 'Hairstyle',
     drapingType: 'Saree Draping',
     mehndiStyle: 'Mehndi Design',
+    jewelleryAssistance: 'Jewellery Styling',
     blouseDesignType: 'Blouse Design',
     blouseStitchType: 'Stitching Preference',
     aariWorkType: 'Aari Embroidery',
+    blouseCount: 'Blouse Quantity',
+    fabricStatus: 'Fabric Source',
+    measurementPreference: 'Fitting / Measurement',
+    consultationPref: 'Consultation Mode',
     specificNotes: 'Special Request'
   };
 

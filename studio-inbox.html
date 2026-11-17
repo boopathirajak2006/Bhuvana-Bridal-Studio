@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Owner Studio Inbox | Bhuvana's Bridal &amp; Tailoring Studio</title>
+  <title>Owner Studio Portal | Bhuvana's Bridal &amp; Tailoring Studio</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
 
@@ -26,7 +26,7 @@
         <img src="assets/images/logo.png" alt="Bhuvana's Bridal Studio Logo" class="dash-logo">
         <div>
           <div class="dash-brand-title">Bhuvana's Studio</div>
-          <div class="dash-brand-badge">Owner Management Portal</div>
+          <div class="dash-brand-badge">Private Owner Portal</div>
         </div>
       </a>
 
@@ -34,11 +34,6 @@
         <button id="btn-push-toggle" class="dash-btn dash-btn-outline" title="Enable browser push notifications">
           <span>🔔</span>
           <span id="push-status-label">Push Alerts</span>
-        </button>
-
-        <button id="btn-export-backup" class="dash-btn dash-btn-outline" title="Export offline database backup">
-          <span>💾</span>
-          <span>Export Backup</span>
         </button>
 
         <div class="dash-user-pill">
@@ -54,73 +49,440 @@
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="dash-main">
+  <!-- 9-Section Dashboard Layout -->
+  <div class="dash-shell">
+    <!-- Sidebar Navigation -->
+    <aside class="dash-sidebar" aria-label="Portal Navigation">
+      <button class="dash-nav-btn active" data-section="overview">
+        <span class="nav-icon">📊</span>
+        <span>Overview</span>
+      </button>
+      <button class="dash-nav-btn" data-section="bookings">
+        <span class="nav-icon">📋</span>
+        <span>Bookings</span>
+      </button>
+      <button class="dash-nav-btn" data-section="calendar">
+        <span class="nav-icon">📅</span>
+        <span>Calendar</span>
+      </button>
+      <button class="dash-nav-btn" data-section="customers">
+        <span class="nav-icon">👥</span>
+        <span>Customers</span>
+      </button>
+      <button class="dash-nav-btn" data-section="services">
+        <span class="nav-icon">🏷️</span>
+        <span>Services &amp; Pricing</span>
+      </button>
+      <button class="dash-nav-btn" data-section="gallery">
+        <span class="nav-icon">🖼️</span>
+        <span>Gallery</span>
+      </button>
+      <button class="dash-nav-btn" data-section="notifications">
+        <span class="nav-icon">🔔</span>
+        <span>Notifications</span>
+      </button>
+      <button class="dash-nav-btn" data-section="reports">
+        <span class="nav-icon">📈</span>
+        <span>Reports</span>
+      </button>
+      <button class="dash-nav-btn" data-section="settings">
+        <span class="nav-icon">⚙️</span>
+        <span>Owner Settings</span>
+      </button>
+    </aside>
 
-    <!-- KPI Metric Cards -->
-    <div class="dash-metrics-grid">
-      <div class="dash-metric-card">
-        <div class="metric-label">Total Enquiries</div>
-        <div class="metric-value" id="kpi-total">0</div>
-      </div>
-      <div class="dash-metric-card metric-card-pending">
-        <div class="metric-label">Pending Approval</div>
-        <div class="metric-value" id="kpi-pending">0</div>
-      </div>
-      <div class="dash-metric-card metric-card-approved">
-        <div class="metric-label">Approved Bookings</div>
-        <div class="metric-value" id="kpi-approved">0</div>
-      </div>
-      <div class="dash-metric-card metric-card-rejected">
-        <div class="metric-label">Rejected / Cancelled</div>
-        <div class="metric-value" id="kpi-rejected">0</div>
-      </div>
-    </div>
+    <!-- Main Content Area -->
+    <main class="dash-content-area">
 
-    <!-- Filter & Search Toolbar -->
-    <div class="dash-toolbar">
-      <div class="dash-filter-tabs">
-        <button class="filter-tab active" data-status="all">All Enquiries</button>
-        <button class="filter-tab" data-status="pending">Pending</button>
-        <button class="filter-tab" data-status="approved">Approved</button>
-        <button class="filter-tab" data-status="rejected">Rejected</button>
-      </div>
+      <!-- ========================================================================= -->
+      <!-- SECTION 1: DASHBOARD OVERVIEW                                             -->
+      <!-- ========================================================================= -->
+      <section id="section-overview" class="dash-section active">
+        <!-- KPI Metric Cards -->
+        <div class="dash-metrics-grid">
+          <div class="dash-metric-card">
+            <div class="metric-label">Total Enquiries</div>
+            <div class="metric-value" id="kpi-total">0</div>
+          </div>
+          <div class="dash-metric-card metric-card-pending">
+            <div class="metric-label">Pending Approval</div>
+            <div class="metric-value" id="kpi-pending">0</div>
+          </div>
+          <div class="dash-metric-card metric-card-approved">
+            <div class="metric-label">Approved Bookings</div>
+            <div class="metric-value" id="kpi-approved">0</div>
+          </div>
+          <div class="dash-metric-card metric-card-rejected">
+            <div class="metric-label">Rejected / Cancelled</div>
+            <div class="metric-value" id="kpi-rejected">0</div>
+          </div>
+        </div>
 
-      <div style="display: flex; gap: 0.75rem; align-items: center;">
-        <input type="text" id="dash-search-input" class="dash-search-input" placeholder="Search ref, customer, phone, venue...">
-        <button id="btn-refresh" class="dash-btn dash-btn-outline" title="Refresh list">
-          <span>🔄</span>
-          <span>Refresh</span>
-        </button>
-      </div>
-    </div>
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+          <!-- Upcoming Events Schedule -->
+          <div style="background: var(--white); border: 1.5px solid var(--border); border-radius: 14px; padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+              <h3 style="font-family:'Cormorant Garamond', serif; font-size:1.45rem; color:var(--burgundy);">
+                Upcoming Studio Appointments
+              </h3>
+              <button class="dash-btn dash-btn-outline btn-switch-section" data-target="calendar" style="font-size:0.8rem; padding:0.35rem 0.75rem;">
+                Open Calendar &rarr;
+              </button>
+            </div>
+            <div id="overview-upcoming-list">
+              <p style="color:var(--ink-light); font-size:0.9rem;">Loading upcoming schedule...</p>
+            </div>
+          </div>
 
-    <!-- Bookings Table -->
-    <div class="dash-table-wrapper">
-      <table class="dash-table">
-        <thead>
-          <tr>
-            <th>Booking Ref</th>
-            <th>Customer Name</th>
-            <th>Phone / WhatsApp</th>
-            <th>Event Date</th>
-            <th>Location</th>
-            <th>Status</th>
-            <th>Poster</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="bookings-table-body">
-          <tr>
-            <td colspan="8" style="text-align: center; padding: 3rem; color: var(--ink-light);">
-              Loading studio bookings...
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+          <!-- Quick Actions & Recent Activity Feed -->
+          <div style="background: var(--white); border: 1.5px solid var(--border); border-radius: 14px; padding: 1.5rem;">
+            <h3 style="font-family:'Cormorant Garamond', serif; font-size:1.45rem; color:var(--burgundy); margin-bottom: 1rem;">
+              Studio Activity Feed
+            </h3>
+            <div id="overview-activity-feed" style="font-size: 0.88rem; line-height: 1.6; display: flex; flex-direction: column; gap: 0.85rem;">
+              <div style="padding: 0.6rem; background: var(--ivory); border-radius: 8px;">
+                <strong>System Active:</strong> Connected to Cloudflare Worker API &amp; Cloudinary storage.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-  </main>
+      <!-- ========================================================================= -->
+      <!-- SECTION 2: BOOKING MANAGEMENT                                             -->
+      <!-- ========================================================================= -->
+      <section id="section-bookings" class="dash-section">
+        <!-- Filter & Search Toolbar -->
+        <div class="dash-toolbar">
+          <div class="dash-filter-tabs">
+            <button class="filter-tab active" data-status="all">All Enquiries</button>
+            <button class="filter-tab" data-status="pending">Pending</button>
+            <button class="filter-tab" data-status="approved">Approved</button>
+            <button class="filter-tab" data-status="rejected">Rejected</button>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <input type="text" id="dash-search-input" class="dash-search-input" placeholder="Search ref, customer, phone, venue...">
+            <button id="btn-refresh" class="dash-btn dash-btn-outline" title="Refresh list">
+              <span>🔄</span>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bookings Table -->
+        <div class="dash-table-wrapper">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Booking Ref</th>
+                <th>Customer Name</th>
+                <th>Phone / WhatsApp</th>
+                <th>Event Date</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Poster</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="bookings-table-body">
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 3rem; color: var(--ink-light);">
+                  Loading studio bookings...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SECTION 3: BOOKING CALENDAR                                               -->
+      <!-- ========================================================================= -->
+      <section id="section-calendar" class="dash-section">
+        <div class="calendar-controls">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <button class="dash-btn dash-btn-outline" id="cal-prev-month">&larr; Prev Month</button>
+            <h2 id="cal-current-label" style="font-family:'Cormorant Garamond', serif; font-size:1.8rem; color:var(--burgundy); margin:0;">
+              Month Year
+            </h2>
+            <button class="dash-btn dash-btn-outline" id="cal-next-month">Next Month &rarr;</button>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <button class="dash-btn dash-btn-danger" id="btn-open-block-date" style="font-size:0.85rem;">
+              <span>🚫</span> Block Unavailable Date
+            </button>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div style="display: flex; gap: 1.5rem; margin-bottom: 1rem; font-size: 0.85rem; align-items: center;">
+          <span style="display: flex; align-items: center; gap: 0.4rem;">
+            <span style="width: 12px; height: 12px; background: #2E7D32; border-radius: 3px; display: inline-block;"></span> Approved Booking
+          </span>
+          <span style="display: flex; align-items: center; gap: 0.4rem;">
+            <span style="width: 12px; height: 12px; background: #F57F17; border-radius: 3px; display: inline-block;"></span> Pending Enquiry
+          </span>
+          <span style="display: flex; align-items: center; gap: 0.4rem;">
+            <span style="width: 12px; height: 12px; background: #C62828; border-radius: 3px; display: inline-block;"></span> Blocked Date / Studio Leave
+          </span>
+          <span style="display: flex; align-items: center; gap: 0.4rem;">
+            <span class="conflict-badge">!</span> Date Conflict (Multiple Bookings)
+          </span>
+        </div>
+
+        <!-- 7-column Calendar Grid -->
+        <div class="calendar-grid" id="calendar-grid-container">
+          <!-- Injected by JS -->
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SECTION 4: CUSTOMER MANAGEMENT                                            -->
+      <!-- ========================================================================= -->
+      <section id="section-customers" class="dash-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2 style="font-family:'Cormorant Garamond', serif; font-size:1.85rem; color:var(--burgundy); margin-bottom:0.25rem;">
+              Customer Directory
+            </h2>
+            <p style="color:var(--muted); font-size:0.9rem; margin:0;">
+              View customer profiles, past bookings history, contact details, and repeat customer tags.
+            </p>
+          </div>
+          <input type="text" id="customer-search-input" class="dash-search-input" placeholder="Search customer by name or phone...">
+        </div>
+
+        <div class="dash-table-wrapper">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>Mobile &amp; WhatsApp</th>
+                <th>City / Area</th>
+                <th>Total Bookings</th>
+                <th>Customer Tag</th>
+                <th>Quick Actions</th>
+              </tr>
+            </thead>
+            <tbody id="customers-table-body">
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 2rem; color: var(--ink-light);">
+                  Aggregating customer profiles...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SECTION 5: SERVICES & PRICING MANAGEMENT                                  -->
+      <!-- ========================================================================= -->
+      <section id="section-services" class="dash-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2 style="font-family:'Cormorant Garamond', serif; font-size:1.85rem; color:var(--burgundy); margin-bottom:0.25rem;">
+              Services &amp; Pricing Catalog
+            </h2>
+            <p style="color:var(--muted); font-size:0.9rem; margin:0;">
+              Manage services across Bridal &amp; Beauty and Designer Blouse, edit rates, and toggle availability.
+            </p>
+          </div>
+          <button class="dash-btn dash-btn-primary" id="btn-add-service">
+            <span>+</span> Add Custom Service
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
+          <button class="filter-tab active service-div-filter" data-div="all">All Divisions</button>
+          <button class="filter-tab service-div-filter" data-div="bridal-beauty">Bridal &amp; Beauty</button>
+          <button class="filter-tab service-div-filter" data-div="designer-blouse">Designer Blouse</button>
+        </div>
+
+        <div class="studio-card-grid" id="services-grid-container">
+          <!-- Injected by JS -->
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SECTION 6: GALLERY MANAGEMENT                                             -->
+      <!-- ========================================================================= -->
+      <section id="section-gallery" class="dash-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2 style="font-family:'Cormorant Garamond', serif; font-size:1.85rem; color:var(--burgundy); margin-bottom:0.25rem;">
+              Studio Gallery &amp; Portfolio
+            </h2>
+            <p style="color:var(--muted); font-size:0.9rem; margin:0;">
+              Upload, organize, and manage portfolio photos showcased to bridal customers.
+            </p>
+          </div>
+          <button class="dash-btn dash-btn-primary" id="btn-add-gallery-photo">
+            <span>📷</span> Add Portfolio Photo
+          </button>
+        </div>
+
+        <div class="gallery-grid-owner" id="gallery-grid-container">
+          <!-- Injected by JS -->
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SECTION 7: NOTIFICATION MANAGEMENT                                        -->
+      <!-- ========================================================================= -->
+      <section id="section-notifications" class="dash-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2 style="font-family:'Cormorant Garamond', serif; font-size:1.85rem; color:var(--burgundy); margin-bottom:0.25rem;">
+              Notification Management &amp; WhatsApp Logs
+            </h2>
+            <p style="color:var(--muted); font-size:0.9rem; margin:0;">
+              Track Web Push alerts to owner and Meta WhatsApp Cloud API status logs.
+            </p>
+          </div>
+          <button class="dash-btn dash-btn-outline" id="btn-retry-failed-notifs">
+            <span>🔄</span> Retry Failed Notifications
+          </button>
+        </div>
+
+        <!-- Push Status Banner -->
+        <div style="background: var(--white); border: 1.5px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <strong style="color: var(--burgundy); font-size: 1.05rem;">Firebase Web Push Notifications (FCM)</strong>
+            <div style="font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem;" id="fcm-status-description">
+              Status: Checking browser push subscription...
+            </div>
+          </div>
+          <button class="dash-btn dash-btn-outline" id="btn-test-push-alert">
+            <span>🔔</span> Send Test Alert
+          </button>
+        </div>
+
+        <!-- WhatsApp Logs Table -->
+        <h3 style="font-size: 1.15rem; color: var(--ink); margin-bottom: 0.75rem;">WhatsApp Customer Notification Logs</h3>
+        <div class="dash-table-wrapper">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Booking Ref</th>
+                <th>Recipient Mobile</th>
+                <th>Template / Event</th>
+                <th>Timestamp</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="notifications-table-body">
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 2rem; color: var(--ink-light);">
+                  No WhatsApp delivery logs recorded yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SECTION 8: REPORTS & HISTORY                                              -->
+      <!-- ========================================================================= -->
+      <section id="section-reports" class="dash-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2 style="font-family:'Cormorant Garamond', serif; font-size:1.85rem; color:var(--burgundy); margin-bottom:0.25rem;">
+              Studio Analytics &amp; Reports
+            </h2>
+            <p style="color:var(--muted); font-size:0.9rem; margin:0;">
+              Monthly booking volume, status trends, and exportable financial summaries.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.75rem;">
+            <button class="dash-btn dash-btn-outline" id="btn-export-csv">
+              <span>📊</span> Export CSV
+            </button>
+            <button class="dash-btn dash-btn-primary" id="btn-export-backup">
+              <span>💾</span> Export Full JSON
+            </button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+          <div class="dash-metric-card">
+            <div class="metric-label">Approved Rate</div>
+            <div class="metric-value" id="rep-approval-rate">0%</div>
+          </div>
+          <div class="dash-metric-card">
+            <div class="metric-label">This Month's Events</div>
+            <div class="metric-value" id="rep-month-events">0</div>
+          </div>
+          <div class="dash-metric-card">
+            <div class="metric-label">Most Requested Division</div>
+            <div class="metric-value" id="rep-popular-division" style="font-size:1.5rem; line-height:1.3;">Bridal Beauty</div>
+          </div>
+        </div>
+
+        <div style="background: var(--white); border: 1.5px solid var(--border); border-radius: 14px; padding: 1.5rem;">
+          <h3 style="font-family:'Cormorant Garamond', serif; font-size:1.45rem; color:var(--burgundy); margin-bottom: 1rem;">
+            Monthly Enquiry Breakdown
+          </h3>
+          <div id="reports-monthly-breakdown" style="font-size: 0.92rem; line-height: 1.6;">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SECTION 9: OWNER SETTINGS                                                 -->
+      <!-- ========================================================================= -->
+      <section id="section-settings" class="dash-section">
+        <h2 style="font-family:'Cormorant Garamond', serif; font-size:1.85rem; color:var(--burgundy); margin-bottom:0.25rem;">
+          Owner Settings &amp; Studio Profile
+        </h2>
+        <p style="color:var(--muted); font-size:0.9rem; margin-bottom: 1.75rem;">
+          Update studio contact information, notification preferences, and change your owner account password.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+          <!-- Password Change Card -->
+          <div style="background: var(--white); border: 1.5px solid var(--border); border-radius: 14px; padding: 1.5rem;">
+            <h3 style="font-size: 1.2rem; color: var(--ink); margin-bottom: 1rem;">Change Owner Password</h3>
+            <form id="form-change-password">
+              <div class="login-form-group">
+                <label for="pwd-current">Current Password</label>
+                <input type="password" id="pwd-current" class="login-form-input" required autocomplete="current-password">
+              </div>
+              <div class="login-form-group">
+                <label for="pwd-new">New Password (Min 8 Characters)</label>
+                <input type="password" id="pwd-new" class="login-form-input" minlength="8" required autocomplete="new-password">
+              </div>
+              <div class="login-form-group">
+                <label for="pwd-confirm">Confirm New Password</label>
+                <input type="password" id="pwd-confirm" class="login-form-input" minlength="8" required autocomplete="new-password">
+              </div>
+              <button class="dash-btn dash-btn-primary" type="submit" style="width: 100%;">
+                Update Password
+              </button>
+            </form>
+          </div>
+
+          <!-- Studio Profile Details Card -->
+          <div style="background: var(--white); border: 1.5px solid var(--border); border-radius: 14px; padding: 1.5rem;">
+            <h3 style="font-size: 1.2rem; color: var(--ink); margin-bottom: 1rem;">Studio Contact Profile</h3>
+            <div style="font-size: 0.95rem; line-height: 1.7; color: var(--ink);">
+              <p><strong>Studio Founder:</strong> Bhuvaneshwari</p>
+              <p><strong>Official Phone:</strong> +91 63740 36629</p>
+              <p><strong>WhatsApp:</strong> +91 63740 36629</p>
+              <p><strong>Location:</strong> Erumbalai, Steel Plant Road, Salem, Tamil Nadu</p>
+              <p><strong>Instagram:</strong> @__itz_berry_</p>
+              <p><strong>Operational Hours:</strong> 8:00 AM &ndash; 8:00 PM (Muhurtham Timings by Appointment)</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
 
   <!-- Detail & Decision Modal -->
   <div class="dash-modal-backdrop" id="booking-detail-modal" style="display: none;" role="dialog" aria-modal="true">
@@ -234,7 +596,34 @@
     </div>
   </div>
 
+  <!-- Block Unavailable Date Modal -->
+  <div class="dash-modal-backdrop" id="block-date-modal" style="display: none;" role="dialog" aria-modal="true">
+    <div class="dash-modal-content" style="max-width: 480px;">
+      <div class="dash-modal-header">
+        <h3 style="font-family:'Cormorant Garamond', serif; font-size:1.5rem; color:var(--burgundy);">
+          Block Unavailable Date
+        </h3>
+        <button class="dash-close-btn" id="btn-close-block-modal">&times;</button>
+      </div>
+      <form id="form-block-date">
+        <div class="login-form-group">
+          <label for="block-date-val">Select Date to Block</label>
+          <input type="date" id="block-date-val" class="login-form-input" required>
+        </div>
+        <div class="login-form-group">
+          <label for="block-reason-val">Reason for Blocking</label>
+          <input type="text" id="block-reason-val" class="login-form-input" placeholder="e.g. Studio Maintenance / Family Event" required>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+          <button class="dash-btn dash-btn-outline" id="btn-cancel-block" type="button">Cancel</button>
+          <button class="dash-btn dash-btn-danger" type="submit">Block Date</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Scripts -->
+  <script src="js/services-data.js"></script>
   <script src="js/cloudflare-config.js"></script>
   <script src="js/studio-auth.js"></script>
   <script src="js/studio-dashboard.js"></script>

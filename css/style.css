@@ -58,13 +58,6 @@ body {
   line-height: 1.65;
   font-size: 1rem;
   overflow-x: hidden;
-  padding-bottom: 72px; /* For mobile sticky bottom bar */
-}
-
-@media (min-width: 900px) {
-  body {
-    padding-bottom: 0;
-  }
 }
 
 img, picture, svg {
@@ -315,6 +308,7 @@ header.is-scrolled {
   justify-content: space-between;
   padding-block: 0.45rem;
   min-height: 64px;
+  gap: 0.5rem;
   transition: min-height 0.25s ease, padding 0.25s ease;
 }
 
@@ -326,25 +320,28 @@ header.is-scrolled .nav {
 .logo-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.75rem;
   text-decoration: none;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .logo-img {
-  width: 50px;
-  height: 50px;
-  max-height: 50px;
+  width: 48px;
+  height: 48px;
+  max-height: 48px;
   border-radius: 50%;
   object-fit: contain;
   display: block;
   border: 1.5px solid var(--champagne);
   transition: transform 0.25s ease, width 0.25s ease, height 0.25s ease;
   background: var(--white);
+  flex-shrink: 0;
 }
 
 header.is-scrolled .logo-img {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
 }
 
 .logo-link:hover .logo-img {
@@ -354,21 +351,27 @@ header.is-scrolled .logo-img {
 .brand-text {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .brand-title {
   font-family: var(--serif);
-  font-size: 1.25rem;
+  font-size: clamp(1.05rem, 3.6vw, 1.35rem);
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.15;
   color: var(--ink);
+  white-space: nowrap;
 }
 
 .brand-sub {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: var(--gold-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Desktop Navigation Menu */
@@ -408,15 +411,20 @@ header.is-scrolled .logo-img {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-shrink: 0;
 }
 
 .nav-actions .btn-booking-nav {
   background: var(--gold-dark);
   color: var(--white);
   font-weight: 500;
-  padding: 0.55rem 1.35rem;
+  padding: 0.5rem 1.25rem;
   border-radius: 999px;
-  min-height: 40px;
+  min-height: 38px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-actions .btn-booking-nav:hover {
@@ -431,15 +439,16 @@ header.is-scrolled .logo-img {
   display: inline-flex;
   flex-direction: column;
   justify-content: space-around;
-  width: 44px;
-  height: 44px;
-  padding: 10px;
+  width: 42px;
+  height: 42px;
+  padding: 9px;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: var(--transition);
   z-index: 110;
+  flex-shrink: 0;
 }
 
 .menu-toggle:hover {
@@ -553,6 +562,79 @@ header.is-scrolled .logo-img {
   }
   .mobile-drawer {
     display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --container: min(1140px, 100% - 1.25rem);
+    --container-narrow: min(840px, 100% - 1.25rem);
+  }
+  .nav {
+    min-height: 58px;
+    gap: 0.35rem;
+  }
+  .logo-link {
+    gap: 0.5rem;
+  }
+  .logo-img {
+    width: 40px;
+    height: 40px;
+  }
+  header.is-scrolled .logo-img {
+    width: 36px;
+    height: 36px;
+  }
+  .brand-title {
+    font-size: clamp(0.92rem, 3.4vw, 1.15rem);
+    white-space: nowrap;
+  }
+  .brand-sub {
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+  }
+  .nav-actions {
+    gap: 0.4rem;
+  }
+  .nav-actions .btn-booking-nav {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+    min-height: 34px;
+  }
+  .menu-toggle {
+    width: 38px;
+    height: 38px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  :root {
+    --container: min(1140px, 100% - 1rem);
+    --container-narrow: min(840px, 100% - 1rem);
+  }
+  .logo-link {
+    gap: 0.35rem;
+  }
+  .logo-img {
+    width: 34px;
+    height: 34px;
+  }
+  .brand-title {
+    font-size: 0.86rem;
+  }
+  .brand-sub {
+    display: none;
+  }
+  .nav-actions .btn-booking-nav {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+    min-height: 32px;
+  }
+  .menu-toggle {
+    width: 34px;
+    height: 34px;
+    padding: 7px;
   }
 }
 
@@ -1325,45 +1407,6 @@ footer {
   }
 }
 
-/* ---------- Mobile Sticky Bottom Action Bar ---------- */
-.mobile-action-bar {
-  position: fixed;
-  inset: auto 0 0;
-  z-index: 90;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1.3fr;
-  background: var(--white);
-  border-top: 1px solid var(--border);
-  padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: 0 -4px 16px rgba(59, 47, 42, 0.08);
-}
-
-.mobile-action-bar a {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
-  padding: 0.75rem 0.4rem;
-  text-align: center;
-  font-size: 0.84rem;
-  font-weight: 500;
-  color: var(--ink);
-  border-right: 1px solid var(--border);
-  min-height: 54px;
-}
-
-.mobile-action-bar a:last-child {
-  border-right: none;
-  background: var(--ink);
-  color: var(--ivory);
-}
-
-@media (min-width: 900px) {
-  .mobile-action-bar {
-    display: none;
-  }
-}
 
 /* ---------- Accessibility & Motion ---------- */
 @media (prefers-reduced-motion: reduce) {
@@ -1744,4 +1787,128 @@ footer {
   font-size: 0.95rem;
   color: var(--ink);
   font-weight: 500;
+}
+
+/* ---------- Unified 5-Step Booking Workflow & Customization ---------- */
+.booking-step {
+  display: none;
+}
+
+.booking-step.active {
+  display: block;
+  animation: stepFadeIn 0.3s ease-out;
+}
+
+@keyframes stepFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.package-selected-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--gold-light);
+  border: 1px solid var(--border);
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--burgundy);
+  margin-bottom: 1.25rem;
+}
+
+.image-upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  background: var(--white);
+  transition: var(--transition);
+  position: relative;
+}
+
+.image-upload-zone:hover,
+.image-upload-zone.dragover {
+  border-color: var(--gold-dark);
+  background: var(--champagne);
+}
+
+.image-upload-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+}
+
+.image-preview-item {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+  background: var(--ivory);
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-preview-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(59, 47, 42, 0.85);
+  color: var(--white);
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.image-preview-remove:hover {
+  background: #C62828;
+  transform: scale(1.1);
+}
+
+.review-edit-btn {
+  font-size: 0.82rem;
+  color: var(--gold-dark);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.review-edit-btn:hover {
+  background: var(--gold-light);
+  border-color: var(--gold);
 }
