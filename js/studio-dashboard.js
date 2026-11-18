@@ -17,7 +17,6 @@
   let currentStatusFilter = 'all';
   let currentSearchQuery = '';
   let activeSelectedBooking = null;
-  let posterObjectUrl = null;
 
   // Calendar State
   let calCurrentDate = new Date();
@@ -851,39 +850,6 @@
         consentBox.innerHTML = `Customer did not opt-in for WhatsApp. Contact manually by phone call.`;
       }
 
-      // Poster Stream
-      const posterImg = document.getElementById('detail-poster-img');
-      const posterDownloadBtn = document.getElementById('btn-download-detail-poster');
-
-      if (posterObjectUrl) {
-        URL.revokeObjectURL(posterObjectUrl);
-        posterObjectUrl = null;
-      }
-
-      posterImg.src = '';
-      posterImg.alt = 'Loading poster...';
-
-      try {
-        const token = localStorage.getItem('bbs_owner_token');
-        const posterRes = await fetch(config.url(`/api/admin/bookings/${b.id}/poster`), {
-          headers: token ? { 'Authorization': 'Bearer ' + token } : {},
-          credentials: 'include'
-        });
-
-        if (posterRes.ok) {
-          const blob = await posterRes.blob();
-          posterObjectUrl = URL.createObjectURL(blob);
-          posterImg.src = posterObjectUrl;
-          posterDownloadBtn.href = posterObjectUrl;
-          posterDownloadBtn.download = `Bhuvana-Booking-${b.booking_ref}.png`;
-        } else {
-          posterImg.alt = 'Poster image unavailable';
-        }
-      } catch (imgErr) {
-        console.warn('Failed to stream poster image:', imgErr);
-        posterImg.alt = 'Poster image preview failed';
-      }
-
       // Action Buttons visibility based on status
       const actionPanel = document.getElementById('detail-action-buttons');
       if (b.booking_status === 'pending') {
@@ -915,10 +881,6 @@
   function closeDetailModal() {
     const modal = document.getElementById('booking-detail-modal');
     if (modal) modal.style.display = 'none';
-    if (posterObjectUrl) {
-      URL.revokeObjectURL(posterObjectUrl);
-      posterObjectUrl = null;
-    }
     activeSelectedBooking = null;
   }
 
