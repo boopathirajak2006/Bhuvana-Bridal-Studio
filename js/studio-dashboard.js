@@ -20,6 +20,15 @@
   let pushDeviceRegistered = false;
   let pushRegistrationError = '';
 
+  function isIOSDevice() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  function isStandaloneApp() {
+    return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  }
+
   // Calendar State
   let calCurrentDate = new Date();
   let blockedDatesCache = [
@@ -705,6 +714,10 @@
       } else if (desc) {
         desc.textContent = 'Status: Click Push Alerts and allow notifications on this device.';
       }
+    } else if (desc && isIOSDevice() && !isStandaloneApp()) {
+      desc.textContent = 'iPhone: Add this portal to your Home Screen, open it from its icon, then enable Push Alerts.';
+    } else if (desc) {
+      desc.textContent = 'Status: This browser does not support push notifications.';
     }
 
     if (notificationLogs.length === 0) {
@@ -1115,8 +1128,13 @@
   }
 
   async function handleEnablePushNotifications() {
+    if (isIOSDevice() && !isStandaloneApp()) {
+      alert('iPhone-la push alerts use panna, Share icon → Add to Home Screen pannunga. Add aana icon-lendhu portal open panni Push Alerts tap pannunga. iOS 16.4 or newer thevai.');
+      return;
+    }
+
     if (!('Notification' in window)) {
-      alert('This browser does not support desktop push notifications.');
+      alert('This browser does not support push notifications. iPhone-na Home Screen app-a install panni adhilirundhu open pannunga.');
       return;
     }
 
