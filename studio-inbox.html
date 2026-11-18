@@ -443,7 +443,7 @@
           Update studio contact information, notification preferences, and change your owner account password.
         </p>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div class="owner-settings-grid">
           <!-- Password Change Card -->
           <div style="background: var(--white); border: 1.5px solid var(--border); border-radius: 14px; padding: 1.5rem;">
             <h3 style="font-size: 1.2rem; color: var(--ink); margin-bottom: 1rem;">Change Owner Password</h3>
@@ -499,7 +499,7 @@
         <button class="dash-close-btn" id="btn-close-detail-modal" aria-label="Close modal">&times;</button>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+      <div class="booking-detail-grid">
         <!-- Left Column: Information -->
         <div>
           <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--ink);">Customer &amp; Event</h3>
@@ -533,7 +533,7 @@
       </div>
 
       <!-- Action Decision Bar -->
-      <div style="border-top: 1.5px solid var(--border); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;" id="detail-action-buttons">
+      <div class="booking-detail-actions" id="detail-action-buttons">
         <button class="dash-btn dash-btn-danger" id="btn-trigger-reject">
           <span>✕</span>
           <span>Reject Booking</span>
@@ -545,7 +545,7 @@
       </div>
 
       <!-- Audit Trail Section -->
-      <div style="margin-top: 2rem; border-top: 1px dashed var(--border); padding-top: 1rem;">
+      <div class="booking-detail-audit">
         <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--ink-light); margin-bottom: 0.5rem;">Audit Trail &amp; History</h4>
         <div id="detail-audit-trail" style="font-size: 0.8rem; color: var(--ink-light); font-family: monospace;"></div>
       </div>
