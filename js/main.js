@@ -51,10 +51,11 @@
   const navLinks = document.querySelectorAll('.nav-menu a, .mobile-nav-list a');
 
   navLinks.forEach(function (link) {
-    const linkPath = link.getAttribute('href');
-    if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
-      link.classList.add('active');
-    }
+    const linkUrl = new URL(link.href, window.location.href);
+    const currentUrl = new URL(window.location.href);
+    const samePageAnchor = linkUrl.pathname === currentUrl.pathname && linkUrl.hash === currentUrl.hash;
+    const homeTop = currentPath === 'index.html' && !currentUrl.hash && linkUrl.pathname === currentUrl.pathname && linkUrl.hash === '#top';
+    if (samePageAnchor || homeTop) link.classList.add('active');
   });
 
   // Compact Sticky Header Scroll State

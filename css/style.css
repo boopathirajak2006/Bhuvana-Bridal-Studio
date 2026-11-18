@@ -379,11 +379,11 @@ header.is-scrolled .logo-img {
   display: none;
   list-style: none;
   align-items: center;
-  gap: 1.75rem;
+  gap: clamp(0.55rem, 1vw, 0.9rem);
 }
 
 .nav-menu a {
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 500;
   color: var(--ink);
   padding: 0.3rem 0;
@@ -1404,6 +1404,357 @@ footer {
     flex-direction: row;
     justify-content: space-between;
     text-align: left;
+  }
+}
+
+/* ---------- Homepage Gallery Links ---------- */
+.home-gallery-links {
+  width: min(100%, 900px);
+  margin: 2.25rem auto 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.home-gallery-link {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.4rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.home-gallery-link:hover {
+  border-color: var(--gold);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.home-gallery-link-mark {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--gold-dark);
+  background: var(--gold-light);
+  font-family: var(--serif);
+  font-size: 1.25rem;
+}
+
+.home-gallery-link > span:nth-child(2) {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.home-gallery-link strong {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  line-height: 1.2;
+}
+
+.home-gallery-link small {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.home-gallery-arrow {
+  flex: 0 0 auto;
+  color: var(--gold-dark);
+  font-size: 1.25rem;
+}
+
+/* ---------- Booking Category Chooser ---------- */
+.booking-choice-page {
+  min-height: calc(100vh - 64px);
+  padding: clamp(1.25rem, 4vw, 3.5rem) 1rem;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at top, rgba(232, 213, 188, 0.42), transparent 62%), var(--ivory);
+}
+
+.booking-choice-dialog {
+  position: relative;
+  width: min(100%, 1040px);
+  padding: clamp(1.25rem, 3.5vw, 2.75rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow-lg);
+}
+
+.booking-choice-close {
+  position: absolute;
+  top: 0.85rem;
+  right: 1rem;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--ink-light);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.booking-choice-close:hover {
+  background: var(--gold-light);
+  color: var(--gold-dark);
+}
+
+.booking-choice-heading {
+  max-width: 660px;
+  margin: 0 auto 1.75rem;
+  padding-inline: 1.5rem;
+  text-align: center;
+}
+
+.booking-choice-heading .eyebrow {
+  margin-bottom: 0.35rem;
+}
+
+.booking-choice-heading h1 {
+  font-size: clamp(1.8rem, 4vw, 2.65rem);
+}
+
+.booking-choice-heading p {
+  margin: 0.65rem 0 0;
+  color: var(--muted);
+}
+
+.booking-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.booking-choice-card {
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--ivory);
+}
+
+.booking-choice-card > img {
+  width: 100%;
+  height: clamp(130px, 17vw, 175px);
+  object-fit: cover;
+}
+
+.booking-choice-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1rem;
+}
+
+.booking-choice-kicker {
+  color: var(--gold-dark);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.booking-choice-card h2 {
+  margin-top: 0.25rem;
+  font-size: clamp(1.3rem, 2vw, 1.65rem);
+}
+
+.booking-choice-card p {
+  flex: 1;
+  margin: 0.4rem 0 1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.booking-choice-card .btn {
+  min-height: 44px;
+  margin-top: auto;
+  padding: 0.6rem 0.75rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.booking-choice-card-featured {
+  border-color: var(--gold);
+  box-shadow: inset 0 0 0 1px var(--gold);
+}
+
+.booking-choice-card-featured .btn {
+  background: var(--burgundy, #6f1830);
+  color: var(--white);
+}
+
+.booking-choice-note {
+  margin: 1.1rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+@media (max-width: 780px) {
+  .booking-choice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-choice-card {
+    display: grid;
+    grid-template-columns: minmax(110px, 0.75fr) minmax(0, 1.25fr);
+  }
+
+  .booking-choice-card > img {
+    height: 100%;
+    min-height: 180px;
+  }
+}
+
+@media (max-width: 600px) {
+  .home-gallery-links {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .home-gallery-link {
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .home-gallery-link-mark {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+
+  .home-gallery-link strong {
+    font-size: 1.18rem;
+  }
+
+  .home-gallery-link small {
+    font-size: 0.82rem;
+  }
+
+  .booking-choice-page {
+    min-height: auto;
+    padding: 1rem 0.75rem 2rem;
+  }
+
+  .booking-choice-dialog {
+    padding: 1.3rem 1rem 1.15rem;
+    border-radius: 18px;
+  }
+
+  .booking-choice-close {
+    top: 0.65rem;
+    right: 0.65rem;
+    width: 34px;
+    height: 34px;
+  }
+
+  .booking-choice-heading {
+    margin-bottom: 1.1rem;
+    padding-inline: 0.25rem;
+  }
+
+  .booking-choice-heading h1 {
+    padding-inline: 0.3rem;
+    font-size: clamp(1.65rem, 7vw, 2.1rem);
+  }
+
+  .booking-choice-heading p {
+    font-size: 0.9rem;
+  }
+
+  .booking-choice-card {
+    grid-template-columns: minmax(92px, 0.68fr) minmax(0, 1.32fr);
+  }
+
+  .booking-choice-card > img {
+    min-height: 172px;
+  }
+
+  .booking-choice-card-body {
+    padding: 0.8rem;
+  }
+
+  .booking-choice-kicker {
+    font-size: 0.62rem;
+  }
+
+  .booking-choice-card h2 {
+    font-size: 1.25rem;
+  }
+
+  .booking-choice-card p {
+    font-size: 0.81rem;
+    margin: 0.3rem 0 0.65rem;
+  }
+
+  .booking-choice-card .btn {
+    min-height: 40px;
+    font-size: 0.81rem;
+  }
+
+  footer {
+    padding-block: 2.5rem;
+    font-size: 0.88rem;
+  }
+
+  .footer-grid {
+    gap: 1.75rem;
+  }
+
+  .footer-brand {
+    gap: 0.75rem;
+  }
+
+  .footer-brand > div {
+    min-width: 0;
+  }
+
+  .footer-brand h4 {
+    font-size: 1.12rem;
+    line-height: 1.25;
+  }
+
+  .footer-brand p,
+  .footer-links a {
+    font-size: 0.84rem;
+    overflow-wrap: anywhere;
+  }
+
+  .footer-col h5 {
+    margin-bottom: 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  .footer-links {
+    gap: 0.45rem;
+  }
+
+  .footer-bottom {
+    margin-top: 2rem;
+    padding-top: 1.1rem;
+    gap: 0.55rem;
+    font-size: 0.75rem;
+    text-wrap: balance;
   }
 }
 
