@@ -1626,6 +1626,68 @@ footer {
 }
 
 @media (max-width: 600px) {
+  #divisions .division-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-top: 1.5rem;
+  }
+
+  #divisions .division-card {
+    min-width: 0;
+  }
+
+  #divisions .division-card-header {
+    height: clamp(90px, 28vw, 125px);
+  }
+
+  #divisions .division-card-body {
+    gap: 0.55rem;
+    padding: 0.75rem;
+  }
+
+  #divisions .division-card-body .eyebrow {
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    line-height: 1.35;
+  }
+
+  #divisions .division-card-body h3 {
+    font-size: 1.12rem;
+    line-height: 1.2;
+  }
+
+  #divisions .division-card-body p {
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  #divisions .division-highlights {
+    gap: 0.35rem;
+    margin-block: 0.25rem 0.5rem;
+  }
+
+  #divisions .division-highlights li {
+    align-items: flex-start;
+    gap: 0.3rem;
+    font-size: 0.68rem;
+    line-height: 1.4;
+  }
+
+  #divisions .division-highlights li::before {
+    flex: 0 0 auto;
+    margin-top: 0.06rem;
+    font-size: 0.65rem;
+  }
+
+  #divisions .division-card-body .btn {
+    width: 100%;
+    align-self: stretch;
+    justify-content: center;
+    padding: 0.5rem 0.35rem;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
   .home-gallery-links {
     grid-template-columns: 1fr;
     gap: 0.75rem;
@@ -1718,11 +1780,17 @@ footer {
   }
 
   .footer-grid {
-    gap: 1.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem 1rem;
   }
 
   .footer-brand {
+    grid-column: 1 / -1;
     gap: 0.75rem;
+  }
+
+  .footer-col {
+    min-width: 0;
   }
 
   .footer-brand > div {
