@@ -17,6 +17,8 @@
   let currentStatusFilter = 'all';
   let currentSearchQuery = '';
   let activeSelectedBooking = null;
+  let pushDeviceRegistered = false;
+  let pushRegistrationError = '';
 
   // Calendar State
   let calCurrentDate = new Date();
@@ -58,6 +60,14 @@
     renderGallery();
     renderNotifications();
     renderReports();
+
+    if (window.Notification && Notification.permission === 'granted' && config?.isFirebaseConfigured()) {
+      registerOwnerPushDevice().catch(err => {
+        pushRegistrationError = err.message || 'Device registration failed';
+        renderNotifications();
+        console.warn('[Push] Existing permission could not register this device:', err);
+      });
+    }
   }
 
   function setupOwnerHeader() {
@@ -206,11 +216,11 @@
     if (testPushBtn) {
       testPushBtn.addEventListener('click', () => {
         if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification("Bhuvana's Studio Alert", {
-            body: "Test Alert: Push notification service is functioning properly.",
+          new Notification("Bhuvana's Studio Browser Alert", {
+            body: 'This local check confirms browser permission only; new booking alerts require this device to be registered.',
             icon: "assets/images/logo.png"
           });
-          alert('Test alert triggered!');
+          alert('Browser notification displayed. Check the status above to confirm this device is registered for booking alerts.');
         } else {
           alert('Please enable browser push notifications first.');
         }
@@ -684,10 +694,16 @@
     if (!tbody) return;
 
     if ('Notification' in window) {
-      if (Notification.permission === 'granted') {
-        if (desc) desc.textContent = 'Status: Active & Subscribed to instant owner push alerts.';
-      } else {
-        if (desc) desc.textContent = 'Status: Not enabled. Click "Push Alerts" above to allow notifications.';
+      if (Notification.permission === 'granted' && pushDeviceRegistered) {
+        if (desc) desc.textContent = 'Status: This browser is registered for new booking alerts.';
+      } else if (Notification.permission === 'granted' && pushRegistrationError) {
+        if (desc) desc.textContent = `Status: Browser permission is allowed, but device setup failed: ${pushRegistrationError}`;
+      } else if (Notification.permission === 'granted') {
+        if (desc) desc.textContent = 'Status: Browser permission is allowed. Click Push Alerts to connect this device.';
+      } else if (Notification.permission === 'denied') {
+        if (desc) desc.textContent = 'Status: Notifications are blocked for this site in browser settings.';
+      } else if (desc) {
+        desc.textContent = 'Status: Click Push Alerts and allow notifications on this device.';
       }
     }
 
@@ -1045,6 +1061,59 @@
   // ==========================================
   // WEB PUSH NOTIFICATIONS
   // ==========================================
+  async function registerOwnerPushDevice() {
+    if (!config || !config.isFirebaseConfigured()) {
+      throw new Error('Firebase web configuration or the public VAPID key is missing.');
+    }
+    if (!window.isSecureContext || !('serviceWorker' in navigator)) {
+      throw new Error('Push setup needs the secure HTTPS website and service worker support.');
+    }
+    if (!window.firebase || typeof firebase.messaging !== 'function') {
+      throw new Error('Firebase Messaging did not load. Check internet and reload this page.');
+    }
+    if (!('Notification' in window) || Notification.permission !== 'granted') {
+      throw new Error('Allow notifications for this website in the browser first.');
+    }
+
+    if (!firebase.apps || firebase.apps.length === 0) {
+      firebase.initializeApp(config.firebaseConfig);
+    } else if (firebase.app().options.projectId !== config.firebaseConfig.projectId) {
+      throw new Error('Firebase app is initialized for a different project.');
+    }
+
+    const serviceWorkerUrl = new URL('firebase-messaging-sw.js', document.baseURI);
+    const serviceWorkerScope = new URL('.', document.baseURI).pathname;
+    const serviceWorkerRegistration = await navigator.serviceWorker.register(serviceWorkerUrl.href, {
+      scope: serviceWorkerScope
+    });
+    const messaging = firebase.messaging();
+    const fcmToken = await messaging.getToken({
+      vapidKey: config.firebaseVapidKey,
+      serviceWorkerRegistration
+    });
+
+    if (!fcmToken) {
+      throw new Error('Firebase did not return a device registration token.');
+    }
+
+    const registration = await config.apiFetch('/api/admin/devices/register', {
+      method: 'POST',
+      body: JSON.stringify({ fcmToken, deviceName: 'Owner web browser' })
+    });
+    if (!registration || !registration.success) {
+      throw new Error(registration?.error || 'The owner device could not be saved by the booking server.');
+    }
+
+    pushDeviceRegistered = true;
+    pushRegistrationError = '';
+    const pushBtn = document.getElementById('btn-push-toggle');
+    const pushLabel = document.getElementById('push-status-label');
+    if (pushBtn) pushBtn.classList.add('dash-btn-success');
+    if (pushLabel) pushLabel.textContent = 'Push Enabled';
+    renderNotifications();
+    return registration;
+  }
+
   async function handleEnablePushNotifications() {
     if (!('Notification' in window)) {
       alert('This browser does not support desktop push notifications.');
@@ -1054,17 +1123,17 @@
     try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        const pushBtn = document.getElementById('btn-push-toggle');
-        const pushLabel = document.getElementById('push-status-label');
-        if (pushBtn) pushBtn.classList.add('dash-btn-success');
-        if (pushLabel) pushLabel.textContent = 'Push Enabled';
-        renderNotifications();
-        alert('Push notifications enabled successfully for owner alerts.');
+        pushRegistrationError = '';
+        await registerOwnerPushDevice();
+        alert('This device is registered for new booking alerts.');
       } else {
         alert('Push notification permission was denied or dismissed.');
       }
     } catch (err) {
       console.warn('Push error:', err);
+      pushRegistrationError = err.message || 'Device registration failed';
+      renderNotifications();
+      alert(`Browser permission was granted, but booking alerts could not be set up: ${pushRegistrationError}`);
     }
   }
 

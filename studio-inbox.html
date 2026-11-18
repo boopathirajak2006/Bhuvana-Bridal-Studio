@@ -339,7 +339,7 @@
               Notification Management &amp; WhatsApp Logs
             </h2>
             <p style="color:var(--muted); font-size:0.9rem; margin:0;">
-              Track Web Push alerts to owner and Meta WhatsApp Cloud API status logs.
+              Register this device for new booking alerts. Customer WhatsApp messages remain owner-reviewed before sending.
             </p>
           </div>
           <button class="dash-btn dash-btn-outline" id="btn-retry-failed-notifs">
@@ -355,8 +355,8 @@
               Status: Checking browser push subscription...
             </div>
           </div>
-          <button class="dash-btn dash-btn-outline" id="btn-test-push-alert">
-            <span>🔔</span> Send Test Alert
+          <button class="dash-btn dash-btn-outline" id="btn-test-push-alert" title="Show a local browser notification to check this device's permission">
+            <span>🔔</span> Test Browser Alert
           </button>
         </div>
 
@@ -613,6 +613,8 @@
   <script src="js/services-data.js"></script>
   <script src="js/cloudflare-config.js"></script>
   <script src="js/studio-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-messaging-compat.js"></script>
   <script src="js/studio-dashboard.js"></script>
 </body>
 
