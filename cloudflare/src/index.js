@@ -1,7 +1,7 @@
 /**
  * Bhuvana's Bridal & Tailoring Studio — Cloudflare Worker Entrypoint
  * Provides high-performance, serverless booking management on Cloudflare Workers,
- * Cloudflare D1 (Database & Owner Auth), Cloudinary (Image Storage), FCM & WhatsApp.
+ * Cloudflare D1, private Cloudinary image storage, FCM & WhatsApp.
  */
 
 import { handleOptions, errorResponse, jsonResponse } from './utils/response.js';
@@ -30,13 +30,6 @@ import {
   handleWhatsAppWebhookGet,
   handleWhatsAppWebhookPost
 } from './routes/whatsapp.js';
-import {
-  handleGetPublicGallery,
-  handleListAdminGallery,
-  handleAddGalleryPhoto,
-  handleUpdateGalleryPhoto,
-  handleDeleteGalleryPhoto
-} from './routes/gallery.js';
 
 export default {
   /**
@@ -72,7 +65,7 @@ export default {
         return await handleReserveBooking(request, env);
       }
 
-      if ((path === '/api/bookings/submit' || path === '/api/bookings') && method === 'POST') {
+      if (path === '/api/bookings/submit' && method === 'POST') {
         return await handleSubmitBooking(request, env);
       }
 
@@ -84,13 +77,6 @@ export default {
       const statusMatch = path.match(/^\/api\/bookings\/status\/([A-Za-z0-9-]+)$/);
       if (statusMatch && method === 'GET') {
         return await handleGetBookingStatus(request, env, statusMatch[1]);
-      }
-
-      // -------------------------------------------------------------
-      // Public Gallery Endpoints
-      // -------------------------------------------------------------
-      if (path === '/api/gallery' && method === 'GET') {
-        return await handleGetPublicGallery(request, env);
       }
 
       // -------------------------------------------------------------
@@ -140,11 +126,6 @@ export default {
           return await handleGetStats(request, env, auth);
         }
 
-        // Change password
-        if (path === '/api/admin/change-password' && method === 'POST') {
-          return await handleChangePassword(request, env, auth);
-        }
-
         // Export data
         if (path === '/api/admin/bookings/export' && method === 'GET') {
           return await handleExportBookings(request, env, auth);
@@ -188,27 +169,6 @@ export default {
         const bookingDetailMatch = path.match(/^\/api\/admin\/bookings\/([A-Za-z0-9-]+)$/);
         if (bookingDetailMatch && method === 'GET') {
           return await handleGetBookingDetails(request, env, auth, bookingDetailMatch[1]);
-        }
-
-        // -----------------------------------------------------------
-        // Gallery Management Endpoints (Owner Protected)
-        // -----------------------------------------------------------
-        if (path === '/api/admin/gallery' && method === 'GET') {
-          return await handleListAdminGallery(request, env, auth);
-        }
-
-        if (path === '/api/admin/gallery' && method === 'POST') {
-          return await handleAddGalleryPhoto(request, env, auth);
-        }
-
-        const adminGalleryItemMatch = path.match(/^\/api\/admin\/gallery\/([A-Za-z0-9_-]+)$/);
-        if (adminGalleryItemMatch) {
-          if (method === 'PUT') {
-            return await handleUpdateGalleryPhoto(request, env, auth, adminGalleryItemMatch[1]);
-          }
-          if (method === 'DELETE') {
-            return await handleDeleteGalleryPhoto(request, env, auth, adminGalleryItemMatch[1]);
-          }
         }
       }
 

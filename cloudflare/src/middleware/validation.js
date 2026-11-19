@@ -81,13 +81,13 @@ export function validateBookingReservation(body) {
 export async function validateBookingSubmission(formData) {
   const errors = [];
 
-  const reservationToken = formData.get('reservation_token') || null;
+  const reservationToken = formData.get('reservation_token');
   if (reservationToken && typeof reservationToken !== 'string') {
     errors.push('Invalid reservation token');
   }
 
   const bookingRef = formData.get('booking_ref');
-  if (!bookingRef || !/^BBS-\d{4}-[A-Za-z0-9]{4,10}$/i.test(bookingRef)) {
+  if (!bookingRef || !/^BBS-\d{4}-[2-9A-HJ-NP-Z]{4,6}$/.test(bookingRef)) {
     errors.push('Valid booking reference (BBS-YYYY-XXXX) is required');
   }
 
@@ -117,12 +117,6 @@ export async function validateBookingSubmission(formData) {
     } catch {
       errors.push('Invalid JSON in booking_data field');
     }
-  }
-
-  // Map top-level whatsapp_consent if not inside booking_data
-  const formConsent = formData.get('whatsapp_consent');
-  if (customerData && customerData.whatsapp_consent === undefined && formConsent !== null) {
-    customerData.whatsapp_consent = formConsent === 'true' || formConsent === '1';
   }
 
   if (errors.length > 0) {

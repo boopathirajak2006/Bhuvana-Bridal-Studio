@@ -47,10 +47,6 @@ export class AuthService {
     if (token) await D1Service.deleteOwnerSession(env, token);
   }
 
-  static async changePassword(env, ownerId, currentPassword, newPassword, currentToken) {
-    return await D1Service.updateOwnerPassword(env, ownerId, currentPassword, newPassword, currentToken);
-  }
-
   static async authenticateRequest(request, env) {
     if (!env.DB) return null;
 

@@ -1,7 +1,4 @@
-/**
- * Authentication Middleware for Bhuvana's Bridal Studio Cloudflare Worker
- * Validates owner session cookies and Bearer tokens via Cloudflare D1.
- */
+/** Requires an authenticated owner with an unexpired D1-backed session. */
 
 import { AuthService } from '../services/auth.js';
 import { errorResponse } from '../utils/response.js';
@@ -9,7 +6,7 @@ import { errorResponse } from '../utils/response.js';
 export async function requireOwnerAuth(request, env) {
   if (!env.DB) {
     return {
-      errorResponse: errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE')
+      errorResponse: errorResponse(request, env, 'D1 database is unavailable', 503, 'SERVICE_UNAVAILABLE')
     };
   }
 
