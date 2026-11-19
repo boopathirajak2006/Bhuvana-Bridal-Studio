@@ -30,6 +30,8 @@ import {
   handleWhatsAppWebhookGet,
   handleWhatsAppWebhookPost
 } from './routes/whatsapp.js';
+import { handlePublicGallery, handleOwnerGalleryList, handleOwnerGalleryUpload, handleOwnerGalleryDelete } from './routes/gallery.js';
+import { handlePublicContent, handleOwnerContent } from './routes/content.js';
 
 export default {
   /**
@@ -57,6 +59,9 @@ export default {
           version: '2.0.0'
         });
       }
+
+      if (path === '/api/gallery' && method === 'GET') return await handlePublicGallery(request, env);
+      if (path === '/api/content' && method === 'GET') return await handlePublicContent(request, env);
 
       // -------------------------------------------------------------
       // Public Booking Endpoints (Customer Facing)
@@ -116,6 +121,11 @@ export default {
       if (path.startsWith('/api/admin/')) {
         const { auth, errorResponse: authErr } = await requireOwnerAuth(request, env);
         if (authErr) return authErr;
+
+        if (path === '/api/admin/gallery' && method === 'GET') return await handleOwnerGalleryList(request, env, auth);
+        if (path === '/api/admin/gallery/photo' && method === 'POST') return await handleOwnerGalleryUpload(request, env, auth);
+        if (path === '/api/admin/gallery/photo' && method === 'DELETE') return await handleOwnerGalleryDelete(request, env, auth);
+        if (path === '/api/admin/content' && ['GET', 'PUT'].includes(method)) return await handleOwnerContent(request, env, auth);
 
         if (path === '/api/admin/change-password' && method === 'POST') {
           return await handleChangePassword(request, env, auth);

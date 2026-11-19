@@ -839,6 +839,37 @@ header.is-scrolled .logo-img {
   }
 }
 
+/* Studio detail catalogs reveal in two-card rows on desktop. */
+body.studio-detail-page .cards-grid,
+body.studio-detail-page .feature-columns {
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  body.studio-detail-page .cards-grid,
+  body.studio-detail-page .feature-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+body.studio-detail-page .cards-grid > *,
+body.studio-detail-page .feature-columns > * {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 520ms ease, transform 520ms ease;
+}
+body.studio-detail-page .cards-grid > *.is-revealed,
+body.studio-detail-page .feature-columns > *.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  body.studio-detail-page .cards-grid > *,
+  body.studio-detail-page .feature-columns > * {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 .cards-grid.cols-4 {
   grid-template-columns: 1fr;
 }
@@ -1040,6 +1071,21 @@ header.is-scrolled .logo-img {
   font-size: 0.88rem;
   color: var(--muted);
   margin: 0;
+}
+
+.gallery-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--muted);
+}
+.gallery-slot-empty {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: var(--ivory);
+  border: 1px dashed var(--border);
 }
 
 /* ---------- About & Founder Grid ---------- */
@@ -1321,6 +1367,8 @@ footer {
   font-size: 0.92rem;
   border-top: 2px solid var(--gold-dark);
 }
+
+footer .cms-managed { white-space: pre-line; }
 
 .footer-grid {
   display: grid;

@@ -31,6 +31,48 @@ export class CloudinaryService {
     return await this.sha1(toSign);
   }
 
+  static async uploadGalleryPhoto(env, category, slot, arrayBuffer) {
+    const { CLOUDINARY_CLOUD_NAME: cloudName, CLOUDINARY_API_KEY: apiKey, CLOUDINARY_API_SECRET: apiSecret } = env;
+    if ([cloudName, apiKey, apiSecret].some(value => this.isPlaceholder(value))) {
+      throw new Error('Cloudinary gallery credentials are not configured');
+    }
+    const timestamp = Math.floor(Date.now() / 1000);
+    const folder = 'bhuvana_gallery';
+    const publicId = `${folder}/${category}/slot-${slot}`;
+    const params = { overwrite: 'true', public_id: publicId, timestamp: String(timestamp), upload_preset: '' };
+    delete params.upload_preset;
+    const signature = await this.generateApiSignature(params, apiSecret);
+    const form = new FormData();
+    form.append('file', new Blob([arrayBuffer]), `slot-${slot}`);
+    form.append('api_key', apiKey);
+    form.append('timestamp', String(timestamp));
+    form.append('public_id', publicId);
+    form.append('overwrite', 'true');
+    form.append('signature', signature);
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: form });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error?.message || `Cloudinary upload failed (${response.status})`);
+    return { public_id: result.public_id, secure_url: result.secure_url };
+  }
+
+  static async deleteGalleryPhoto(env, publicId) {
+    const { CLOUDINARY_CLOUD_NAME: cloudName, CLOUDINARY_API_KEY: apiKey, CLOUDINARY_API_SECRET: apiSecret } = env;
+    if ([cloudName, apiKey, apiSecret].some(value => this.isPlaceholder(value))) {
+      throw new Error('Cloudinary gallery credentials are not configured');
+    }
+    const timestamp = Math.floor(Date.now() / 1000);
+    const signature = await this.generateApiSignature({ public_id: publicId, timestamp: String(timestamp) }, apiSecret);
+    const form = new FormData();
+    form.append('public_id', publicId);
+    form.append('api_key', apiKey);
+    form.append('timestamp', String(timestamp));
+    form.append('signature', signature);
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, { method: 'POST', body: form });
+    const result = await response.json();
+    if (!response.ok || (result.result !== 'ok' && result.result !== 'not found')) throw new Error(result.error?.message || 'Cloudinary photo deletion failed');
+    return result;
+  }
+
   /**
    * Generate Cloudinary delivery signature for authenticated/private images
    * Formula: First 8 characters of Base64 URL-safe SHA-1 of `[v<version>/]<public_id><api_secret>`

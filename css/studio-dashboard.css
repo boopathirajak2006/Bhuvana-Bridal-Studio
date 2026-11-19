@@ -966,3 +966,8 @@ body {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.content-editor-list { display: grid; gap: 0.85rem; margin-top: 1.25rem; }
+.content-editor-row { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(240px, 2fr) auto; gap: 0.75rem; align-items: center; background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem; }
+.content-editor-row label { color: var(--ink); font-weight: 600; }
+.content-editor-row textarea { min-height: 2.75rem; resize: vertical; }
+@media (max-width: 720px) { .content-editor-row { grid-template-columns: 1fr; } }

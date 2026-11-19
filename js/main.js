@@ -79,4 +79,19 @@
     updateHeaderOnScroll();
   }
 
+  // Smoothly reveal service and process cards in their two-column rows.
+  const revealItems = document.querySelectorAll('.studio-detail-page .cards-grid > *, .studio-detail-page .feature-columns > *');
+  if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const revealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-revealed');
+        revealObserver.unobserve(entry.target);
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -32px 0px' });
+    revealItems.forEach(item => revealObserver.observe(item));
+  } else {
+    revealItems.forEach(item => item.classList.add('is-revealed'));
+  }
+
 })();
