@@ -292,8 +292,10 @@
 
     const addGalleryButton = document.getElementById('btn-add-gallery-photo');
     if (addGalleryButton) addGalleryButton.addEventListener('click', () => {
-      document.querySelector('#gallery-grid-container input[type="file"]:not([data-filled="true"])')?.click();
+      document.querySelector('#gallery-grid-container input[type="file"]')?.click();
     });
+    const galleryCategoryFilter = document.getElementById('gallery-subcategory-filter');
+    if (galleryCategoryFilter) galleryCategoryFilter.addEventListener('change', renderGallery);
 
     // Exports
     const exportCsvBtn = document.getElementById('btn-export-csv');
@@ -681,6 +683,30 @@
     }
   }
 
+  const galleryTaxonomy = {
+    'bridal-beauty': {
+      label: 'Bridal & Beauty',
+      categories: [
+        ['baby-shower', 'Baby Shower Makeup'], ['wedding-makeup', 'Wedding Makeup'], ['party-makeup', 'Party Makeup'],
+        ['engagement-makeup', 'Engagement Makeup'], ['reception-makeup', 'Reception Makeup'], ['bridal-hairstyling', 'Bridal Hairstyling'], ['other-bridal', 'Other Bridal Work']
+      ]
+    },
+    'designer-blouse': {
+      label: 'Designer Blouse',
+      categories: [
+        ['bridal-blouse', 'Bridal Blouse Designs'], ['maggam-work', 'Maggam Work'], ['aari-work', 'Aari Work'],
+        ['embroidery', 'Embroidery Designs'], ['sleeve-designs', 'Sleeve Designs'], ['neck-designs', 'Neck Designs'], ['other-blouse', 'Other Blouse Work']
+      ]
+    }
+  };
+
+  function getSelectedGalleryCategory() {
+    const [category, subcategory] = (document.getElementById('gallery-subcategory-filter')?.value || 'bridal-beauty|baby-shower').split('|');
+    return { category, subcategory };
+  }
+
+  function galleryKey(category, subcategory, slot) { return `${category}|${subcategory}|${slot}`; }
+
   const managedContentFields = [
     ['home.specialities.title', 'Home · Specialities heading', 'Our Studio Specialities'],
     ['home.specialities.bridal.title', 'Home · Bridal division title', 'Bridal & Beauty Studio'],
@@ -691,8 +717,8 @@
     ['home.gallery.description', 'Home · Gallery description', 'Explore bridal artistry and handcrafted blouse designs in their dedicated galleries.'],
     ['bridal.page.title', 'Bridal page · Heading', 'Bridal & Beauty Studio'],
     ['blouse.page.title', 'Blouse page · Heading', 'Designer Blouse Studio'],
-    ['gallery.bridal.title', 'Gallery · Bridal category title', 'Bridal & Beauty Gallery'],
-    ['gallery.blouse.title', 'Gallery · Blouse category title', 'Designer Blouse & Aari Work Gallery'],
+    ['gallery.bridal.title', 'Gallery · Bridal page heading', 'Bridal & Beauty Gallery'],
+    ['gallery.blouse.title', 'Gallery · Blouse page heading', 'Designer Blouse Gallery'],
     ['footer.brand', 'Footer · Studio name', "Bhuvana's Bridal Studio"],
     ['footer.description', 'Footer · Studio description', 'Bridal makeup artist & designer blouse studio by Bhuvaneshwari.\nErumbalai, Steel Plant & nearby areas, Salem, Tamil Nadu.']
   ];
@@ -727,42 +753,39 @@
   function renderGallery() {
     const container = document.getElementById('gallery-grid-container');
     if (!container) return;
-    const categories = [
-      ['bridal-beauty', 'Bridal & Beauty'],
-      ['designer-blouse', 'Designer Blouse']
-    ];
-    container.innerHTML = categories.flatMap(([category, label]) => Array.from({ length: 6 }, (_, i) => {
+    const { category, subcategory } = getSelectedGalleryCategory();
+    const division = galleryTaxonomy[category];
+    const subcategoryLabel = division.categories.find(([key]) => key === subcategory)?.[1] || 'Work';
+    container.innerHTML = Array.from({ length: 6 }, (_, i) => {
       const slot = i + 1;
-      const photo = galleryItems.find(item => item.category === category && Number(item.slot) === slot);
+      const photo = galleryItems.find(item => item.category === category && item.subcategory === subcategory && Number(item.slot) === slot);
+      const key = galleryKey(category, subcategory, slot);
       return `<div class="gallery-card-owner">
-        ${photo ? `<img src="${escapeHtml(photo.image_url)}" alt="${escapeHtml(photo.title || label + ' customer work')}">` : `<div class="gallery-slot-empty">Photo slot ${slot}</div>`}
-        <div class="gallery-card-meta"><div><strong>${escapeHtml(label)} · ${slot}</strong>
-          <input class="login-form-input" data-gallery-title="${category}-${slot}" maxlength="100" placeholder="Photo caption" value="${escapeHtml(photo?.title || '')}">
-          <input type="file" accept="image/*" data-gallery-photo="${category}-${slot}" aria-label="${photo ? 'Replace' : 'Add'} ${label} photo slot ${slot}">
-          <button type="button" class="dash-btn dash-btn-primary" data-gallery-save="${category}-${slot}">${photo ? 'Replace Photo' : 'Add Photo'}</button>
-          ${photo ? `<button type="button" class="dash-btn dash-btn-danger" data-gallery-delete="${category}-${slot}">Delete</button>` : ''}
+        ${photo ? `<img src="${escapeHtml(photo.image_url)}" alt="${escapeHtml(photo.title || subcategoryLabel + ' customer work')}">` : `<div class="gallery-slot-empty">Photo slot ${slot}</div>`}
+        <div class="gallery-card-meta"><div><strong>${escapeHtml(subcategoryLabel)} · Slot ${slot}</strong>
+          <input class="login-form-input" data-gallery-title="${key}" maxlength="100" placeholder="Photo caption" value="${escapeHtml(photo?.title || '')}">
+          <input type="file" accept="image/jpeg,image/png,image/webp" data-gallery-photo="${key}" aria-label="${photo ? 'Replace' : 'Add'} ${subcategoryLabel} photo slot ${slot}">
+          <button type="button" class="dash-btn dash-btn-primary" data-gallery-save="${key}">${photo ? 'Replace Photo' : 'Add Photo'}</button>
+          ${photo ? `<button type="button" class="dash-btn dash-btn-danger" data-gallery-delete="${key}">Delete</button>` : ''}
         </div></div></div>`;
-    })).join('');
+    }).join('');
 
     container.querySelectorAll('[data-gallery-save]').forEach(button => button.addEventListener('click', async () => {
-      const [category, slot] = button.dataset.gallerySave.split('-').slice(0, -1).join('-') === 'bridal-beauty'
-        ? ['bridal-beauty', button.dataset.gallerySave.split('-').at(-1)]
-        : ['designer-blouse', button.dataset.gallerySave.split('-').at(-1)];
-      const input = container.querySelector(`[data-gallery-photo="${category}-${slot}"]`);
+      const [category, subcategory, slot] = button.dataset.gallerySave.split('|');
+      const key = galleryKey(category, subcategory, slot);
+      const input = container.querySelector(`[data-gallery-photo="${key}"]`);
       const file = input?.files?.[0];
       if (!file) { alert('Choose a completed customer-work photo first.'); return; }
-      const form = new FormData(); form.append('category', category); form.append('slot', slot);
-      form.append('title', container.querySelector(`[data-gallery-title="${category}-${slot}"]`)?.value || ''); form.append('photo', file);
+      const form = new FormData(); form.append('category', category); form.append('subcategory', subcategory); form.append('slot', slot);
+      form.append('title', container.querySelector(`[data-gallery-title="${key}"]`)?.value || ''); form.append('photo', file);
       button.disabled = true;
       try { await config.apiFetch('/api/admin/gallery/photo', { method: 'POST', body: form }); await loadGallery(); }
       catch (err) { alert(`Photo upload failed: ${err.message}`); button.disabled = false; }
     }));
     container.querySelectorAll('[data-gallery-delete]').forEach(button => button.addEventListener('click', async () => {
       if (!confirm('Delete this published portfolio photo?')) return;
-      const [category, slot] = button.dataset.galleryDelete.startsWith('bridal-beauty-')
-        ? ['bridal-beauty', button.dataset.galleryDelete.slice('bridal-beauty-'.length)]
-        : ['designer-blouse', button.dataset.galleryDelete.slice('designer-blouse-'.length)];
-      try { await config.apiFetch('/api/admin/gallery/photo', { method: 'DELETE', body: JSON.stringify({ category, slot: Number(slot) }) }); await loadGallery(); }
+      const [category, subcategory, slot] = button.dataset.galleryDelete.split('|');
+      try { await config.apiFetch('/api/admin/gallery/photo', { method: 'DELETE', body: JSON.stringify({ category, subcategory, slot: Number(slot) }) }); await loadGallery(); }
       catch (err) { alert(`Photo could not be deleted: ${err.message}`); }
     }));
   }

@@ -127,7 +127,7 @@
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+        <div class="overview-secondary-grid">
           <!-- Upcoming Events Schedule -->
           <div style="background: var(--white); border: 1.5px solid var(--border); border-radius: 14px; padding: 1.5rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
@@ -337,6 +337,28 @@
               Upload, organize, and manage portfolio photos showcased to bridal customers.
             </p>
           </div>
+          <label class="gallery-category-picker">Upload category
+            <select id="gallery-subcategory-filter" class="login-form-input">
+              <optgroup label="Bridal &amp; Beauty">
+                <option value="bridal-beauty|baby-shower">Baby Shower Makeup</option>
+                <option value="bridal-beauty|wedding-makeup">Wedding Makeup</option>
+                <option value="bridal-beauty|party-makeup">Party Makeup</option>
+                <option value="bridal-beauty|engagement-makeup">Engagement Makeup</option>
+                <option value="bridal-beauty|reception-makeup">Reception Makeup</option>
+                <option value="bridal-beauty|bridal-hairstyling">Bridal Hairstyling</option>
+                <option value="bridal-beauty|other-bridal">Other Bridal Work</option>
+              </optgroup>
+              <optgroup label="Designer Blouse">
+                <option value="designer-blouse|bridal-blouse">Bridal Blouse Designs</option>
+                <option value="designer-blouse|maggam-work">Maggam Work</option>
+                <option value="designer-blouse|aari-work">Aari Work</option>
+                <option value="designer-blouse|embroidery">Embroidery Designs</option>
+                <option value="designer-blouse|sleeve-designs">Sleeve Designs</option>
+                <option value="designer-blouse|neck-designs">Neck Designs</option>
+                <option value="designer-blouse|other-blouse">Other Blouse Work</option>
+              </optgroup>
+            </select>
+          </label>
           <button class="dash-btn dash-btn-primary" id="btn-add-gallery-photo">
             <span>📷</span> Add Portfolio Photo
           </button>

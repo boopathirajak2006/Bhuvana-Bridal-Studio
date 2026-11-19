@@ -31,14 +31,14 @@ export class CloudinaryService {
     return await this.sha1(toSign);
   }
 
-  static async uploadGalleryPhoto(env, category, slot, arrayBuffer) {
+  static async uploadGalleryPhoto(env, category, subcategory, slot, arrayBuffer) {
     const { CLOUDINARY_CLOUD_NAME: cloudName, CLOUDINARY_API_KEY: apiKey, CLOUDINARY_API_SECRET: apiSecret } = env;
     if ([cloudName, apiKey, apiSecret].some(value => this.isPlaceholder(value))) {
       throw new Error('Cloudinary gallery credentials are not configured');
     }
     const timestamp = Math.floor(Date.now() / 1000);
     const folder = 'bhuvana_gallery';
-    const publicId = `${folder}/${category}/slot-${slot}`;
+    const publicId = `${folder}/${category}/${subcategory}/slot-${slot}`;
     const params = { overwrite: 'true', public_id: publicId, timestamp: String(timestamp), upload_preset: '' };
     delete params.upload_preset;
     const signature = await this.generateApiSignature(params, apiSecret);

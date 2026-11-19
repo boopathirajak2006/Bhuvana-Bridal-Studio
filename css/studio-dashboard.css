@@ -234,6 +234,15 @@ body {
   margin-bottom: 2rem;
 }
 
+.overview-secondary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+.gallery-category-picker { display: grid; gap: 0.3rem; min-width: min(260px, 100%); color: var(--ink); font-size: 0.85rem; font-weight: 600; }
+.gallery-category-picker .login-form-input { min-height: 2.6rem; }
+
 .dash-metric-card {
   background: var(--white);
   border: 1.5px solid var(--border);
@@ -579,23 +588,41 @@ body {
 
 @media (max-width: 900px) {
   .dash-shell {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    align-items: start;
   }
   .dash-sidebar {
-    width: 100%;
-    flex-direction: row;
-    overflow-x: auto;
+    width: 150px;
+    height: calc(100dvh - 64px);
+    position: sticky;
+    top: 64px;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
     border-right: none;
-    border-bottom: 1.5px solid var(--border);
-    padding: 0.75rem;
+    border-right: 1.5px solid var(--border);
+    border-bottom: none;
+    padding: 0.65rem 0.5rem;
   }
   .dash-nav-btn {
-    white-space: nowrap;
-    padding: 0.5rem 0.85rem;
-    font-size: 0.85rem;
+    width: 100%;
+    white-space: normal;
+    padding: 0.55rem 0.45rem;
+    font-size: 0.74rem;
+    line-height: 1.2;
+    gap: 0.4rem;
   }
   .dash-content-area {
-    padding: 1.25rem 1rem;
+    padding: 1rem 0.75rem;
+  }
+  .overview-secondary-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  .dash-content-area h2 {
+    font-size: 1.4rem !important;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -797,7 +824,7 @@ body {
 
 @media (max-width: 900px) {
   .dash-nav-btn {
-    width: auto;
+    width: 100%;
     flex: 0 0 auto;
   }
 
@@ -855,15 +882,26 @@ body {
 
   .dash-sidebar {
     gap: 0.4rem;
-    scroll-snap-type: x proximity;
+    scroll-snap-type: none;
+    width: 128px;
+    height: calc(100dvh - 104px);
+    top: 104px;
+    padding: 0.5rem 0.35rem;
   }
 
   .dash-nav-btn {
-    scroll-snap-align: start;
+    scroll-snap-align: none;
+    align-items: flex-start;
+    font-size: 0.68rem;
+    padding: 0.55rem 0.35rem;
+    border-radius: 8px;
   }
 
+  .dash-nav-btn .nav-icon { flex: 0 0 18px; width: 18px; font-size: 1rem; }
+
   .dash-content-area {
-    padding: 1rem 0.75rem;
+    min-width: 0;
+    padding: 0.8rem 0.55rem;
   }
 
   .dash-main {
@@ -894,13 +932,21 @@ body {
   }
 
   .dash-metrics-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
   }
 
   .dash-metric-card {
-    padding: 1.1rem;
+    min-width: 0;
+    padding: 0.65rem;
   }
+  .metric-label { font-size: 0.58rem; letter-spacing: 0.025em; overflow-wrap: anywhere; }
+  .metric-value { font-size: 1.8rem; }
+  .overview-secondary-grid > div { min-width: 0; padding: 0.75rem !important; }
+  .dash-section > div[style*="justify-content: space-between"] { align-items: stretch !important; }
+  .dash-toolbar > div:last-child { min-width: 0; width: 100%; }
+  .dash-table-wrapper { max-width: 100%; }
+  .dash-modal-content { overflow-x: hidden; }
 
   .dash-modal-backdrop {
     padding: 0.5rem;
@@ -971,3 +1017,11 @@ body {
 .content-editor-row label { color: var(--ink); font-weight: 600; }
 .content-editor-row textarea { min-height: 2.75rem; resize: vertical; }
 @media (max-width: 720px) { .content-editor-row { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .dash-content-area, .dash-section, .dash-section > * { min-width: 0; }
+  .gallery-category-picker { width: 100%; min-width: 0; }
+  .gallery-category-picker select { width: 100%; max-width: 100%; }
+  .dash-table-wrapper { max-width: 100%; overflow-x: auto; }
+  .calendar-controls { align-items: stretch; }
+  .calendar-controls > div { flex-wrap: wrap; gap: 0.45rem !important; }
+}
