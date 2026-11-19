@@ -1,10 +1,9 @@
 /**
  * Authentication Middleware for Bhuvana's Bridal Studio Cloudflare Worker
- * Validates owner session cookies and Bearer tokens via Supabase Auth exclusively.
+ * Validates owner session cookies and Bearer tokens via Cloudflare D1.
  */
 
 import { AuthService } from '../services/auth.js';
-import { SupabaseService } from '../services/supabase.js';
 import { errorResponse } from '../utils/response.js';
 
 /**
@@ -18,9 +17,9 @@ import { errorResponse } from '../utils/response.js';
  */
 export async function requireOwnerAuth(request, env) {
   try {
-    if (!SupabaseService.isConfigured(env)) {
+    if (!env.DB) {
       return {
-        errorResponse: errorResponse(request, env, 'Supabase Auth is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE')
+        errorResponse: errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE')
       };
     }
 

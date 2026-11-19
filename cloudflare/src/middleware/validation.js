@@ -81,17 +81,14 @@ export function validateBookingReservation(body) {
 export async function validateBookingSubmission(formData) {
   const errors = [];
 
-  const reservationToken = formData.get('reservation_token');
-  if (!reservationToken || typeof reservationToken !== 'string') {
-    errors.push('Missing reservation token');
-  }
+  const reservationToken = formData.get('reservation_token') || null;
 
   const bookingRef = formData.get('booking_ref');
-  if (!bookingRef || !/^BBS-2026-[2-9A-HJ-NP-Z]{6}$/.test(bookingRef)) {
-    errors.push('Valid booking reference (BBS-2026-XXXXXX) is required');
+  if (!bookingRef || !/^BBS-\d{4}-[A-Z0-9]{4,10}$/i.test(bookingRef)) {
+    errors.push('Valid booking reference (BBS-YYYY-XXXX) is required');
   }
 
-  const posterFile = formData.get('poster');
+  const posterFile = formData.get('poster') || formData.get('poster_image');
   if (!posterFile) {
     errors.push('Generated booking poster image file is required');
   } else {
@@ -117,6 +114,12 @@ export async function validateBookingSubmission(formData) {
     } catch {
       errors.push('Invalid JSON in booking_data field');
     }
+  }
+
+  // Map top-level whatsapp_consent if not inside booking_data
+  const formConsent = formData.get('whatsapp_consent');
+  if (customerData && customerData.whatsapp_consent === undefined && formConsent !== null) {
+    customerData.whatsapp_consent = formConsent === 'true' || formConsent === '1';
   }
 
   if (errors.length > 0) {

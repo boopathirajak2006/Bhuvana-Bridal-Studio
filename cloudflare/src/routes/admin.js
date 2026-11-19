@@ -1,17 +1,14 @@
 /**
  * Protected Studio Owner / Admin Routes
- * Handles login, session management, booking reviews, private poster streaming from R2, and exports.
+ * Handles login, session management, booking reviews, private poster streaming from Cloudinary, and exports.
  * 
- * Storage: Cloudflare R2 exclusively (Private bucket streaming)
- * Database & Auth: Supabase Postgres & Supabase Auth exclusively (Zero D1 write mirrors)
- * Historical: D1 read-only inspection strictly for older preserved records
+ * Storage: Cloudinary exclusively (Private authenticated streaming)
+ * Database & Auth: Cloudflare D1 exclusively (PBKDF2 passwords & secure sessions)
  */
 
 import { jsonResponse, errorResponse, setCookieHeader, clearCookieHeader } from '../utils/response.js';
 import { AuthService } from '../services/auth.js';
-import { SupabaseService } from '../services/supabase.js';
 import { CloudinaryService } from '../services/cloudinary.js';
-import { R2Service } from '../services/r2.js';
 import { D1Service } from '../services/d1.js';
 import { WhatsAppService } from '../services/whatsapp.js';
 import { validateRejectionPayload } from '../middleware/validation.js';
@@ -33,8 +30,8 @@ export async function handleAdminLogin(request, env) {
       return errorResponse(request, env, 'Username/Email and password are required', 400, 'MISSING_CREDENTIALS');
     }
 
-    if (!SupabaseService.isConfigured(env)) {
-      return errorResponse(request, env, 'Supabase Auth is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
+    if (!env.DB) {
+      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
 
     const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || '127.0.0.1';
@@ -53,7 +50,6 @@ export async function handleAdminLogin(request, env) {
       success: true,
       message: 'Login successful',
       token: result.token,
-      refreshToken: result.refreshToken,
       expiresAt: result.expiresAt,
       owner: result.owner
     }, 200, {
@@ -99,12 +95,41 @@ export async function handleAdminMe(request, env, auth) {
 }
 
 /**
+ * POST /api/admin/change-password
+ */
+export async function handleChangePassword(request, env, auth) {
+  try {
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return errorResponse(request, env, 'Invalid JSON body', 400, 'INVALID_JSON');
+    }
+
+    const { currentPassword, newPassword } = body || {};
+    if (!currentPassword || !newPassword) {
+      return errorResponse(request, env, 'Current password and new password are required', 400, 'MISSING_FIELDS');
+    }
+
+    await AuthService.changePassword(env, auth.owner.id, currentPassword, newPassword);
+
+    return jsonResponse(request, env, {
+      success: true,
+      message: 'Owner password updated successfully'
+    });
+  } catch (err) {
+    console.error('[Route: ChangePassword] Error:', err);
+    return errorResponse(request, env, err.message || 'Failed to update owner password', 400, 'CHANGE_PASSWORD_FAILED');
+  }
+}
+
+/**
  * GET /api/admin/bookings
  */
 export async function handleListBookings(request, env, auth) {
   try {
-    if (!SupabaseService.isConfigured(env)) {
-      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
+    if (!env.DB) {
+      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
 
     const url = new URL(request.url);
@@ -113,7 +138,7 @@ export async function handleListBookings(request, env, auth) {
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
     const offset = Math.max(parseInt(url.searchParams.get('offset') || '0', 10), 0);
 
-    const result = await SupabaseService.listBookings(env, { status, search, limit, offset });
+    const result = await D1Service.listBookings(env, { status, search, limit, offset });
 
     return jsonResponse(request, env, {
       success: true,
@@ -133,11 +158,11 @@ export async function handleListBookings(request, env, auth) {
  */
 export async function handleGetStats(request, env, auth) {
   try {
-    if (!SupabaseService.isConfigured(env)) {
-      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
+    if (!env.DB) {
+      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
 
-    const metrics = await SupabaseService.getMetrics(env);
+    const metrics = await D1Service.getMetrics(env);
 
     return jsonResponse(request, env, {
       success: true,
@@ -154,21 +179,11 @@ export async function handleGetStats(request, env, auth) {
  */
 export async function handleGetBookingDetails(request, env, auth, bookingId) {
   try {
-    let booking = null;
-    let isHistorical = false;
-
-    // 1. Primary: Look up in Supabase
-    if (SupabaseService.isConfigured(env)) {
-      booking = await SupabaseService.getBookingById(env, bookingId);
+    if (!env.DB) {
+      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
 
-    // 2. Read-only fallback: Look up in D1 historical archives
-    if (!booking && env.DB) {
-      booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
-      if (booking) {
-        isHistorical = true;
-      }
-    }
+    const booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
 
     if (!booking) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
@@ -176,21 +191,16 @@ export async function handleGetBookingDetails(request, env, auth, bookingId) {
 
     let auditLogs = [];
     let notificationJobs = [];
-    if (env.DB) {
-      try {
-        auditLogs = await D1Service.getAuditLogsForBooking(env, booking.id).catch(() => []);
-        notificationJobs = await D1Service.listNotificationJobsForBooking(env, booking.id).catch(() => []);
-      } catch (e) {
-        // non-blocking
-      }
+    try {
+      auditLogs = await D1Service.recordAuditLog ? await env.DB.prepare('SELECT * FROM booking_audit_logs WHERE booking_id = ? ORDER BY created_at DESC').bind(booking.id).all().then(r => r.results || []).catch(() => []) : [];
+      notificationJobs = await D1Service.getNotificationJobsForBooking(env, booking.id).catch(() => []);
+    } catch (e) {
+      // non-blocking
     }
 
     return jsonResponse(request, env, {
       success: true,
-      booking: {
-        ...booking,
-        is_historical: isHistorical
-      },
+      booking,
       auditLogs,
       notificationJobs
     });
@@ -202,28 +212,24 @@ export async function handleGetBookingDetails(request, env, auth, bookingId) {
 
 /**
  * GET /api/admin/bookings/:id/poster
- * Streams the private booking poster PNG to authenticated studio owner.
- * Dynamically resolves storage provider (Cloudinary vs Cloudflare R2) from stored booking metadata.
+ * Streams the private booking poster PNG from Cloudinary to authenticated studio owner.
  */
 export async function handleGetBookingPoster(request, env, auth, bookingId) {
   try {
-    let booking = null;
-    if (SupabaseService.isConfigured(env)) {
-      booking = await SupabaseService.getBookingById(env, bookingId);
+    if (!env.DB) {
+      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
-    if (!booking && env.DB) {
-      booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
-    }
+
+    const booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
 
     if (!booking) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     }
 
     const publicId = booking.poster_public_id || '';
-    const key = booking.poster_key || booking.poster_public_id || booking.booking_ref || '';
-    const secureUrl = booking.poster_secure_url || booking.poster_url || '';
+    const secureUrl = booking.poster_secure_url || '';
 
-    if (!publicId && !key && !secureUrl) {
+    if (!publicId && !secureUrl) {
       return errorResponse(request, env, 'No poster image stored for this booking', 404, 'NOT_FOUND');
     }
 
@@ -231,60 +237,17 @@ export async function handleGetBookingPoster(request, env, auth, bookingId) {
     let contentLength = null;
     let etag = null;
 
-    // Determine storage provider from actual metadata
-    const isCloudinary = Boolean(
-      (publicId && publicId.includes('bhuvana_posters')) ||
-      (secureUrl && secureUrl.includes('cloudinary.com')) ||
-      booking.poster_version
-    );
-
-    const isR2 = Boolean(
-      (publicId && publicId.startsWith('posters/')) ||
-      (booking.poster_key && booking.poster_key.startsWith('posters/'))
-    );
-
-    if (isCloudinary) {
-      // 1. Fetch from Cloudinary
-      const cdnRes = await CloudinaryService.getPosterStream(env, booking);
-      if (cdnRes && cdnRes.body) {
-        imageBody = cdnRes.body;
-        contentLength = cdnRes.headers.get('content-length');
-        etag = cdnRes.headers.get('etag');
-      }
-    } else if (isR2 && (env.BUCKET || env.POSTERS)) {
-      // 2. Fetch from Cloudflare R2
-      const r2Object = await R2Service.getPoster(env, key);
-      if (r2Object && r2Object.body) {
-        imageBody = r2Object.body;
-        if (r2Object.size) contentLength = String(r2Object.size);
-        if (r2Object.httpEtag) etag = r2Object.httpEtag;
-      }
-    } else {
-      // Fallback: Check Cloudinary first, then R2 if available
-      if (env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET) {
-        try {
-          const cdnRes = await CloudinaryService.getPosterStream(env, booking);
-          if (cdnRes && cdnRes.body) {
-            imageBody = cdnRes.body;
-            contentLength = cdnRes.headers.get('content-length');
-            etag = cdnRes.headers.get('etag');
-          }
-        } catch (e) {
-          // Cloudinary fallback error ignored
+    // Fetch poster stream from Cloudinary
+    if (env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET) {
+      try {
+        const cdnRes = await CloudinaryService.getPosterStream(env, booking);
+        if (cdnRes && cdnRes.body) {
+          imageBody = cdnRes.body;
+          contentLength = cdnRes.headers.get('content-length');
+          etag = cdnRes.headers.get('etag');
         }
-      }
-
-      if (!imageBody && (env.BUCKET || env.POSTERS)) {
-        try {
-          const r2Object = await R2Service.getPoster(env, key);
-          if (r2Object && r2Object.body) {
-            imageBody = r2Object.body;
-            if (r2Object.size) contentLength = String(r2Object.size);
-            if (r2Object.httpEtag) etag = r2Object.httpEtag;
-          }
-        } catch (e) {
-          // R2 fallback error ignored
-        }
+      } catch (e) {
+        console.warn('[Route: BookingPoster] Cloudinary stream fetch error:', e);
       }
     }
 
@@ -323,32 +286,17 @@ export async function handleGetBookingPoster(request, env, auth, bookingId) {
  */
 export async function handleApproveBooking(request, env, auth, bookingId) {
   try {
-    if (!SupabaseService.isConfigured(env)) {
-      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
+    if (!env.DB) {
+      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
 
-    let booking = await SupabaseService.getBookingById(env, bookingId);
-
-    // If not found in Supabase, verify if it is an older D1 record
-    if (!booking && env.DB) {
-      const historical = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
-      if (historical) {
-        return errorResponse(
-          request,
-          env,
-          `Booking ${historical.booking_ref} is a historical D1 record and cannot be modified. It is preserved in read-only mode.`,
-          409,
-          'HISTORICAL_RECORD_READONLY'
-        );
-      }
-    }
-
+    const booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
     if (!booking) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     }
 
-    // Update Supabase exclusively (Zero mirrored writes to D1)
-    const approvedBooking = await SupabaseService.approveBooking(env, booking.id, auth.owner);
+    // Update D1 booking status
+    const approvedBooking = await D1Service.approveBooking(env, booking.id, auth.owner);
 
     // Trigger WhatsApp notification if customer opted in
     let whatsappResult = null;
@@ -388,32 +336,17 @@ export async function handleRejectBooking(request, env, auth, bookingId) {
       return errorResponse(request, env, validation.errors.join('; '), 400, 'VALIDATION_FAILED');
     }
 
-    if (!SupabaseService.isConfigured(env)) {
-      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
+    if (!env.DB) {
+      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
 
-    let booking = await SupabaseService.getBookingById(env, bookingId);
-
-    // If not found in Supabase, verify if it is an older D1 record
-    if (!booking && env.DB) {
-      const historical = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
-      if (historical) {
-        return errorResponse(
-          request,
-          env,
-          `Booking ${historical.booking_ref} is a historical D1 record and cannot be modified. It is preserved in read-only mode.`,
-          409,
-          'HISTORICAL_RECORD_READONLY'
-        );
-      }
-    }
-
+    const booking = await D1Service.getBookingById(env, bookingId) || await D1Service.getBookingByRef(env, bookingId);
     if (!booking) {
       return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
     }
 
-    // Update Supabase exclusively (Zero mirrored writes to D1)
-    const rejectedBooking = await SupabaseService.rejectBooking(
+    // Update D1 booking status
+    const rejectedBooking = await D1Service.rejectBooking(
       env,
       booking.id,
       auth.owner,
@@ -447,11 +380,11 @@ export async function handleRejectBooking(request, env, auth, bookingId) {
  */
 export async function handleExportBookings(request, env, auth) {
   try {
-    if (!SupabaseService.isConfigured(env)) {
-      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
+    if (!env.DB) {
+      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
 
-    const allBookings = await SupabaseService.exportAllBookings(env);
+    const allBookings = await D1Service.exportAllBookings(env);
     const filename = `bhuvana_bookings_backup_${new Date().toISOString().split('T')[0]}.json`;
 
     return new Response(JSON.stringify(allBookings, null, 2), {
@@ -473,7 +406,7 @@ export async function handleExportBookings(request, env, auth) {
 export async function handleRetryNotification(request, env, auth, jobId) {
   try {
     if (!env.DB) {
-      return errorResponse(request, env, 'Notification jobs are currently stored in D1', 400, 'UNSUPPORTED');
+      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
     const job = await D1Service.getNotificationJobById(env, jobId);
     if (!job) {
@@ -494,3 +427,5 @@ export async function handleRetryNotification(request, env, auth, jobId) {
     return errorResponse(request, env, 'Failed to retry notification job', 500, 'INTERNAL_ERROR');
   }
 }
+
+

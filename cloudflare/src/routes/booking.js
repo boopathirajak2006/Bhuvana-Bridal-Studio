@@ -2,16 +2,13 @@
  * Public Booking Routes for Bhuvana's Bridal Studio
  * Handles reservation (Step 1), poster submission (Step 2), and public status lookup.
  * 
- * Storage: Cloudflare R2 exclusively (Private bucket)
- * Database: Supabase Postgres exclusively (Zero mirrored writes to D1)
- * Historical: D1 read-only fallback strictly for status lookup of older records
+ * Storage: Cloudinary exclusively
+ * Database: Cloudflare D1 exclusively
  */
 
 import { jsonResponse, errorResponse } from '../utils/response.js';
 import { validateBookingReservation, validateBookingSubmission } from '../middleware/validation.js';
-import { SupabaseService } from '../services/supabase.js';
 import { CloudinaryService } from '../services/cloudinary.js';
-import { R2Service } from '../services/r2.js';
 import { D1Service } from '../services/d1.js';
 import { FCMService } from '../services/fcm.js';
 
@@ -29,9 +26,9 @@ export async function handleReserveBooking(request, env) {
       return errorResponse(request, env, validation.errors.join('; '), 400, 'VALIDATION_FAILED');
     }
 
-    // Require Supabase as the exclusive active booking database
-    if (!SupabaseService.isConfigured(env)) {
-      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
+    // Require D1 as the exclusive active booking database
+    if (!env.DB) {
+      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
 
     const reservationPayload = {
@@ -46,7 +43,7 @@ export async function handleReserveBooking(request, env) {
       idempotencyKey: body.idempotency_key || null
     };
 
-    const reservation = await SupabaseService.reserveBooking(env, reservationPayload);
+    const reservation = await D1Service.reserveBooking(env, reservationPayload);
 
     return jsonResponse(request, env, {
       success: true,
@@ -74,9 +71,9 @@ export async function handleSubmitBooking(request, env) {
       return errorResponse(request, env, validation.errors.join('; '), 400, 'VALIDATION_FAILED');
     }
 
-    // Require Supabase as the exclusive active booking database
-    if (!SupabaseService.isConfigured(env)) {
-      return errorResponse(request, env, 'Supabase database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
+    // Require D1 as the exclusive active booking database
+    if (!env.DB) {
+      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
 
     const { bookingRef, posterFile, customerData } = validation.data;
@@ -90,10 +87,9 @@ export async function handleSubmitBooking(request, env) {
       eventDate: eventDate
     });
 
-    // 2. Persist booking enquiry exclusively in Supabase database (Zero D1 mirrored writes)
+    // 2. Persist booking enquiry in Cloudflare D1
     const submitPayload = {
       bookingRef,
-      posterKey: cloudinaryResult.public_id,
       posterPublicId: cloudinaryResult.public_id,
       posterSecureUrl: cloudinaryResult.secure_url,
       posterVersion: cloudinaryResult.version,
@@ -104,13 +100,13 @@ export async function handleSubmitBooking(request, env) {
       customerEmail: (customerData && customerData.customer_email) || '',
       eventDate: eventDate,
       eventLocation: (customerData && customerData.location) || 'Salem',
-      selectedServices: (customerData && customerData.service_ids) || [],
-      requirements: (customerData && customerData.additional_requirements) || {},
+      selectedServicesJson: (customerData && customerData.service_ids) || [],
+      requirementsJson: (customerData && customerData.additional_requirements) || {},
       specialNotes: (customerData && customerData.notes) || '',
       whatsappConsent: customerData ? (customerData.whatsapp_consent === 1 || customerData.whatsapp_consent === true) : false
     };
 
-    const finalizedBooking = await SupabaseService.submitBooking(env, submitPayload);
+    const finalizedBooking = await D1Service.submitBooking(env, submitPayload);
 
     // 3. Asynchronously dispatch FCM push notification to owner devices (non-blocking)
     try {
@@ -122,10 +118,11 @@ export async function handleSubmitBooking(request, env) {
     return jsonResponse(request, env, {
       success: true,
       message: 'Booking enquiry submitted successfully. Awaiting studio owner review.',
+      bookingRef: finalizedBooking.booking_ref,
       booking: {
         id: finalizedBooking.id,
         booking_ref: finalizedBooking.booking_ref,
-        status: finalizedBooking.booking_status || finalizedBooking.status,
+        status: finalizedBooking.booking_status,
         customer_name: finalizedBooking.customer_name,
         customer_mobile: finalizedBooking.customer_mobile,
         event_date: finalizedBooking.event_date,
@@ -145,18 +142,11 @@ export async function handleGetBookingStatus(request, env, bookingRef) {
       return errorResponse(request, env, 'Booking reference is required', 400, 'MISSING_PARAM');
     }
 
-    let booking = null;
-
-    // 1. Primary: Query Supabase
-    if (SupabaseService.isConfigured(env)) {
-      booking = await SupabaseService.getBookingByRef(env, bookingRef);
+    if (!env.DB) {
+      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
     }
 
-    // 2. Read-only historical fallback: Query D1 only if not found in Supabase
-    if (!booking && env.DB) {
-      booking = await D1Service.getBookingByRef(env, bookingRef);
-    }
-
+    const booking = await D1Service.getBookingByRef(env, bookingRef);
     if (!booking) {
       return errorResponse(request, env, `Booking ${bookingRef} not found`, 404, 'NOT_FOUND');
     }
@@ -165,7 +155,7 @@ export async function handleGetBookingStatus(request, env, bookingRef) {
       success: true,
       booking: {
         booking_ref: booking.booking_ref,
-        status: booking.booking_status || booking.status,
+        status: booking.booking_status,
         customer_name: booking.customer_name,
         event_date: booking.event_date,
         event_location: booking.event_location,

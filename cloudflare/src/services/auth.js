@@ -2,54 +2,127 @@
  * Bhuvana's Bridal & Tailoring Studio — Cloudflare Backend
  * Studio Owner Authentication Service
  * 
- * Authentication Mechanism: Supabase Auth (GoTrue) + RBAC via public.user_roles ONLY.
- * No D1 session fallback is permitted.
+ * Authentication Mechanism: Cloudflare D1 Database + PBKDF2 (SHA-256, 100,000 iterations)
+ * Session Management: Secure Server-Side Sessions with SHA-256 Token Hashes in D1.
  */
 
-import { SupabaseService } from './supabase.js';
+import { D1Service } from './d1.js';
+import { verifyPassword, generateRandomHex, generateSalt, hashPassword } from '../utils/security.js';
 
 export class AuthService {
   /**
-   * Authenticate studio owner with username/email and password via Supabase Auth
+   * Authenticate studio owner with username and password via Cloudflare D1
    */
   static async login(env, username, password, ip, userAgent) {
     if (!username || !password) {
-      throw new Error('Username or email and password are required');
+      throw new Error('Username and password are required');
     }
 
-    if (!SupabaseService.isConfigured(env)) {
-      throw new Error('Supabase Auth is not configured. Please configure SUPABASE_URL and SUPABASE_ANON_KEY.');
+    if (!env.DB) {
+      throw new Error('Database service is not configured or unavailable');
     }
 
-    // Authenticate exclusively via Supabase Auth
-    return await SupabaseService.loginOwner(env, username, password);
+    const cleanUsername = String(username).toLowerCase().trim();
+
+    // Check if initial owner setup is needed (only seeds if owners table is empty)
+    await D1Service.seedInitialOwnerIfEmpty(env);
+
+    const owner = await D1Service.findOwnerByUsername(env, cleanUsername);
+    if (!owner || !owner.password_hash || !owner.salt) {
+      throw new Error('Invalid username or password');
+    }
+
+    const isValid = await verifyPassword(password, owner.password_hash, owner.salt);
+    if (!isValid) {
+      throw new Error('Invalid username or password');
+    }
+
+    // Update last login timestamp in D1
+    const nowIso = new Date().toISOString();
+    try {
+      await env.DB.prepare('UPDATE owners SET last_login_at = ?, updated_at = ? WHERE id = ?')
+        .bind(nowIso, nowIso, owner.id)
+        .run();
+    } catch (e) {
+      // Non-blocking
+    }
+
+    // Generate secure 64-character session token
+    const token = generateRandomHex(32);
+    const session = await D1Service.createOwnerSession(env, owner.id, token, ip, userAgent);
+
+    return {
+      token: session.token,
+      expiresAt: session.expiresAt,
+      owner: {
+        id: owner.id,
+        username: owner.username,
+        name: owner.name,
+        role: owner.role || 'owner'
+      }
+    };
   }
 
   /**
-   * Log out owner by revoking session
+   * Log out owner by revoking session in D1
    */
   static async logout(env, token) {
-    // Supabase tokens are stateless JWTs on the backend; client clears local token
+    if (!env.DB || !token) return;
+    await D1Service.deleteOwnerSession(env, token);
   }
 
   /**
-   * Extract and verify session token from Request
-   * Validates Supabase JWT Bearer token or cookie via Supabase Auth exclusively
+   * Securely update owner password using PBKDF2 with a fresh salt
+   */
+  static async changePassword(env, ownerId, currentPassword, newPassword) {
+    if (!env.DB) {
+      throw new Error('Database service is not configured or unavailable');
+    }
+    if (!currentPassword || !newPassword) {
+      throw new Error('Current password and new password are required');
+    }
+    if (newPassword.length < 8) {
+      throw new Error('New password must be at least 8 characters long');
+    }
+
+    const owner = await env.DB.prepare('SELECT * FROM owners WHERE id = ?').bind(ownerId).first();
+    if (!owner || !owner.password_hash || !owner.salt) {
+      throw new Error('Owner account not found');
+    }
+
+    const isValid = await verifyPassword(currentPassword, owner.password_hash, owner.salt);
+    if (!isValid) {
+      throw new Error('Current password does not match');
+    }
+
+    const newSalt = generateSalt();
+    const newHash = await hashPassword(newPassword, newSalt);
+    const nowIso = new Date().toISOString();
+
+    await env.DB.prepare('UPDATE owners SET password_hash = ?, salt = ?, updated_at = ? WHERE id = ?')
+      .bind(newHash, newSalt, nowIso, ownerId)
+      .run();
+
+    return true;
+  }
+
+  /**
+   * Extract and verify session token from Request via Cloudflare D1
    */
   static async authenticateRequest(request, env) {
-    if (!SupabaseService.isConfigured(env)) {
+    if (!env.DB) {
       return null;
     }
 
     let token = null;
 
-    // 1. Check Authorization header
+    // 1. Check Authorization header (Bearer <token>)
     const authHeader = request.headers.get('Authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7).trim();
     }
 
-    // 2. Check Cookie header
+    // 2. Check Cookie header (bbs_session=<token>)
     if (!token) {
       const cookieHeader = request.headers.get('Cookie');
       if (cookieHeader) {
@@ -63,7 +136,19 @@ export class AuthService {
 
     if (!token) return null;
 
-    // Verify exclusively via Supabase Auth
-    return await SupabaseService.verifyOwnerToken(env, token);
+    // Verify session token against D1 owner_sessions
+    const session = await D1Service.getOwnerBySessionToken(env, token);
+    if (!session) return null;
+
+    return {
+      token,
+      owner: {
+        id: session.owner_id,
+        username: session.username,
+        name: session.name,
+        role: session.role || 'owner'
+      },
+      expiresAt: session.expires_at
+    };
   }
 }

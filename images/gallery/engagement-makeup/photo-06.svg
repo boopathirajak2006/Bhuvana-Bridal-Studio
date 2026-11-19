@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#582231"/>
+      <stop offset="50%" stop-color="#943B53"/>
+      <stop offset="100%" stop-color="#11080A"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF2C5"/>
+      <stop offset="50%" stop-color="#F7BC9E"/>
+      <stop offset="100%" stop-color="#9E7B34"/>
+    </linearGradient>
+    <pattern id="mandala" width="80" height="80" patternUnits="userSpaceOnUse" opacity="0.06">
+      <circle cx="40" cy="40" r="32" fill="none" stroke="#FFF" stroke-width="1"/>
+      <circle cx="40" cy="40" r="18" fill="none" stroke="#FFF" stroke-width="0.75"/>
+      <path d="M40 8 L40 72 M8 40 L72 40" stroke="#FFF" stroke-width="0.5"/>
+      <circle cx="40" cy="40" r="4" fill="#FFF"/>
+    </pattern>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="800" height="600" fill="url(#bgGrad)"/>
+  <rect width="800" height="600" fill="url(#mandala)"/>
+
+  <!-- Ornate Border Frame -->
+  <rect x="30" y="30" width="740" height="540" rx="16" fill="none" stroke="url(#goldGrad)" stroke-width="2" opacity="0.85"/>
+  <rect x="38" y="38" width="724" height="524" rx="12" fill="none" stroke="#F7BC9E" stroke-width="1" stroke-dasharray="6 4" opacity="0.4"/>
+
+  <!-- Corner Flourishes -->
+  <g fill="#F7BC9E" opacity="0.75">
+    <path d="M 42 58 Q 42 42 58 42 L 72 42 Q 52 48 48 68 Z"/>
+    <path d="M 758 58 Q 758 42 742 42 L 728 42 Q 748 48 752 68 Z"/>
+    <path d="M 42 542 Q 42 558 58 558 L 72 558 Q 52 552 48 532 Z"/>
+    <path d="M 758 542 Q 758 558 742 558 L 728 558 Q 748 552 752 532 Z"/>
+  </g>
+
+  <!-- Central Visual Emblem Badge -->
+  <g transform="translate(400, 210)" filter="url(#cardShadow)">
+    <circle cx="0" cy="0" r="90" fill="rgba(18, 9, 11, 0.7)" stroke="url(#goldGrad)" stroke-width="3"/>
+    <circle cx="0" cy="0" r="78" fill="none" stroke="#F7BC9E" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"/>
+
+    <!-- Distinctive Star & Medallion Motif -->
+    <path d="M0 -45 L12 -12 L45 0 L12 12 L0 45 L-12 12 L-45 0 L-12 -12 Z" fill="url(#goldGrad)" opacity="0.9"/>
+    <circle cx="0" cy="0" r="14" fill="none" stroke="#582231" stroke-width="2.5"/>
+    <circle cx="0" cy="0" r="6" fill="#FFF"/>
+
+    <circle cx="0" cy="-58" r="3.5" fill="#F7BC9E"/>
+    <circle cx="0" cy="58" r="3.5" fill="#F7BC9E"/>
+    <circle cx="-58" cy="0" r="3.5" fill="#F7BC9E"/>
+    <circle cx="58" cy="0" r="3.5" fill="#F7BC9E"/>
+  </g>
+
+  <!-- Top Category Tag -->
+  <g transform="translate(400, 78)">
+    <rect x="-160" y="-16" width="320" height="32" rx="16" fill="rgba(17, 8, 10, 0.85)" stroke="url(#goldGrad)" stroke-width="1.5"/>
+    <text x="0" y="5" text-anchor="middle" fill="#F7BC9E" font-family="'Jost', sans-serif" font-size="12" font-weight="600" letter-spacing="2.5">
+      ENGAGEMENT MAKEUP &bull; 06/06
+    </text>
+  </g>
+
+  <!-- Central Title & Description Plaque -->
+  <text x="400" y="350" text-anchor="middle" fill="#FFFFFF" font-family="'Cormorant Garamond', Georgia, serif" font-size="30" font-weight="700" letter-spacing="0.5">
+    Soft Coral Glamour
+  </text>
+  <line x1="280" y1="372" x2="520" y2="372" stroke="url(#goldGrad)" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="400" cy="372" r="3.5" fill="#F7BC9E"/>
+
+  <text x="400" y="412" text-anchor="middle" fill="#E5D3B8" font-family="'Jost', sans-serif" font-size="14" font-weight="400" letter-spacing="0.3">
+    Sun-kissed coral blush and warm amber tones for vibrant celebratory portraits.
+  </text>
+
+  <!-- Official Sample Disclaimer Badge -->
+  <g transform="translate(400, 498)">
+    <rect x="-230" y="-18" width="460" height="36" rx="18" fill="rgba(0, 0, 0, 0.65)" stroke="rgba(255, 255, 255, 0.18)" stroke-width="1"/>
+    <text x="0" y="5" text-anchor="middle" fill="#E8D0A9" font-family="'Jost', sans-serif" font-size="11.5" font-weight="500" letter-spacing="0.8">
+      SAMPLE PORTFOLIO IMAGE &bull; BHUVANA'S BRIDAL STUDIO
+    </text>
+  </g>
+
+  <!-- Watermark Subtitle -->
+  <text x="400" y="545" text-anchor="middle" fill="rgba(232, 208, 169, 0.55)" font-family="'Jost', sans-serif" font-size="10.5" letter-spacing="1.2">
+    Salem, Tamil Nadu &bull; Dedicated Bridal Makeup &amp; Designer Tailoring
+  </text>
+</svg>

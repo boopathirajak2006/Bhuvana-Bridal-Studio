@@ -719,28 +719,170 @@ body {
   gap: 1rem;
 }
 
+/* Enhanced Owner Gallery Management */
+.owner-gallery-header-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.owner-gallery-tabs-scroll {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.25rem;
+  scrollbar-width: thin;
+}
+
+.owner-gallery-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.owner-gallery-tab:hover {
+  border-color: var(--gold);
+  color: var(--burgundy);
+}
+
+.owner-gallery-tab.active {
+  background: var(--burgundy);
+  border-color: var(--burgundy);
+  color: var(--white);
+}
+
+.owner-gallery-tab .tab-badge {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 9999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.owner-gallery-tab.active .tab-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--white);
+}
+
 .gallery-grid-owner {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.25rem;
 }
 
 .gallery-card-owner {
   background: var(--white);
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   border: 1.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.gallery-card-owner img {
+.gallery-card-owner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.gallery-card-media {
+  position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-  object-fit: cover;
+  overflow: hidden;
+  background: #f8f6f0;
 }
 
-.gallery-card-meta {
-  padding: 0.75rem;
+.gallery-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.gallery-card-media:hover img {
+  transform: scale(1.03);
+}
+
+.gallery-card-badge {
+  position: absolute;
+  top: 0.65rem;
+  left: 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  backdrop-filter: blur(4px);
+}
+
+.gallery-card-badge.sample {
+  background: rgba(184, 134, 11, 0.9);
+  color: #fff;
+}
+
+.gallery-card-badge.studio {
+  background: rgba(26, 127, 55, 0.9);
+  color: #fff;
+}
+
+.gallery-card-body {
+  padding: 1rem;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.gallery-card-category {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--burgundy);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.35rem;
+}
+
+.gallery-card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.35rem;
+  line-height: 1.3;
+}
+
+.gallery-card-desc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  flex-grow: 1;
+}
+
+.gallery-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.gallery-card-actions .dash-btn {
+  flex: 1;
+  font-size: 0.78rem;
+  padding: 0.45rem 0.5rem;
+  justify-content: center;
 }
