@@ -6,12 +6,14 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  "preview_urls": false,
   "vars": {
     "ENVIRONMENT": "production",
     "CORS_ORIGINS": "https://boopathirajak2006.github.io,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080,http://localhost:8787",
     "CLOUDINARY_CLOUD_NAME": "hcj8r6r4",
     "MAX_POSTER_SIZE_BYTES": "5242880",
-    "WHATSAPP_API_VERSION": "v21.0"
+    "WHATSAPP_API_VERSION": "v21.0",
+    "WHATSAPP_AUTOMATIC_SEND": "false"
   },
   "d1_databases": [
     {

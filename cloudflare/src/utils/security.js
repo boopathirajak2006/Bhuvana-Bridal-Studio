@@ -149,7 +149,7 @@ export async function verifyMetaWebhookSignature(appSecret, payloadString, signa
 
 /**
  * Generate Unique Booking Reference
- * Format: BBS-2026-XXXXXX (6 alphanumeric uppercase chars, avoiding ambiguous I, O, 1, 0)
+ * Format: BBS-YYYY-XXXXXX (6 alphanumeric uppercase chars, avoiding ambiguous I, O, 1, 0)
  */
 export function generateBookingRef() {
   const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -159,7 +159,7 @@ export function generateBookingRef() {
   for (let i = 0; i < 6; i++) {
     code += chars[array[i] % chars.length];
   }
-  return `BBS-2026-${code}`;
+  return `BBS-${new Date().getFullYear()}-${code}`;
 }
 
 /**

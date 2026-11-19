@@ -371,6 +371,58 @@
   }
 
   /**
+   * Converts same-origin poster images to data URLs before html2canvas draws
+   * them. This keeps the output canvas origin-clean, including when the page
+   * is hosted under a project subpath such as GitHub Pages.
+   * Returns a function that restores the original image sources.
+   */
+  async function inlinePosterImages(element) {
+    const images = Array.from(element.querySelectorAll('img'));
+    const inlined = await Promise.all(images.map(async img => {
+      const source = img.currentSrc || img.src;
+      const sourceUrl = new URL(source, document.baseURI);
+
+      if (sourceUrl.protocol === 'data:' || sourceUrl.protocol === 'blob:') {
+        return null;
+      }
+
+      if (sourceUrl.origin !== window.location.origin) {
+        throw new Error(`Poster image is hosted on another origin: ${sourceUrl.href}`);
+      }
+
+      const response = await fetch(sourceUrl.href, {
+        mode: 'same-origin',
+        credentials: 'same-origin'
+      });
+      if (!response.ok) {
+        throw new Error(`Could not load poster image (${response.status}): ${sourceUrl.pathname}`);
+      }
+
+      const blob = await response.blob();
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error(`Could not prepare poster image: ${sourceUrl.pathname}`));
+        reader.readAsDataURL(blob);
+      });
+
+      return { img, originalSrc: img.getAttribute('src'), dataUrl };
+    }));
+
+    const originals = inlined.filter(Boolean);
+    originals.forEach(({ img, dataUrl }) => img.setAttribute('src', dataUrl));
+
+    try {
+      await Promise.all(originals.map(({ img }) => img.decode()));
+    } catch (error) {
+      originals.forEach(({ img, originalSrc }) => img.setAttribute('src', originalSrc));
+      throw error;
+    }
+
+    return () => originals.forEach(({ img, originalSrc }) => img.setAttribute('src', originalSrc));
+  }
+
+  /**
    * Renders the dynamic poster DOM element to a high-resolution canvas
    */
   async function renderPosterToCanvas(targetElement) {
@@ -386,20 +438,27 @@
     // Pre-check and wait for images, logging any failed paths
     await waitForImages(targetElement);
 
-    // Give DOM a micro-tick to compute layout
-    await new Promise(r => setTimeout(r, 60));
+    // Use same-origin data URLs while rasterizing so the canvas stays exportable.
+    const restoreImageSources = await inlinePosterImages(targetElement);
 
-    const canvas = await html2canvas(targetElement, {
-      scale: 2, // 2x retina sharpness (2160px rendered)
-      useCORS: true,
-      allowTaint: false,
-      backgroundColor: '#FEF6ED',
-      width: 1080,
-      logging: false,
-      imageTimeout: 10000
-    });
+    try {
+      // Give DOM a micro-tick to compute layout
+      await new Promise(r => setTimeout(r, 60));
 
-    return canvas;
+      const canvas = await html2canvas(targetElement, {
+        scale: 2, // 2x retina sharpness (2160px rendered)
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#FEF6ED',
+        width: 1080,
+        logging: false,
+        imageTimeout: 10000
+      });
+
+      return canvas;
+    } finally {
+      restoreImageSources();
+    }
   }
 
   /**

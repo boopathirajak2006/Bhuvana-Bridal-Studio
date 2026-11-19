@@ -82,9 +82,12 @@ export async function validateBookingSubmission(formData) {
   const errors = [];
 
   const reservationToken = formData.get('reservation_token') || null;
+  if (reservationToken && typeof reservationToken !== 'string') {
+    errors.push('Invalid reservation token');
+  }
 
   const bookingRef = formData.get('booking_ref');
-  if (!bookingRef || !/^BBS-\d{4}-[A-Z0-9]{4,10}$/i.test(bookingRef)) {
+  if (!bookingRef || !/^BBS-\d{4}-[A-Za-z0-9]{4,10}$/i.test(bookingRef)) {
     errors.push('Valid booking reference (BBS-YYYY-XXXX) is required');
   }
 

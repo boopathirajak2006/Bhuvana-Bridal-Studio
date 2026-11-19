@@ -1,5 +1,5 @@
 -- ==============================================================================
--- Migration 0004: Gallery Management
+-- Migration 0005: Gallery Management
 -- Bhuvana's Bridal & Tailoring Studio
 -- Cloudflare D1 Gallery Tables & Indexes
 -- ==============================================================================

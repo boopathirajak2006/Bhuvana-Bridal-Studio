@@ -76,6 +76,11 @@ export default {
         return await handleSubmitBooking(request, env);
       }
 
+      // Backwards-compatible route used by the current website frontend.
+      if (path === '/api/bookings' && method === 'POST') {
+        return await handleSubmitBooking(request, env);
+      }
+
       const statusMatch = path.match(/^\/api\/bookings\/status\/([A-Za-z0-9-]+)$/);
       if (statusMatch && method === 'GET') {
         return await handleGetBookingStatus(request, env, statusMatch[1]);
@@ -125,6 +130,10 @@ export default {
       if (path.startsWith('/api/admin/')) {
         const { auth, errorResponse: authErr } = await requireOwnerAuth(request, env);
         if (authErr) return authErr;
+
+        if (path === '/api/admin/change-password' && method === 'POST') {
+          return await handleChangePassword(request, env, auth);
+        }
 
         // Statistics
         if (path === '/api/admin/bookings/stats' && method === 'GET') {

@@ -6,23 +6,14 @@
 import { AuthService } from '../services/auth.js';
 import { errorResponse } from '../utils/response.js';
 
-/**
- * Ensures request is made by an authenticated owner.
- * If valid, returns the owner record and token.
- * If invalid, returns a Response object with 401 Unauthorized or 503 if unconfigured.
- *
- * @param {Request} request
- * @param {object} env
- * @returns {Promise<{ auth?: object, errorResponse?: Response }>}
- */
 export async function requireOwnerAuth(request, env) {
-  try {
-    if (!env.DB) {
-      return {
-        errorResponse: errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE')
-      };
-    }
+  if (!env.DB) {
+    return {
+      errorResponse: errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE')
+    };
+  }
 
+  try {
     const auth = await AuthService.authenticateRequest(request, env);
     if (!auth) {
       return {
@@ -31,7 +22,7 @@ export async function requireOwnerAuth(request, env) {
     }
     return { auth };
   } catch (err) {
-    console.error('[AuthMiddleware] Auth check failed:', err);
+    console.error('[AuthMiddleware] D1 session check failed:', err);
     return {
       errorResponse: errorResponse(request, env, 'Authentication verification error', 401, 'AUTH_ERROR')
     };

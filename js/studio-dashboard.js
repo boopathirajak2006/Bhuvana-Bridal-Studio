@@ -17,7 +17,17 @@
   let currentStatusFilter = 'all';
   let currentSearchQuery = '';
   let activeSelectedBooking = null;
-  let posterObjectUrl = null;
+  let pushDeviceRegistered = false;
+  let pushRegistrationError = '';
+
+  function isIOSDevice() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  function isStandaloneApp() {
+    return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  }
 
   // Calendar State
   let calCurrentDate = new Date();
@@ -59,6 +69,14 @@
     await loadGalleryFromServer();
     renderNotifications();
     renderReports();
+
+    if (window.Notification && Notification.permission === 'granted' && config?.isFirebaseConfigured()) {
+      registerOwnerPushDevice().catch(err => {
+        pushRegistrationError = err.message || 'Device registration failed';
+        renderNotifications();
+        console.warn('[Push] Existing permission could not register this device:', err);
+      });
+    }
   }
 
   function setupOwnerHeader() {
@@ -207,11 +225,11 @@
     if (testPushBtn) {
       testPushBtn.addEventListener('click', () => {
         if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification("Bhuvana's Studio Alert", {
-            body: "Test Alert: Push notification service is functioning properly.",
+          new Notification("Bhuvana's Studio Browser Alert", {
+            body: 'This local check confirms browser permission only; new booking alerts require this device to be registered.',
             icon: "assets/images/logo.png"
           });
-          alert('Test alert triggered!');
+          alert('Browser notification displayed. Check the status above to confirm this device is registered for booking alerts.');
         } else {
           alert('Please enable browser push notifications first.');
         }
@@ -416,8 +434,8 @@
           ? 'badge-approved'
           : 'badge-rejected';
 
-        const cleanPhone = (b.customer_mobile || '').replace(/\D/g, '');
-        const waLink = cleanPhone ? `https://wa.me/91${cleanPhone.slice(-10)}` : '#';
+        const hasWhatsAppConsent = Number(b.whatsapp_consent) === 1;
+        const waLink = hasWhatsAppConsent ? buildBookingWhatsAppLink(b) : null;
 
         return `
           <tr>
@@ -434,7 +452,9 @@
               <div style="font-size: 0.8rem; margin-top: 2px;">
                 <a href="tel:${escapeHtml(b.customer_mobile)}" style="color: var(--burgundy); text-decoration: none;">📞 Call</a>
                 &middot;
-                <a href="${waLink}" target="_blank" rel="noopener" style="color: #128C7E; text-decoration: none;">💬 WhatsApp</a>
+                ${waLink
+                  ? `<a href="${escapeHtml(waLink)}" target="_blank" rel="noopener noreferrer" style="color: #128C7E; text-decoration: none;">💬 WhatsApp</a>`
+                  : `<span style="color:var(--muted);">${hasWhatsAppConsent ? 'Invalid WhatsApp number' : 'No WhatsApp consent'}</span>`}
               </div>
             </td>
             <td>${escapeHtml(b.event_date || '—')}</td>
@@ -1131,11 +1151,21 @@
     if (!tbody) return;
 
     if ('Notification' in window) {
-      if (Notification.permission === 'granted') {
-        if (desc) desc.textContent = 'Status: Active & Subscribed to instant owner push alerts.';
-      } else {
-        if (desc) desc.textContent = 'Status: Not enabled. Click "Push Alerts" above to allow notifications.';
+      if (Notification.permission === 'granted' && pushDeviceRegistered) {
+        if (desc) desc.textContent = 'Status: This browser is registered for new booking alerts.';
+      } else if (Notification.permission === 'granted' && pushRegistrationError) {
+        if (desc) desc.textContent = `Status: Browser permission is allowed, but device setup failed: ${pushRegistrationError}`;
+      } else if (Notification.permission === 'granted') {
+        if (desc) desc.textContent = 'Status: Browser permission is allowed. Click Push Alerts to connect this device.';
+      } else if (Notification.permission === 'denied') {
+        if (desc) desc.textContent = 'Status: Notifications are blocked for this site in browser settings.';
+      } else if (desc) {
+        desc.textContent = 'Status: Click Push Alerts and allow notifications on this device.';
       }
+    } else if (desc && isIOSDevice() && !isStandaloneApp()) {
+      desc.textContent = 'iPhone: Add this portal to your Home Screen, open it from its icon, then enable Push Alerts.';
+    } else if (desc) {
+      desc.textContent = 'Status: This browser does not support push notifications.';
     }
 
     if (notificationLogs.length === 0) {
@@ -1285,49 +1315,16 @@
 
       // Consent Box
       const consentBox = document.getElementById('detail-consent-box');
-      if (b.whatsapp_consent === 1) {
+      if (Number(b.whatsapp_consent) === 1) {
         consentBox.style.background = 'rgba(37, 211, 102, 0.12)';
         consentBox.style.border = '1px solid #25D366';
         consentBox.style.color = '#128C7E';
-        consentBox.innerHTML = `✓ Customer opted-in to receive automated WhatsApp notifications.`;
+        consentBox.innerHTML = `✓ Customer opted in to WhatsApp messages. After approving or rejecting, the studio owner can open a prepared message and press Send.`;
       } else {
         consentBox.style.background = '#F5EDE4';
         consentBox.style.border = '1px solid var(--border)';
         consentBox.style.color = 'var(--ink-light)';
         consentBox.innerHTML = `Customer did not opt-in for WhatsApp. Contact manually by phone call.`;
-      }
-
-      // Poster Stream
-      const posterImg = document.getElementById('detail-poster-img');
-      const posterDownloadBtn = document.getElementById('btn-download-detail-poster');
-
-      if (posterObjectUrl) {
-        URL.revokeObjectURL(posterObjectUrl);
-        posterObjectUrl = null;
-      }
-
-      posterImg.src = '';
-      posterImg.alt = 'Loading poster...';
-
-      try {
-        const token = localStorage.getItem('bbs_owner_token');
-        const posterRes = await fetch(config.url(`/api/admin/bookings/${b.id}/poster`), {
-          headers: token ? { 'Authorization': 'Bearer ' + token } : {},
-          credentials: 'include'
-        });
-
-        if (posterRes.ok) {
-          const blob = await posterRes.blob();
-          posterObjectUrl = URL.createObjectURL(blob);
-          posterImg.src = posterObjectUrl;
-          posterDownloadBtn.href = posterObjectUrl;
-          posterDownloadBtn.download = `Bhuvana-Booking-${b.booking_ref}.png`;
-        } else {
-          posterImg.alt = 'Poster image unavailable';
-        }
-      } catch (imgErr) {
-        console.warn('Failed to stream poster image:', imgErr);
-        posterImg.alt = 'Poster image preview failed';
       }
 
       // Action Buttons visibility based on status
@@ -1361,16 +1358,57 @@
   function closeDetailModal() {
     const modal = document.getElementById('booking-detail-modal');
     if (modal) modal.style.display = 'none';
-    if (posterObjectUrl) {
-      URL.revokeObjectURL(posterObjectUrl);
-      posterObjectUrl = null;
-    }
     activeSelectedBooking = null;
   }
 
   function closeRejectModal() {
     const modal = document.getElementById('reject-reason-modal');
     if (modal) modal.style.display = 'none';
+  }
+
+  function normalizeWhatsAppNumber(value) {
+    let digits = String(value || '').replace(/\D/g, '');
+    if (digits.length === 10) digits = `91${digits}`;
+    else if (digits.length === 11 && digits.startsWith('0')) digits = `91${digits.slice(1)}`;
+    return digits.length >= 10 ? digits : '';
+  }
+
+  function formatWhatsAppEventDate(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return 'To be confirmed';
+
+    const dateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const date = dateOnly
+      ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])))
+      : new Date(raw);
+
+    if (Number.isNaN(date.getTime())) return raw;
+    return new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC'
+    }).format(date);
+  }
+
+  function buildBookingWhatsAppLink(booking, status = booking.booking_status) {
+    if (Number(booking.whatsapp_consent) !== 1) return null;
+    const recipient = normalizeWhatsAppNumber(booking.customer_mobile);
+    if (!recipient) return null;
+
+    const name = booking.customer_name || 'Valued Client';
+    const reference = booking.booking_ref || 'your booking';
+    const eventDate = formatWhatsAppEventDate(booking.event_date);
+    let message = '';
+
+    if (status === 'approved') {
+      message = `Hello ${name}!\n\nYour booking enquiry has been approved by Bhuvana's Bridal Studio.\n\nEvent Date: ${eventDate}\n\nBooking Ref: ${reference}\n\nStatus: Booking Approved ✅\n\nThank you for choosing Bhuvana's Bridal Studio!`;
+    } else if (status === 'rejected') {
+      message = `Hello ${name}!\n\nSorry, we are unable to accept your requested date.\n\nEvent Date: ${eventDate}\n\nBooking Ref: ${reference}\n\nPlease contact us to check another available date.\n\nThank you for choosing Bhuvana's Bridal Studio.`;
+    }
+
+    const baseUrl = `https://wa.me/${recipient}`;
+    return message ? `${baseUrl}?text=${encodeURIComponent(message)}` : baseUrl;
   }
 
   // ==========================================
@@ -1380,8 +1418,9 @@
     if (!activeSelectedBooking) return;
     const b = activeSelectedBooking;
 
-    const confirmMsg = `Approve booking ${b.booking_ref} for ${b.customer_name}?\n\nIf the client consented to WhatsApp, an official booking confirmation will be dispatched automatically.`;
+    const confirmMsg = `Approve booking ${b.booking_ref} for ${b.customer_name}?\n\nIf the customer opted into WhatsApp, you can open a prepared message after approval and press Send yourself.`;
     if (!confirm(confirmMsg)) return;
+    const whatsappLink = Number(b.whatsapp_consent) === 1 ? buildBookingWhatsAppLink(b, 'approved') : null;
 
     const btn = document.getElementById('btn-trigger-approve');
     btn.disabled = true;
@@ -1395,7 +1434,19 @@
         })
       });
 
-      alert(`Booking ${b.booking_ref} approved successfully!`);
+      if (res?.whatsappResult?.success) {
+        alert(`Booking ${b.booking_ref} approved and the WhatsApp message was sent.`);
+      } else if (whatsappLink) {
+        if (confirm(`Booking ${b.booking_ref} approved. Open WhatsApp with a prepared message? Review it and press Send to contact the customer.`)) {
+          const whatsappWindow = window.open(whatsappLink, '_blank');
+          if (whatsappWindow) whatsappWindow.opener = null;
+          else alert('WhatsApp could not open in a new tab. After the list refreshes, use the WhatsApp link beside this booking.');
+        }
+      } else {
+        alert(Number(b.whatsapp_consent) === 1
+          ? `Booking ${b.booking_ref} approved, but the WhatsApp number is invalid.`
+          : `Booking ${b.booking_ref} approved. The customer did not opt into WhatsApp; please contact them by phone.`);
+      }
       closeDetailModal();
       await loadMetrics();
       await loadBookings();
@@ -1423,6 +1474,8 @@
       reason = customReasonInput.value.trim() || 'Custom studio scheduling conflict';
     }
 
+    const whatsappLink = Number(b.whatsapp_consent) === 1 ? buildBookingWhatsAppLink(b, 'rejected') : null;
+
     const notes = internalNotesInput ? internalNotesInput.value.trim() : '';
 
     const btn = document.getElementById('btn-confirm-reject');
@@ -1438,7 +1491,19 @@
         })
       });
 
-      alert(`Booking ${b.booking_ref} has been declined.`);
+      if (res?.whatsappResult?.success) {
+        alert(`Booking ${b.booking_ref} declined and the WhatsApp message was sent.`);
+      } else if (whatsappLink) {
+        if (confirm(`Booking ${b.booking_ref} declined. Open WhatsApp with a prepared message? Review it and press Send to contact the customer.`)) {
+          const whatsappWindow = window.open(whatsappLink, '_blank');
+          if (whatsappWindow) whatsappWindow.opener = null;
+          else alert('WhatsApp could not open in a new tab. After the list refreshes, use the WhatsApp link beside this booking.');
+        }
+      } else {
+        alert(Number(b.whatsapp_consent) === 1
+          ? `Booking ${b.booking_ref} declined, but the WhatsApp number is invalid.`
+          : `Booking ${b.booking_ref} declined. The customer did not opt into WhatsApp; please contact them by phone.`);
+      }
       closeRejectModal();
       closeDetailModal();
       await loadMetrics();
@@ -1457,26 +1522,84 @@
   // ==========================================
   // WEB PUSH NOTIFICATIONS
   // ==========================================
+  async function registerOwnerPushDevice() {
+    if (!config || !config.isFirebaseConfigured()) {
+      throw new Error('Firebase web configuration or the public VAPID key is missing.');
+    }
+    if (!window.isSecureContext || !('serviceWorker' in navigator)) {
+      throw new Error('Push setup needs the secure HTTPS website and service worker support.');
+    }
+    if (!window.firebase || typeof firebase.messaging !== 'function') {
+      throw new Error('Firebase Messaging did not load. Check internet and reload this page.');
+    }
+    if (!('Notification' in window) || Notification.permission !== 'granted') {
+      throw new Error('Allow notifications for this website in the browser first.');
+    }
+
+    if (!firebase.apps || firebase.apps.length === 0) {
+      firebase.initializeApp(config.firebaseConfig);
+    } else if (firebase.app().options.projectId !== config.firebaseConfig.projectId) {
+      throw new Error('Firebase app is initialized for a different project.');
+    }
+
+    const serviceWorkerUrl = new URL('firebase-messaging-sw.js', document.baseURI);
+    const serviceWorkerScope = new URL('.', document.baseURI).pathname;
+    const serviceWorkerRegistration = await navigator.serviceWorker.register(serviceWorkerUrl.href, {
+      scope: serviceWorkerScope
+    });
+    const messaging = firebase.messaging();
+    const fcmToken = await messaging.getToken({
+      vapidKey: config.firebaseVapidKey,
+      serviceWorkerRegistration
+    });
+
+    if (!fcmToken) {
+      throw new Error('Firebase did not return a device registration token.');
+    }
+
+    const registration = await config.apiFetch('/api/admin/devices/register', {
+      method: 'POST',
+      body: JSON.stringify({ fcmToken, deviceName: 'Owner web browser' })
+    });
+    if (!registration || !registration.success) {
+      throw new Error(registration?.error || 'The owner device could not be saved by the booking server.');
+    }
+
+    pushDeviceRegistered = true;
+    pushRegistrationError = '';
+    const pushBtn = document.getElementById('btn-push-toggle');
+    const pushLabel = document.getElementById('push-status-label');
+    if (pushBtn) pushBtn.classList.add('dash-btn-success');
+    if (pushLabel) pushLabel.textContent = 'Push Enabled';
+    renderNotifications();
+    return registration;
+  }
+
   async function handleEnablePushNotifications() {
+    if (isIOSDevice() && !isStandaloneApp()) {
+      alert('iPhone-la push alerts use panna, Share icon → Add to Home Screen pannunga. Add aana icon-lendhu portal open panni Push Alerts tap pannunga. iOS 16.4 or newer thevai.');
+      return;
+    }
+
     if (!('Notification' in window)) {
-      alert('This browser does not support desktop push notifications.');
+      alert('This browser does not support push notifications. iPhone-na Home Screen app-a install panni adhilirundhu open pannunga.');
       return;
     }
 
     try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        const pushBtn = document.getElementById('btn-push-toggle');
-        const pushLabel = document.getElementById('push-status-label');
-        if (pushBtn) pushBtn.classList.add('dash-btn-success');
-        if (pushLabel) pushLabel.textContent = 'Push Enabled';
-        renderNotifications();
-        alert('Push notifications enabled successfully for owner alerts.');
+        pushRegistrationError = '';
+        await registerOwnerPushDevice();
+        alert('This device is registered for new booking alerts.');
       } else {
         alert('Push notification permission was denied or dismissed.');
       }
     } catch (err) {
       console.warn('Push error:', err);
+      pushRegistrationError = err.message || 'Device registration failed';
+      renderNotifications();
+      alert(`Browser permission was granted, but booking alerts could not be set up: ${pushRegistrationError}`);
     }
   }
 

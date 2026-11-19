@@ -1,19 +1,16 @@
-/**
- * Public Booking Routes for Bhuvana's Bridal Studio
- * Handles reservation (Step 1), poster submission (Step 2), and public status lookup.
- * 
- * Storage: Cloudinary exclusively
- * Database: Cloudflare D1 exclusively
- */
+/** Public booking endpoints backed by D1 and private Cloudinary assets. */
 
 import { jsonResponse, errorResponse } from '../utils/response.js';
 import { validateBookingReservation, validateBookingSubmission } from '../middleware/validation.js';
 import { CloudinaryService } from '../services/cloudinary.js';
 import { D1Service } from '../services/d1.js';
 import { FCMService } from '../services/fcm.js';
+import { sha256 } from '../utils/security.js';
 
 export async function handleReserveBooking(request, env) {
   try {
+    if (!env.DB) return errorResponse(request, env, 'D1 database is unavailable', 503, 'SERVICE_UNAVAILABLE');
+
     let body;
     try {
       body = await request.json();
@@ -26,24 +23,17 @@ export async function handleReserveBooking(request, env) {
       return errorResponse(request, env, validation.errors.join('; '), 400, 'VALIDATION_FAILED');
     }
 
-    // Require D1 as the exclusive active booking database
-    if (!env.DB) {
-      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
-    }
-
-    const reservationPayload = {
+    const reservation = await D1Service.reserveBooking(env, {
       customerName: validation.sanitized.customer_name,
       customerMobile: validation.sanitized.customer_phone,
-      customerEmail: validation.sanitized.customer_email,
+      customerEmail: body.customer_email || null,
       eventDate: validation.sanitized.event_date,
       eventLocation: validation.sanitized.location,
       selectedServices: validation.sanitized.service_ids,
       requirements: validation.sanitized.additional_requirements,
       specialNotes: validation.sanitized.notes,
       idempotencyKey: body.idempotency_key || null
-    };
-
-    const reservation = await D1Service.reserveBooking(env, reservationPayload);
+    });
 
     return jsonResponse(request, env, {
       success: true,
@@ -54,82 +44,114 @@ export async function handleReserveBooking(request, env) {
     }, 201);
   } catch (err) {
     console.error('[Route: ReserveBooking] Error:', err);
-    return errorResponse(request, env, err.message || 'Failed to reserve booking reference', 500, 'INTERNAL_ERROR');
+    return errorResponse(request, env, 'Failed to reserve booking reference', 500, 'INTERNAL_ERROR');
   }
 }
 
 export async function handleSubmitBooking(request, env) {
+  let uploadedAsset = null;
   try {
+    if (!env.DB) return errorResponse(request, env, 'D1 database is unavailable', 503, 'SERVICE_UNAVAILABLE');
     const contentType = request.headers.get('content-type') || '';
     if (!contentType.includes('multipart/form-data')) {
       return errorResponse(request, env, 'Content-Type must be multipart/form-data', 415, 'UNSUPPORTED_MEDIA_TYPE');
     }
 
     const formData = await request.formData();
+    // Keep compatibility with the existing website's `poster_image` field.
+    if (!formData.has('poster') && formData.has('poster_image')) {
+      formData.set('poster', formData.get('poster_image'));
+    }
+
     const validation = await validateBookingSubmission(formData);
     if (!validation.valid) {
       return errorResponse(request, env, validation.errors.join('; '), 400, 'VALIDATION_FAILED');
     }
 
-    // Require D1 as the exclusive active booking database
-    if (!env.DB) {
-      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
+    const { bookingRef, reservationToken, posterFile, customerData } = validation.data;
+    const customer = customerData || {};
+    const customerValidation = validateBookingReservation({
+      customer_name: customer.customer_name,
+      customer_phone: customer.customer_phone || customer.customer_mobile,
+      customer_email: customer.customer_email,
+      event_date: customer.event_date,
+      location: customer.location || customer.event_location,
+      service_ids: customer.service_ids || customer.selected_services,
+      additional_requirements: customer.additional_requirements || customer.requirements,
+      notes: customer.notes || customer.special_notes,
+      whatsapp_consent: customer.whatsapp_consent
+    });
+    if (!customerValidation.valid) {
+      return errorResponse(request, env, customerValidation.errors.join('; '), 400, 'VALIDATION_FAILED');
     }
+    const safeCustomer = customerValidation.sanitized;
 
-    const { bookingRef, posterFile, customerData } = validation.data;
-    const customerDisplayName = (customerData && customerData.customer_name) || 'Valued Client';
-    const eventDate = (customerData && customerData.event_date) || '';
-
-    // 1. Upload poster PNG image exclusively to Cloudinary (Active poster storage)
-    const arrayBuffer = await posterFile.arrayBuffer();
-    const cloudinaryResult = await CloudinaryService.uploadPoster(env, bookingRef, arrayBuffer, {
-      customerName: customerDisplayName,
-      eventDate: eventDate
+    const existing = await D1Service.getBookingByRef(env, bookingRef);
+    if (existing) {
+      if (existing.booking_status !== 'draft') {
+        return errorResponse(request, env, 'This booking reference has already been submitted', 409, 'BOOKING_ALREADY_SUBMITTED');
+      }
+      if (!reservationToken || !existing.reservation_token_hash ||
+          await sha256(reservationToken) !== existing.reservation_token_hash) {
+        return errorResponse(request, env, 'Invalid reservation token', 401, 'INVALID_RESERVATION');
+      }
+      if (existing.reservation_expires_at && existing.reservation_expires_at <= new Date().toISOString()) {
+        return errorResponse(request, env, 'Booking reservation has expired', 410, 'RESERVATION_EXPIRED');
+      }
+    } else if (reservationToken) {
+      return errorResponse(request, env, 'Booking reservation was not found', 404, 'RESERVATION_NOT_FOUND');
+    }
+    const posterBytes = await posterFile.arrayBuffer();
+    uploadedAsset = await CloudinaryService.uploadPoster(env, bookingRef, posterBytes, {
+      customerName: safeCustomer.customer_name,
+      eventDate: safeCustomer.event_date
     });
 
-    // 2. Persist booking enquiry in Cloudflare D1
-    const submitPayload = {
+    const consentField = formData.get('whatsapp_consent');
+    const whatsappConsent = safeCustomer.whatsapp_consent === 1 || customer.whatsapp_consent === true || customer.whatsapp_consent === 1 ||
+      customer.whatsapp_consent === '1' || consentField === 'true' || consentField === '1';
+
+    const booking = await D1Service.submitBooking(env, {
       bookingRef,
-      posterPublicId: cloudinaryResult.public_id,
-      posterSecureUrl: cloudinaryResult.secure_url,
-      posterVersion: cloudinaryResult.version,
-      posterAssetId: cloudinaryResult.asset_id,
-      posterFileSize: cloudinaryResult.bytes || arrayBuffer.byteLength,
-      customerName: customerDisplayName,
-      customerMobile: (customerData && customerData.customer_phone) || '',
-      customerEmail: (customerData && customerData.customer_email) || '',
-      eventDate: eventDate,
-      eventLocation: (customerData && customerData.location) || 'Salem',
-      selectedServicesJson: (customerData && customerData.service_ids) || [],
-      requirementsJson: (customerData && customerData.additional_requirements) || {},
-      specialNotes: (customerData && customerData.notes) || '',
-      whatsappConsent: customerData ? (customerData.whatsapp_consent === 1 || customerData.whatsapp_consent === true) : false
-    };
+      reservationToken,
+      posterPublicId: uploadedAsset.public_id,
+      posterSecureUrl: uploadedAsset.secure_url,
+      posterVersion: uploadedAsset.version,
+      posterAssetId: uploadedAsset.asset_id,
+      posterFileSize: uploadedAsset.bytes || posterBytes.byteLength,
+      customerName: safeCustomer.customer_name,
+      customerMobile: safeCustomer.customer_phone,
+      customerEmail: customer.customer_email || null,
+      eventDate: safeCustomer.event_date,
+      eventLocation: safeCustomer.location,
+      selectedServices: safeCustomer.service_ids,
+      requirements: safeCustomer.additional_requirements,
+      specialNotes: safeCustomer.notes,
+      whatsappConsent,
+      idempotencyKey: formData.get('idempotency_key') || null
+    });
 
-    const finalizedBooking = await D1Service.submitBooking(env, submitPayload);
-
-    // 3. Asynchronously dispatch FCM push notification to owner devices (non-blocking)
     try {
-      await FCMService.notifyNewBooking(env, finalizedBooking);
-    } catch (fcmErr) {
-      console.warn('[Route: SubmitBooking] FCM dispatch warning:', fcmErr);
+      await FCMService.notifyNewBooking(env, booking);
+    } catch (notifyErr) {
+      console.warn('[Route: SubmitBooking] FCM dispatch warning:', notifyErr);
     }
 
     return jsonResponse(request, env, {
       success: true,
       message: 'Booking enquiry submitted successfully. Awaiting studio owner review.',
-      bookingRef: finalizedBooking.booking_ref,
+      bookingRef: booking.booking_ref,
       booking: {
-        id: finalizedBooking.id,
-        booking_ref: finalizedBooking.booking_ref,
-        status: finalizedBooking.booking_status,
-        customer_name: finalizedBooking.customer_name,
-        customer_mobile: finalizedBooking.customer_mobile,
-        event_date: finalizedBooking.event_date,
-        event_location: finalizedBooking.event_location,
-        submitted_at: finalizedBooking.submitted_at || finalizedBooking.created_at
+        id: booking.id,
+        booking_ref: booking.booking_ref,
+        status: booking.booking_status,
+        customer_name: booking.customer_name,
+        customer_mobile: booking.customer_mobile,
+        event_date: booking.event_date,
+        event_location: booking.event_location,
+        submitted_at: booking.submitted_at || booking.created_at
       }
-    }, 200);
+    }, 201);
   } catch (err) {
     console.error('[Route: SubmitBooking] Error:', err);
     return errorResponse(request, env, err.message || 'Failed to submit booking', 500, 'INTERNAL_ERROR');
@@ -138,16 +160,11 @@ export async function handleSubmitBooking(request, env) {
 
 export async function handleGetBookingStatus(request, env, bookingRef) {
   try {
-    if (!bookingRef) {
-      return errorResponse(request, env, 'Booking reference is required', 400, 'MISSING_PARAM');
-    }
-
-    if (!env.DB) {
-      return errorResponse(request, env, 'D1 database service is not configured or unavailable', 503, 'SERVICE_UNAVAILABLE');
-    }
+    if (!env.DB) return errorResponse(request, env, 'D1 database is unavailable', 503, 'SERVICE_UNAVAILABLE');
+    if (!bookingRef) return errorResponse(request, env, 'Booking reference is required', 400, 'MISSING_PARAM');
 
     const booking = await D1Service.getBookingByRef(env, bookingRef);
-    if (!booking) {
+    if (!booking || booking.booking_status === 'draft') {
       return errorResponse(request, env, `Booking ${bookingRef} not found`, 404, 'NOT_FOUND');
     }
 
@@ -163,7 +180,7 @@ export async function handleGetBookingStatus(request, env, bookingRef) {
         submitted_at: booking.submitted_at || booking.created_at,
         updated_at: booking.updated_at
       }
-    }, 200);
+    });
   } catch (err) {
     console.error('[Route: BookingStatus] Error:', err);
     return errorResponse(request, env, 'Failed to fetch booking status', 500, 'INTERNAL_ERROR');
