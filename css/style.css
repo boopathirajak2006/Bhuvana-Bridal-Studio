@@ -1182,7 +1182,6 @@ body.studio-detail-page .service-card { min-width: 0; }
 /* Event date inputs should align with the other mobile form controls. */
 #e-date { width: 100%; min-width: 0; min-height: 3rem; box-sizing: border-box; appearance: none; -webkit-appearance: none; }
 @media (max-width: 520px) {
-  #form-step-2 .form-grid { grid-template-columns: minmax(0, 1fr); }
   #form-step-2 #e-date { font-size: 1rem; padding-inline: .75rem; }
 }
 .gallery-slot-empty {

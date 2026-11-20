@@ -471,15 +471,13 @@
             continue;
           }
 
-          const task = resizeReferenceImage(file).then(blob => {
+          const task = resizeReferenceImage(file).then(blob => new Promise((resolve, reject) => {
             if (blob.size > maxSizeBytes) throw new Error(`File "${file.name}" is too large after compression.`);
             const reader = new FileReader();
-            reader.onload = event => {
-              uploadedImages.push({ name: file.name, blob, dataUrl: event.target.result, size: blob.size });
-              renderImagePreviews();
-            };
+            reader.onload = event => { uploadedImages.push({ name: file.name, blob, dataUrl: event.target.result, size: blob.size }); renderImagePreviews(); resolve(); };
+            reader.onerror = () => reject(new Error(`Could not finish reading ${file.name}`));
             reader.readAsDataURL(blob);
-          }).catch(err => { if (uploadErr) uploadErr.textContent = err.message; });
+          })).catch(err => { if (uploadErr) uploadErr.textContent = err.message; });
           pendingImageReads.push(task);
         }
       }

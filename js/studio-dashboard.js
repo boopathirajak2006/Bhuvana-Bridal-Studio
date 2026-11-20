@@ -108,9 +108,6 @@
       navPanel?.setAttribute('aria-hidden', String(!open));
     };
     menuButton?.addEventListener('click', () => setMenuOpen(menuButton.getAttribute('aria-expanded') !== 'true'));
-    window.addEventListener('scroll', () => {
-      if (menuButton?.getAttribute('aria-expanded') === 'true') setMenuOpen(false);
-    }, { passive: true });
     document.addEventListener('click', event => {
       if (window.matchMedia('(max-width: 900px)').matches && navPanel?.classList.contains('is-open')
         && !navPanel.contains(event.target) && !menuButton?.contains(event.target)) setMenuOpen(false);
