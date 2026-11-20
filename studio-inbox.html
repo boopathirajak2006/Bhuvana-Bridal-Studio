@@ -45,11 +45,15 @@
           <span>👤</span>
           <span id="owner-name-label">Bhuvaneshwari</span>
         </div>
-
-        <button id="btn-owner-logout" class="dash-btn dash-btn-outline" title="Sign out of portal">
-          <span>🚪</span>
-          <span>Logout</span>
-        </button>
+        <div class="dash-account-actions">
+          <button id="btn-dashboard-menu" class="dash-btn dash-btn-outline dash-menu-toggle" type="button" aria-label="Open owner menu" aria-controls="portal-navigation" aria-expanded="false" title="Open owner menu">
+            <span class="dash-menu-lines" aria-hidden="true"><i></i><i></i><i></i></span>
+          </button>
+          <button id="btn-owner-logout" class="dash-btn dash-btn-outline" title="Sign out of portal">
+            <span>🚪</span>
+            <span>Logout</span>
+          </button>
+        </div>
       </div>
     </div>
   </header>
@@ -57,7 +61,7 @@
   <!-- 9-Section Dashboard Layout -->
   <div class="dash-shell">
     <!-- Sidebar Navigation -->
-    <aside class="dash-sidebar" aria-label="Portal Navigation">
+    <aside class="dash-sidebar" id="portal-navigation" aria-label="Portal Navigation" aria-hidden="true">
       <button class="dash-nav-btn active" data-section="overview">
         <span class="nav-icon">📊</span>
         <span>Overview</span>
@@ -186,17 +190,17 @@
               <tr>
                 <th>Booking Ref</th>
                 <th>Customer Name</th>
-                <th>Phone / WhatsApp</th>
+                <th>Phone</th>
+                <th>WhatsApp</th>
                 <th>Event Date</th>
                 <th>Location</th>
                 <th>Status</th>
-                <th>Poster</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="bookings-table-body">
               <tr>
-                <td colspan="8" style="text-align: center; padding: 3rem; color: var(--ink-light);">
+                  <td colspan="8" style="text-align: center; padding: 3rem; color: var(--ink-light);">
                   Loading studio bookings...
                 </td>
               </tr>
@@ -268,7 +272,9 @@
             <thead>
               <tr>
                 <th>Customer Name</th>
-                <th>Mobile &amp; WhatsApp</th>
+                <th>Mobile</th>
+                <th>WhatsApp</th>
+                <th>Email</th>
                 <th>City / Area</th>
                 <th>Total Bookings</th>
                 <th>Customer Tag</th>
@@ -277,7 +283,7 @@
             </thead>
             <tbody id="customers-table-body">
               <tr>
-                <td colspan="6" style="text-align: center; padding: 2rem; color: var(--ink-light);">
+                <td colspan="8" style="text-align: center; padding: 2rem; color: var(--ink-light);">
                   Aggregating customer profiles...
                 </td>
               </tr>
@@ -359,10 +365,15 @@
               </optgroup>
             </select>
           </label>
-          <button class="dash-btn dash-btn-primary" id="btn-add-gallery-photo">
-            <span>📷</span> Add Portfolio Photo
-          </button>
+          <div class="gallery-toolbar-actions" role="group" aria-label="Gallery photo actions">
+            <button class="dash-btn dash-btn-primary" id="btn-add-gallery-photo" type="button"><span>📷</span> Add Photo</button>
+            <button class="dash-btn dash-btn-danger" id="btn-delete-gallery-photo" type="button"><span>🗑</span> Delete Photo</button>
+            <button class="dash-btn dash-btn-outline" id="btn-arrange-gallery-photo" type="button"><span>↕</span> Arrangement</button>
+          </div>
         </div>
+
+        <input type="file" id="gallery-photo-files" accept="image/jpeg,image/png,image/webp" multiple hidden>
+        <div id="gallery-management-status" class="form-status" role="status" aria-live="polite"></div>
 
         <div class="gallery-grid-owner" id="gallery-grid-container">
           <!-- Injected by JS -->
@@ -413,7 +424,7 @@
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody id="notifications-table-body">
+            <tbody id="notifications-table-body" data-responsive-labels="Booking Ref|Recipient Mobile|Template / Event|Timestamp|Status">
               <tr>
                 <td colspan="5" style="text-align: center; padding: 2rem; color: var(--ink-light);">
                   No WhatsApp delivery logs recorded yet.

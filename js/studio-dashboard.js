@@ -40,6 +40,8 @@
 
   // Gallery State
   let galleryItems = [];
+  let galleryDeleteMode = false;
+  let galleryArrangeMode = false;
 
   // Notifications State
   let notificationLogs = [
@@ -97,10 +99,24 @@
   // ==========================================
   function setupNavigationTabs() {
     const navButtons = document.querySelectorAll('.dash-nav-btn');
+    const menuButton = document.getElementById('btn-dashboard-menu');
+    const navPanel = document.getElementById('portal-navigation');
+    const setMenuOpen = open => {
+      menuButton?.setAttribute('aria-expanded', String(open));
+      menuButton?.setAttribute('aria-label', open ? 'Close owner menu' : 'Open owner menu');
+      navPanel?.classList.toggle('is-open', open);
+      navPanel?.setAttribute('aria-hidden', String(!open));
+    };
+    menuButton?.addEventListener('click', () => setMenuOpen(menuButton.getAttribute('aria-expanded') !== 'true'));
+    document.addEventListener('click', event => {
+      if (window.matchMedia('(max-width: 900px)').matches && navPanel?.classList.contains('is-open')
+        && !navPanel.contains(event.target) && !menuButton?.contains(event.target)) setMenuOpen(false);
+    });
     navButtons.forEach(btn => {
       btn.addEventListener('click', function () {
         const targetSection = this.dataset.section;
         switchSection(targetSection);
+        setMenuOpen(false);
       });
     });
 
@@ -291,11 +307,92 @@
     });
 
     const addGalleryButton = document.getElementById('btn-add-gallery-photo');
-    if (addGalleryButton) addGalleryButton.addEventListener('click', () => {
-      document.querySelector('#gallery-grid-container input[type="file"]')?.click();
+    const galleryFileInput = document.getElementById('gallery-photo-files');
+    const deleteGalleryButton = document.getElementById('btn-delete-gallery-photo');
+    const arrangeGalleryButton = document.getElementById('btn-arrange-gallery-photo');
+    const galleryStatus = document.getElementById('gallery-management-status');
+    if (addGalleryButton && galleryFileInput) addGalleryButton.addEventListener('click', () => galleryFileInput.click());
+    if (galleryFileInput) galleryFileInput.addEventListener('change', async () => {
+      const files = [...(galleryFileInput.files || [])];
+      galleryFileInput.value = '';
+      if (!files.length) return;
+      if (files.length > 10) { alert('Choose up to 10 photos at a time.'); return; }
+      if (files.some(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
+        alert('Each photo must be JPG, PNG, or WebP and 5 MB or smaller.');
+        return;
+      }
+      const { category, subcategory } = getSelectedGalleryCategory();
+      const form = new FormData();
+      form.append('category', category);
+      form.append('subcategory', subcategory);
+      files.forEach(file => form.append('photos', file, file.name));
+      addGalleryButton.disabled = true;
+      if (galleryStatus) { galleryStatus.style.display = 'block'; galleryStatus.textContent = `Uploading ${files.length} photo${files.length === 1 ? '' : 's'}…`; }
+      try {
+        await config.apiFetch('/api/admin/gallery/photo', { method: 'POST', body: form });
+        if (galleryStatus) galleryStatus.textContent = `${files.length} photo${files.length === 1 ? '' : 's'} added to ${getGalleryCategoryLabel(category, subcategory)}.`;
+        await loadGallery();
+      } catch (err) {
+        if (galleryStatus) galleryStatus.textContent = `Upload failed: ${err.message}`;
+      } finally { addGalleryButton.disabled = false; }
+    });
+    if (deleteGalleryButton) deleteGalleryButton.addEventListener('click', async () => {
+      if (!galleryDeleteMode) {
+        galleryDeleteMode = true;
+        galleryArrangeMode = false;
+        deleteGalleryButton.textContent = 'Delete Selected (0)';
+        renderGallery();
+        return;
+      }
+      const selected = [...document.querySelectorAll('[data-gallery-select]:checked')].map(input => input.value);
+      if (!selected.length) {
+        galleryDeleteMode = false;
+        deleteGalleryButton.innerHTML = '<span>🗑</span> Delete Photo';
+        renderGallery();
+        return;
+      }
+      if (selected.length > 10) { alert('Select up to 10 photos at a time.'); return; }
+      if (!confirm(`Delete ${selected.length} selected photo${selected.length === 1 ? '' : 's'} from this category?`)) return;
+      deleteGalleryButton.disabled = true;
+      try {
+        await config.apiFetch('/api/admin/gallery/photo', { method: 'DELETE', body: JSON.stringify({ photoIds: selected }) });
+        if (galleryStatus) { galleryStatus.style.display = 'block'; galleryStatus.textContent = `${selected.length} photo${selected.length === 1 ? '' : 's'} deleted.`; }
+        galleryDeleteMode = false;
+        deleteGalleryButton.innerHTML = '<span>🗑</span> Delete Photo';
+        await loadGallery();
+      } catch (err) {
+        alert(`Selected photos could not be deleted: ${err.message}`);
+      } finally { deleteGalleryButton.disabled = false; }
+    });
+    if (arrangeGalleryButton) arrangeGalleryButton.addEventListener('click', async () => {
+      if (!galleryArrangeMode) {
+        galleryArrangeMode = true;
+        galleryDeleteMode = false;
+        if (deleteGalleryButton) deleteGalleryButton.innerHTML = '<span>🗑</span> Delete Photo';
+        arrangeGalleryButton.innerHTML = '<span>✓</span> Save Arrangement';
+        renderGallery();
+        return;
+      }
+      const { category, subcategory } = getSelectedGalleryCategory();
+      const ordered = galleryItems.filter(photo => photo.category === category && photo.subcategory === subcategory).sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
+      arrangeGalleryButton.disabled = true;
+      try {
+        await config.apiFetch('/api/admin/gallery/arrangement', { method: 'PUT', body: JSON.stringify({ category, subcategory, photoIds: ordered.map(photo => photo.id) }) });
+        galleryArrangeMode = false;
+        arrangeGalleryButton.innerHTML = '<span>↕</span> Arrangement';
+        if (galleryStatus) { galleryStatus.style.display = 'block'; galleryStatus.textContent = 'Photo arrangement saved.'; }
+        await loadGallery();
+      } catch (err) { alert(`Arrangement could not be saved: ${err.message}`); }
+      finally { arrangeGalleryButton.disabled = false; }
     });
     const galleryCategoryFilter = document.getElementById('gallery-subcategory-filter');
-    if (galleryCategoryFilter) galleryCategoryFilter.addEventListener('change', renderGallery);
+    if (galleryCategoryFilter) galleryCategoryFilter.addEventListener('change', () => {
+      galleryDeleteMode = false;
+      galleryArrangeMode = false;
+      if (deleteGalleryButton) deleteGalleryButton.innerHTML = '<span>🗑</span> Delete Photo';
+      if (arrangeGalleryButton) arrangeGalleryButton.innerHTML = '<span>↕</span> Arrangement';
+      renderGallery();
+    });
 
     // Exports
     const exportCsvBtn = document.getElementById('btn-export-csv');
@@ -368,11 +465,11 @@
         <tbody>
           ${approvedOrPending.slice(0, 5).map(b => `
             <tr>
-              <td><strong>${escapeHtml(b.event_date || '—')}</strong></td>
-              <td>${escapeHtml(b.customer_name || 'Valued Client')}</td>
-              <td>${escapeHtml(b.event_location || 'Salem')}</td>
-              <td><span class="badge-status ${b.booking_status === 'approved' ? 'badge-approved' : 'badge-pending'}">${b.booking_status}</span></td>
-              <td><button class="dash-btn dash-btn-outline" style="font-size:0.75rem; padding:0.2rem 0.5rem;" onclick="window.viewBookingDetails('${b.id}')">View</button></td>
+              <td data-label="Event Date"><strong>${escapeHtml(b.event_date || '—')}</strong></td>
+              <td data-label="Customer">${escapeHtml(b.customer_name || 'Valued Client')}</td>
+              <td data-label="Location">${escapeHtml(b.event_location || 'Salem')}</td>
+              <td data-label="Status"><span class="badge-status ${b.booking_status === 'approved' ? 'badge-approved' : 'badge-pending'}">${b.booking_status}</span></td>
+              <td data-label="Action"><button class="dash-btn dash-btn-outline" style="font-size:0.75rem; padding:0.2rem 0.5rem;" onclick="window.viewBookingDetails('${b.id}')">View</button></td>
             </tr>
           `).join('')}
         </tbody>
@@ -442,35 +539,22 @@
 
         return `
           <tr>
-            <td>
+            <td data-label="Booking Ref">
               <strong style="color: var(--burgundy); font-family: monospace; font-size: 0.95rem;">
                 ${escapeHtml(b.booking_ref)}
               </strong>
             </td>
-            <td>
+            <td data-label="Customer Name">
               <strong>${escapeHtml(b.customer_name || 'Valued Client')}</strong>
             </td>
-            <td>
-              <div>${escapeHtml(b.customer_mobile || '—')}</div>
-              <div style="font-size: 0.8rem; margin-top: 2px;">
-                <a href="tel:${escapeHtml(b.customer_mobile)}" style="color: var(--burgundy); text-decoration: none;">📞 Call</a>
-                &middot;
-                ${waLink
-                  ? `<a href="${escapeHtml(waLink)}" target="_blank" rel="noopener noreferrer" style="color: #128C7E; text-decoration: none;">💬 WhatsApp</a>`
-                  : `<span style="color:var(--muted);">${hasWhatsAppConsent ? 'Invalid WhatsApp number' : 'No WhatsApp consent'}</span>`}
-              </div>
-            </td>
-            <td>${escapeHtml(b.event_date || '—')}</td>
-            <td>${escapeHtml(b.event_location || '—')}</td>
-            <td>
+            <td data-label="Phone"><a href="tel:${escapeHtml(b.customer_mobile || '')}" style="color:var(--ink);text-decoration:none;">${escapeHtml(b.customer_mobile || '—')}</a></td>
+            <td data-label="WhatsApp"><div>${escapeHtml(b.customer_whatsapp || '—')}</div><div class="booking-whatsapp-action">${waLink ? `<a href="${escapeHtml(waLink)}" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>` : `<span>${hasWhatsAppConsent ? 'Invalid number' : 'No consent'}</span>`}</div></td>
+            <td data-label="Event Date">${escapeHtml(b.event_date || '—')}</td>
+            <td data-label="Location">${escapeHtml(b.event_location || '—')}</td>
+            <td data-label="Status">
               <span class="badge-status ${statusBadgeClass}">${b.booking_status}</span>
             </td>
-            <td>
-              <button class="dash-btn dash-btn-outline" onclick="window.viewBookingDetails('${b.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                🖼 View Poster
-              </button>
-            </td>
-            <td>
+          <td data-label="Actions">
               <button class="dash-btn dash-btn-primary" onclick="window.viewBookingDetails('${b.id}')">
                 Review &rarr;
               </button>
@@ -584,6 +668,7 @@
         customerMap[phone] = {
           name: b.customer_name || 'Client',
           phone: phone,
+          whatsapp: b.customer_whatsapp || '',
           email: b.customer_email || '—',
           location: b.event_location || 'Salem',
           bookings: []
@@ -598,7 +683,7 @@
     }
 
     if (list.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--muted);">No customer profiles found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--muted);">No customer profiles found.</td></tr>`;
       return;
     }
 
@@ -614,22 +699,21 @@
         tagStyle = 'background:#E8F5E9; border:1px solid #A5D6A7; color:#2E7D32; font-weight:600;';
       }
 
-      const cleanPhone = c.phone.replace(/\D/g, '');
-      const waLink = cleanPhone ? `https://wa.me/91${cleanPhone.slice(-10)}` : '#';
+      const cleanPhone = c.whatsapp.replace(/\D/g, '');
+      const waLink = cleanPhone ? `https://wa.me/${cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone}` : '';
 
       return `
         <tr>
-          <td><strong>${escapeHtml(c.name)}</strong></td>
-          <td>
-            <div>${escapeHtml(c.phone)}</div>
-            <div style="font-size:0.8rem; color:var(--muted);">${escapeHtml(c.email)}</div>
-          </td>
-          <td>${escapeHtml(c.location)}</td>
-          <td><strong>${count} Booking${count > 1 ? 's' : ''}</strong></td>
-          <td><span style="display:inline-block; padding:3px 8px; border-radius:999px; font-size:0.75rem; ${tagStyle}">${tag}</span></td>
-          <td>
+          <td data-label="Customer Name"><strong>${escapeHtml(c.name)}</strong></td>
+          <td data-label="Mobile"><a href="tel:${escapeHtml(c.phone)}">${escapeHtml(c.phone)}</a></td>
+          <td data-label="WhatsApp">${escapeHtml(c.whatsapp || 'Not provided')}</td>
+          <td data-label="Email">${escapeHtml(c.email)}</td>
+          <td data-label="City / Area">${escapeHtml(c.location)}</td>
+          <td data-label="Total Bookings"><strong>${count} Booking${count > 1 ? 's' : ''}</strong></td>
+          <td data-label="Customer Tag"><span style="display:inline-block; padding:3px 8px; border-radius:999px; font-size:0.75rem; ${tagStyle}">${tag}</span></td>
+          <td data-label="Quick Actions">
             <a href="tel:${escapeHtml(c.phone)}" class="dash-btn dash-btn-outline" style="font-size:0.75rem; padding:0.25rem 0.5rem; text-decoration:none;">📞 Call</a>
-            <a href="${waLink}" target="_blank" rel="noopener" class="dash-btn dash-btn-outline" style="font-size:0.75rem; padding:0.25rem 0.5rem; text-decoration:none; color:#128C7E;">💬 WhatsApp</a>
+            ${waLink ? `<a href="${waLink}" target="_blank" rel="noopener" class="dash-btn dash-btn-outline" style="font-size:0.75rem; padding:0.25rem 0.5rem; text-decoration:none; color:#128C7E;">💬 WhatsApp</a>` : '<span>WhatsApp not provided</span>'}
           </td>
         </tr>
       `;
@@ -705,7 +789,9 @@
     return { category, subcategory };
   }
 
-  function galleryKey(category, subcategory, slot) { return `${category}|${subcategory}|${slot}`; }
+  function getGalleryCategoryLabel(category, subcategory) {
+    return galleryTaxonomy[category]?.categories.find(([key]) => key === subcategory)?.[1] || 'Work';
+  }
 
   const managedContentFields = [
     ['home.specialities.title', 'Home · Specialities heading', 'Our Studio Specialities'],
@@ -754,40 +840,56 @@
     const container = document.getElementById('gallery-grid-container');
     if (!container) return;
     const { category, subcategory } = getSelectedGalleryCategory();
-    const division = galleryTaxonomy[category];
-    const subcategoryLabel = division.categories.find(([key]) => key === subcategory)?.[1] || 'Work';
-    container.innerHTML = Array.from({ length: 6 }, (_, i) => {
-      const slot = i + 1;
-      const photo = galleryItems.find(item => item.category === category && item.subcategory === subcategory && Number(item.slot) === slot);
-      const key = galleryKey(category, subcategory, slot);
-      return `<div class="gallery-card-owner">
-        ${photo ? `<img src="${escapeHtml(photo.image_url)}" alt="${escapeHtml(photo.title || subcategoryLabel + ' customer work')}">` : `<div class="gallery-slot-empty">Photo slot ${slot}</div>`}
-        <div class="gallery-card-meta"><div><strong>${escapeHtml(subcategoryLabel)} · Slot ${slot}</strong>
-          <input class="login-form-input" data-gallery-title="${key}" maxlength="100" placeholder="Photo caption" value="${escapeHtml(photo?.title || '')}">
-          <input type="file" accept="image/jpeg,image/png,image/webp" data-gallery-photo="${key}" aria-label="${photo ? 'Replace' : 'Add'} ${subcategoryLabel} photo slot ${slot}">
-          <button type="button" class="dash-btn dash-btn-primary" data-gallery-save="${key}">${photo ? 'Replace Photo' : 'Add Photo'}</button>
-          ${photo ? `<button type="button" class="dash-btn dash-btn-danger" data-gallery-delete="${key}">Delete</button>` : ''}
-        </div></div></div>`;
-    }).join('');
+    const label = getGalleryCategoryLabel(category, subcategory);
+    const photos = galleryItems.filter(photo => photo.category === category && photo.subcategory === subcategory).sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
+    container.classList.toggle('is-arranging', galleryArrangeMode);
+    container.innerHTML = photos.map((photo, index) => `
+      <article class="gallery-card-owner" data-gallery-card="${escapeHtml(photo.id)}" ${galleryArrangeMode ? 'draggable="true"' : ''}>
+        ${galleryDeleteMode ? `<label class="gallery-select-photo"><input type="checkbox" data-gallery-select value="${escapeHtml(photo.id)}"><span>Select photo</span></label>` : ''}
+        <img src="${escapeHtml(photo.image_url)}" alt="${escapeHtml(photo.title || label + ' completed customer work')}" loading="lazy">
+        <div class="gallery-card-meta"><strong>${escapeHtml(photo.title || `${label} photo ${index + 1}`)}</strong>
+          ${galleryArrangeMode ? `<div class="gallery-order-actions"><button type="button" class="dash-btn dash-btn-outline" data-move-gallery="up" data-photo-id="${escapeHtml(photo.id)}" ${index === 0 ? 'disabled' : ''} aria-label="Move photo up">↑ Up</button><button type="button" class="dash-btn dash-btn-outline" data-move-gallery="down" data-photo-id="${escapeHtml(photo.id)}" ${index === photos.length - 1 ? 'disabled' : ''} aria-label="Move photo down">↓ Down</button><span>Position ${index + 1}</span></div>` : ''}
+        </div>
+      </article>`).join('') || `<p class="gallery-empty-owner">No photos in ${escapeHtml(label)} yet. Add up to 10 completed customer-work photos at a time.</p>`;
 
-    container.querySelectorAll('[data-gallery-save]').forEach(button => button.addEventListener('click', async () => {
-      const [category, subcategory, slot] = button.dataset.gallerySave.split('|');
-      const key = galleryKey(category, subcategory, slot);
-      const input = container.querySelector(`[data-gallery-photo="${key}"]`);
-      const file = input?.files?.[0];
-      if (!file) { alert('Choose a completed customer-work photo first.'); return; }
-      const form = new FormData(); form.append('category', category); form.append('subcategory', subcategory); form.append('slot', slot);
-      form.append('title', container.querySelector(`[data-gallery-title="${key}"]`)?.value || ''); form.append('photo', file);
-      button.disabled = true;
-      try { await config.apiFetch('/api/admin/gallery/photo', { method: 'POST', body: form }); await loadGallery(); }
-      catch (err) { alert(`Photo upload failed: ${err.message}`); button.disabled = false; }
+    container.querySelectorAll('[data-gallery-select]').forEach(input => input.addEventListener('change', () => {
+      const count = container.querySelectorAll('[data-gallery-select]:checked').length;
+      if (count > 10) { input.checked = false; alert('Select up to 10 photos at a time.'); return; }
+      const button = document.getElementById('btn-delete-gallery-photo');
+      if (button) button.innerHTML = `<span>🗑</span> Delete Selected (${count})`;
+      input.closest('.gallery-card-owner')?.classList.toggle('selected', input.checked);
     }));
-    container.querySelectorAll('[data-gallery-delete]').forEach(button => button.addEventListener('click', async () => {
-      if (!confirm('Delete this published portfolio photo?')) return;
-      const [category, subcategory, slot] = button.dataset.galleryDelete.split('|');
-      try { await config.apiFetch('/api/admin/gallery/photo', { method: 'DELETE', body: JSON.stringify({ category, subcategory, slot: Number(slot) }) }); await loadGallery(); }
-      catch (err) { alert(`Photo could not be deleted: ${err.message}`); }
-    }));
+    container.querySelectorAll('[data-move-gallery]').forEach(button => button.addEventListener('click', () => moveGalleryItem(button.dataset.photoId, button.dataset.moveGallery)));
+
+    let draggedPhotoId = null;
+    container.querySelectorAll('[data-gallery-card]').forEach(card => {
+      card.addEventListener('dragstart', event => {
+        draggedPhotoId = card.dataset.galleryCard;
+        event.dataTransfer?.setData('text/plain', draggedPhotoId);
+      });
+      card.addEventListener('dragover', event => { if (galleryArrangeMode) event.preventDefault(); });
+      card.addEventListener('drop', event => {
+        if (!galleryArrangeMode) return;
+        event.preventDefault();
+        const sourceId = draggedPhotoId || event.dataTransfer?.getData('text/plain');
+        if (sourceId && sourceId !== card.dataset.galleryCard) moveGalleryItem(sourceId, 'before', card.dataset.galleryCard);
+      });
+    });
+  }
+
+  function moveGalleryItem(photoId, direction, targetId = null) {
+    const { category, subcategory } = getSelectedGalleryCategory();
+    const items = galleryItems.filter(photo => photo.category === category && photo.subcategory === subcategory).sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
+    const from = items.findIndex(photo => photo.id === photoId);
+    if (from < 0) return;
+    let to = direction === 'up' ? from - 1 : direction === 'down' ? from + 1 : items.findIndex(photo => photo.id === targetId);
+    if (to < 0 || to >= items.length) return;
+    const [moved] = items.splice(from, 1);
+    if (direction === 'before') items.splice(to > from ? to - 1 : to, 0, moved);
+    else items.splice(to, 0, moved);
+    items.forEach((photo, index) => { photo.sort_order = index + 1; });
+    galleryItems = galleryItems.filter(photo => photo.category !== category || photo.subcategory !== subcategory).concat(items);
+    renderGallery();
   }
 
   // ==========================================
@@ -823,11 +925,11 @@
 
     tbody.innerHTML = notificationLogs.map(n => `
       <tr>
-        <td><strong>${escapeHtml(n.ref)}</strong></td>
-        <td>${escapeHtml(n.recipient)}</td>
-        <td>${escapeHtml(n.template)}</td>
-        <td>${escapeHtml(n.time)}</td>
-        <td><span style="color:#2E7D32; font-weight:600;">✓ ${escapeHtml(n.status)}</span></td>
+        <td data-label="Booking Ref"><strong>${escapeHtml(n.ref)}</strong></td>
+        <td data-label="Recipient Mobile">${escapeHtml(n.recipient)}</td>
+        <td data-label="Template / Event">${escapeHtml(n.template)}</td>
+        <td data-label="Timestamp">${escapeHtml(n.time)}</td>
+        <td data-label="Status"><span style="color:#2E7D32; font-weight:600;">✓ ${escapeHtml(n.status)}</span></td>
       </tr>
     `).join('');
   }
@@ -925,16 +1027,23 @@
       activeSelectedBooking = res.booking;
       const b = res.booking;
 
+      let requirementsObj = {};
+      try { requirementsObj = JSON.parse(b.requirements_json || '{}'); } catch { /* empty */ }
+
       document.getElementById('detail-modal-title').textContent = b.customer_name || 'Customer Booking';
       document.getElementById('detail-modal-sub').textContent = `Reference: ${b.booking_ref} · Status: ${b.booking_status.toUpperCase()}`;
 
       // Customer box
       document.getElementById('detail-customer-box').innerHTML = `
         <div><strong>Name:</strong> ${escapeHtml(b.customer_name)}</div>
-        <div><strong>Mobile:</strong> <a href="tel:${b.customer_mobile}">${escapeHtml(b.customer_mobile)}</a></div>
+        <div><strong>Phone:</strong> <a href="tel:${escapeHtml(b.customer_mobile)}">${escapeHtml(b.customer_mobile)}</a></div>
+        <div><strong>WhatsApp:</strong> ${escapeHtml(b.customer_whatsapp || 'Not provided')}</div>
         <div><strong>Email:</strong> ${escapeHtml(b.customer_email || 'Not provided')}</div>
+        <div><strong>Preferred Contact:</strong> ${escapeHtml(requirementsObj.preferredContact || 'Not specified')}</div>
+        <div><strong>Address:</strong> ${escapeHtml(b.customer_address || requirementsObj.customerAddress || 'Not provided')}</div>
         <div><strong>Event Date:</strong> ${escapeHtml(b.event_date)}</div>
-        <div><strong>Location:</strong> ${escapeHtml(b.event_location)}</div>
+        <div><strong>Event Time:</strong> ${escapeHtml(requirementsObj.eventTime || 'Not provided')}</div>
+        <div><strong>Location:</strong> ${escapeHtml(requirementsObj.eventLocation || b.event_location || 'Not provided')}</div>
         <div><strong>Submitted At:</strong> ${new Date(b.submitted_at || b.created_at).toLocaleString('en-IN')}</div>
       `;
 
@@ -946,19 +1055,21 @@
         servicesList = [b.selected_services_json];
       }
 
-      let requirementsObj = {};
-      try {
-        requirementsObj = JSON.parse(b.requirements_json || '{}');
-      } catch {
-        // empty
-      }
-
-      const reqRows = Object.entries(requirementsObj).map(([k, v]) => `<div><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</div>`).join('');
+      const referenceImages = Array.isArray(res.referenceImages) ? res.referenceImages : [];
+      const reqRows = Object.entries(requirementsObj)
+        .filter(([key]) => !['referenceImages', 'customerAddress', 'eventLocation'].includes(key))
+        .filter(([, value]) => value && typeof value !== 'object')
+        .map(([key, value]) => `<div><strong>${escapeHtml(key)}:</strong> ${escapeHtml(value)}</div>`).join('');
+      const referenceGallery = referenceImages.map((image, index) => {
+        const imageUrl = typeof image?.image_url === 'string' ? image.image_url : '';
+        return imageUrl ? `<a class="booking-reference-thumb" href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener"><img src="${escapeHtml(imageUrl)}" alt="Customer reference image ${index + 1}"><span>${escapeHtml(image.title || `Reference ${index + 1}`)}</span></a>` : '';
+      }).join('');
 
       document.getElementById('detail-services-box').innerHTML = `
         <div style="margin-bottom: 0.5rem;"><strong>Selected Services:</strong><br>${servicesList.map(s => `• ${escapeHtml(s)}`).join('<br>')}</div>
         ${reqRows ? `<div style="margin-top: 0.5rem; border-top: 1px dashed var(--border); padding-top: 0.5rem;">${reqRows}</div>` : ''}
         ${b.special_notes ? `<div style="margin-top: 0.5rem;"><strong>Notes:</strong> ${escapeHtml(b.special_notes)}</div>` : ''}
+        ${referenceGallery ? `<div class="booking-reference-list"><strong>Customer reference images</strong><div class="booking-reference-grid">${referenceGallery}</div></div>` : ''}
       `;
 
       // Consent Box
@@ -1041,7 +1152,7 @@
 
   function buildBookingWhatsAppLink(booking, status = booking.booking_status) {
     if (Number(booking.whatsapp_consent) !== 1) return null;
-    const recipient = normalizeWhatsAppNumber(booking.customer_mobile);
+    const recipient = normalizeWhatsAppNumber(booking.customer_whatsapp || booking.customer_mobile);
     if (!recipient) return null;
 
     const name = booking.customer_name || 'Valued Client';

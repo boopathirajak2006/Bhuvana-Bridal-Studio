@@ -2,7 +2,7 @@
  * Request Validation Middleware for Bhuvana's Bridal Studio Cloudflare Worker
  */
 
-import { validatePngMagicBytes, sanitizeInput } from '../utils/security.js';
+import { sanitizeInput } from '../utils/security.js';
 
 /**
  * Validates booking reservation payload (Step 1)
@@ -29,15 +29,18 @@ export function validateBookingReservation(body) {
     errors.push('Customer mobile number must contain a valid 10 to 15 digit telephone number');
   }
 
+  const whatsapp = typeof body.customer_whatsapp === 'string' ? body.customer_whatsapp.trim() : '';
+  const whatsappDigits = whatsapp.replace(/\D/g, '');
+  if (whatsapp && (whatsappDigits.length < 10 || whatsappDigits.length > 15)) {
+    errors.push('Customer WhatsApp number must contain a valid 10 to 15 digit telephone number');
+  }
+
   const eventDate = typeof body.event_date === 'string' ? body.event_date.trim() : '';
   if (!eventDate) {
     errors.push('Event date is required');
   }
 
   const location = typeof body.location === 'string' ? body.location.trim() : '';
-  if (!location) {
-    errors.push('Location is required');
-  }
 
   const serviceIds = Array.isArray(body.service_ids) ? body.service_ids : [];
   if (serviceIds.length === 0) {
@@ -60,8 +63,11 @@ export function validateBookingReservation(body) {
     sanitized: {
       customer_name: sanitizeInput(name),
       customer_phone: phone,
+      customer_whatsapp: whatsapp,
+      customer_email: typeof body.customer_email === 'string' ? sanitizeInput(body.customer_email.trim().slice(0, 254)) : '',
+      customer_address: typeof body.customer_address === 'string' ? sanitizeInput(body.customer_address.trim().slice(0, 1000)) : '',
       event_date: sanitizeInput(eventDate),
-      location: sanitizeInput(location),
+      location: sanitizeInput(location || 'Salem'),
       service_ids: serviceIds,
       service_breakdown: body.service_breakdown || {},
       additional_requirements: body.additional_requirements || {},
@@ -91,23 +97,6 @@ export async function validateBookingSubmission(formData) {
     errors.push('Valid booking reference (BBS-YYYY-XXXX) is required');
   }
 
-  const posterFile = formData.get('poster') || formData.get('poster_image');
-  if (!posterFile) {
-    errors.push('Generated booking poster image file is required');
-  } else {
-    // Check file size (max 5 MB)
-    const MAX_SIZE = 5 * 1024 * 1024;
-    if (posterFile.size > MAX_SIZE) {
-      errors.push(`Poster image exceeds maximum allowed size of 5MB (size: ${(posterFile.size / 1024 / 1024).toFixed(2)}MB)`);
-    }
-
-    // Validate PNG signature
-    const arrayBuffer = await posterFile.arrayBuffer();
-    if (!validatePngMagicBytes(arrayBuffer)) {
-      errors.push('Uploaded poster is not a valid PNG image');
-    }
-  }
-
   // Optional customer payload update
   let customerData = null;
   const rawData = formData.get('booking_data');
@@ -128,7 +117,6 @@ export async function validateBookingSubmission(formData) {
     data: {
       reservationToken,
       bookingRef,
-      posterFile,
       customerData
     }
   };

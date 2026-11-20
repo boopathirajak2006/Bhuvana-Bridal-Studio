@@ -30,7 +30,7 @@ import {
   handleWhatsAppWebhookGet,
   handleWhatsAppWebhookPost
 } from './routes/whatsapp.js';
-import { handlePublicGallery, handleOwnerGalleryList, handleOwnerGalleryUpload, handleOwnerGalleryDelete } from './routes/gallery.js';
+import { handlePublicGallery, handleOwnerGalleryList, handleOwnerGalleryUpload, handleOwnerGalleryDelete, handleOwnerGalleryArrangement } from './routes/gallery.js';
 import { handlePublicContent, handleOwnerContent } from './routes/content.js';
 
 export default {
@@ -125,6 +125,7 @@ export default {
         if (path === '/api/admin/gallery' && method === 'GET') return await handleOwnerGalleryList(request, env, auth);
         if (path === '/api/admin/gallery/photo' && method === 'POST') return await handleOwnerGalleryUpload(request, env, auth);
         if (path === '/api/admin/gallery/photo' && method === 'DELETE') return await handleOwnerGalleryDelete(request, env, auth);
+        if (path === '/api/admin/gallery/arrangement' && method === 'PUT') return await handleOwnerGalleryArrangement(request, env, auth);
         if (path === '/api/admin/content' && ['GET', 'PUT'].includes(method)) return await handleOwnerContent(request, env, auth);
 
         if (path === '/api/admin/change-password' && method === 'POST') {

@@ -31,23 +31,21 @@ export class CloudinaryService {
     return await this.sha1(toSign);
   }
 
-  static async uploadGalleryPhoto(env, category, subcategory, slot, arrayBuffer) {
+  static async uploadGalleryPhoto(env, category, subcategory, photoId, arrayBuffer) {
     const { CLOUDINARY_CLOUD_NAME: cloudName, CLOUDINARY_API_KEY: apiKey, CLOUDINARY_API_SECRET: apiSecret } = env;
     if ([cloudName, apiKey, apiSecret].some(value => this.isPlaceholder(value))) {
       throw new Error('Cloudinary gallery credentials are not configured');
     }
     const timestamp = Math.floor(Date.now() / 1000);
     const folder = 'bhuvana_gallery';
-    const publicId = `${folder}/${category}/${subcategory}/slot-${slot}`;
-    const params = { overwrite: 'true', public_id: publicId, timestamp: String(timestamp), upload_preset: '' };
-    delete params.upload_preset;
+    const publicId = `${folder}/${category}/${subcategory}/${photoId}`;
+    const params = { public_id: publicId, timestamp: String(timestamp) };
     const signature = await this.generateApiSignature(params, apiSecret);
     const form = new FormData();
-    form.append('file', new Blob([arrayBuffer]), `slot-${slot}`);
+    form.append('file', new Blob([arrayBuffer]), `${photoId}`);
     form.append('api_key', apiKey);
     form.append('timestamp', String(timestamp));
     form.append('public_id', publicId);
-    form.append('overwrite', 'true');
     form.append('signature', signature);
     const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: form });
     const result = await response.json();
@@ -71,6 +69,29 @@ export class CloudinaryService {
     const result = await response.json();
     if (!response.ok || (result.result !== 'ok' && result.result !== 'not found')) throw new Error(result.error?.message || 'Cloudinary photo deletion failed');
     return result;
+  }
+
+  static async uploadBookingReference(env, bookingRef, referenceId, arrayBuffer, mimeType) {
+    const { CLOUDINARY_CLOUD_NAME: cloudName, CLOUDINARY_API_KEY: apiKey, CLOUDINARY_API_SECRET: apiSecret } = env;
+    if ([cloudName, apiKey, apiSecret].some(value => this.isPlaceholder(value))) throw new Error('Cloudinary booking reference credentials are not configured');
+    const folder = `bhuvana_booking_references/${bookingRef}`;
+    const publicId = `${folder}/${referenceId}`;
+    const timestamp = Math.floor(Date.now() / 1000);
+    const type = 'authenticated';
+    const params = { folder, public_id: publicId, timestamp: String(timestamp), type };
+    const signature = await this.generateApiSignature(params, apiSecret);
+    const form = new FormData();
+    form.append('file', new Blob([arrayBuffer], { type: mimeType }), referenceId);
+    form.append('api_key', apiKey);
+    form.append('timestamp', String(timestamp));
+    form.append('folder', folder);
+    form.append('public_id', publicId);
+    form.append('type', type);
+    form.append('signature', signature);
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: form });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error?.message || `Cloudinary reference upload failed (${response.status})`);
+    return { public_id: result.public_id, secure_url: result.secure_url, version: String(result.version), format: result.format || 'jpg' };
   }
 
   /**

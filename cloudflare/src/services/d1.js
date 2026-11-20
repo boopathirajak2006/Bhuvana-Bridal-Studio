@@ -58,6 +58,7 @@ export class D1Service {
 
     const customerName = data.customerName || 'Valued Client';
     const customerMobile = data.customerMobile || '';
+    const customerWhatsapp = data.customerWhatsapp || null;
     const eventDate = data.eventDate || '';
     const eventLocation = data.eventLocation || '';
     const selectedServicesJson = JSON.stringify(data.selectedServices || []);
@@ -69,10 +70,11 @@ export class D1Service {
     // Insert draft booking reservation
     await env.DB.prepare(`
       INSERT INTO bookings (
-        id, booking_ref, idempotency_key, customer_name, customer_mobile, customer_email,
+        id, booking_ref, idempotency_key, customer_name, customer_mobile, customer_email, customer_whatsapp,
+        customer_address,
         event_date, event_location, selected_services_json, requirements_json, special_notes,
         booking_status, reservation_expires_at, reservation_token_hash, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)
     `).bind(
       id,
       bookingRef,
@@ -80,6 +82,8 @@ export class D1Service {
       customerName,
       customerMobile,
       data.customerEmail || null,
+      customerWhatsapp,
+      data.customerAddress || null,
       eventDate,
       eventLocation,
       selectedServicesJson,
@@ -96,7 +100,7 @@ export class D1Service {
       action: 'created_draft',
       previousStatus: null,
       newStatus: 'draft',
-      reason: 'Customer initiated poster generation'
+      reason: 'Customer started a booking enquiry'
     });
 
     return {
@@ -107,21 +111,15 @@ export class D1Service {
     };
   }
 
-  /**
-   * Step 2: Finalize booking submission with poster Cloudinary asset identifiers
-   */
+  /** Finalize the customer's enquiry and persist its optional private references. */
   static async submitBooking(env, data) {
     const nowIso = new Date().toISOString();
     const {
       bookingRef,
-      posterPublicId,
-      posterSecureUrl,
-      posterVersion,
-      posterAssetId,
-      posterFileSize,
       reservationToken,
       customerName,
       customerMobile,
+      customerWhatsapp,
       customerEmail,
       eventDate,
       eventLocation,
@@ -132,10 +130,6 @@ export class D1Service {
       idempotencyKey
     } = data;
 
-    const publicId = posterPublicId || null;
-    const secureUrl = posterSecureUrl || null;
-    const version = posterVersion ? String(posterVersion) : null;
-    const assetId = posterAssetId || null;
 
     // Check if booking already exists (from step 1 draft or idempotency)
     let booking = await this.getBookingByRef(env, bookingRef);
@@ -145,6 +139,7 @@ export class D1Service {
     const requirementsJson = typeof data.requirementsJson === 'string'
       ? data.requirementsJson
       : JSON.stringify(data.requirements || {});
+    const referenceImages = Array.isArray(data.referenceImages) ? data.referenceImages : [];
 
     if (booking) {
       if (booking.booking_status !== 'draft') {
@@ -162,17 +157,14 @@ export class D1Service {
         UPDATE bookings SET
           customer_name = ?,
           customer_mobile = ?,
+          customer_whatsapp = ?,
+          customer_address = ?,
           customer_email = ?,
           event_date = ?,
           event_location = ?,
           selected_services_json = ?,
           requirements_json = ?,
           special_notes = ?,
-          poster_public_id = ?,
-          poster_secure_url = ?,
-          poster_version = ?,
-          poster_asset_id = ?,
-          poster_file_size = ?,
           booking_status = 'pending',
           whatsapp_consent = ?,
           consent_timestamp = ?,
@@ -183,17 +175,14 @@ export class D1Service {
       `).bind(
         customerName,
         customerMobile,
+        customerWhatsapp || null,
+        data.customerAddress || null,
         customerEmail || null,
         eventDate,
         eventLocation,
         selectedServicesJson,
         requirementsJson,
         specialNotes,
-        publicId,
-        secureUrl,
-        version,
-        assetId,
-        posterFileSize || 0,
         whatsappConsent ? 1 : 0,
         consentTimestamp || nowIso,
         consentVersion || 'v1',
@@ -201,6 +190,10 @@ export class D1Service {
         nowIso,
         bookingRef
       ).run();
+      if (referenceImages.length) {
+        await env.DB.batch(referenceImages.map(image => env.DB.prepare(`INSERT INTO booking_reference_images (id, booking_ref, cloudinary_public_id, secure_url, asset_version, image_format, title, sort_order)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).bind(image.id, bookingRef, image.public_id, image.secure_url, image.version || null, image.format || 'jpg', image.title || '', image.sort_order || 0)));
+      }
     } else {
       if (reservationToken) throw new Error('Booking reservation was not found');
       // Direct insertion if not pre-reserved
@@ -208,11 +201,11 @@ export class D1Service {
       await env.DB.prepare(`
         INSERT INTO bookings (
           id, booking_ref, idempotency_key, customer_name, customer_mobile, customer_email,
+          customer_whatsapp, customer_address,
           event_date, event_location, selected_services_json, requirements_json, special_notes,
-          poster_public_id, poster_secure_url, poster_version, poster_asset_id,
-          poster_file_size, booking_status, whatsapp_consent, consent_timestamp,
+          booking_status, whatsapp_consent, consent_timestamp,
           consent_version, submitted_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)
       `).bind(
         id,
         bookingRef,
@@ -220,16 +213,13 @@ export class D1Service {
         customerName,
         customerMobile,
         customerEmail || null,
+        customerWhatsapp || null,
+        data.customerAddress || null,
         eventDate,
         eventLocation,
         selectedServicesJson,
         requirementsJson,
         specialNotes,
-        publicId,
-        secureUrl,
-        version,
-        assetId,
-        posterFileSize || 0,
         whatsappConsent ? 1 : 0,
         consentTimestamp || nowIso,
         consentVersion || 'v1',
@@ -237,6 +227,10 @@ export class D1Service {
         nowIso,
         nowIso
       ).run();
+      if (referenceImages.length) {
+        await env.DB.batch(referenceImages.map(image => env.DB.prepare(`INSERT INTO booking_reference_images (id, booking_ref, cloudinary_public_id, secure_url, asset_version, image_format, title, sort_order)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).bind(image.id, bookingRef, image.public_id, image.secure_url, image.version || null, image.format || 'jpg', image.title || '', image.sort_order || 0)));
+      }
       booking = { id };
     }
 
@@ -245,7 +239,7 @@ export class D1Service {
       action: 'submitted_pending',
       previousStatus: 'draft',
       newStatus: 'pending',
-      reason: 'Customer confirmed booking and uploaded poster'
+      reason: 'Customer confirmed booking enquiry'
     });
 
     return await this.getBookingByRef(env, bookingRef);

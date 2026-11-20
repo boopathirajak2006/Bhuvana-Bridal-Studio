@@ -1,6 +1,6 @@
 # Bhuvana Bridal Studio backend
 
-The Worker uses Cloudflare D1 for bookings, owner accounts, sessions, audit logs, notification jobs, six owner-managed photo slots per gallery subcategory, and owner-published copy overrides. Cloudinary stores private booking posters and public owner-published portfolio photos. WhatsApp and FCM remain optional integrations configured through Worker secrets.
+The Worker uses Cloudflare D1 for bookings, owner accounts, sessions, audit logs, notification jobs, owner-managed gallery photos, customer reference-image records, and owner-published copy overrides. Cloudinary stores private customer reference photos and owner-published portfolio photos. WhatsApp and FCM remain optional integrations configured through Worker secrets.
 
 ## Local-only check
 
@@ -11,7 +11,7 @@ npx wrangler d1 migrations apply bhuvana-bookings-db --local
 npx wrangler dev --local
 ```
 
-`--local` uses local simulated Cloudflare resources. Do not add `--remote`, run a remote D1 command, or deploy as part of local testing. Migrations `0005_studio_gallery.sql` and `0006_studio_content.sql` add gallery and content tables; `0007_gallery_subcategories.sql` expands gallery slots by subcategory while preserving existing photos.
+`--local` uses local simulated Cloudflare resources. Do not add `--remote`, run a remote D1 command, or deploy as part of local testing. Migrations `0005_studio_gallery.sql` and `0006_studio_content.sql` add gallery and content tables; `0007_gallery_subcategories.sql` separates gallery categories; `0008_gallery_library.sql` migrates legacy photos into a flexible owner-managed library and adds booking contact/reference-image storage.
 
 The health endpoint is `http://127.0.0.1:8787/api/health`.
 

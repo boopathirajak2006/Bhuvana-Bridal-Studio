@@ -26,9 +26,11 @@ export async function handleReserveBooking(request, env) {
     const reservation = await D1Service.reserveBooking(env, {
       customerName: validation.sanitized.customer_name,
       customerMobile: validation.sanitized.customer_phone,
-      customerEmail: body.customer_email || null,
+      customerWhatsapp: validation.sanitized.customer_whatsapp,
+      customerAddress: validation.sanitized.customer_address,
+      customerEmail: validation.sanitized.customer_email,
       eventDate: validation.sanitized.event_date,
-      eventLocation: validation.sanitized.location,
+      eventLocation: validation.sanitized.additional_requirements?.eventLocation || '',
       selectedServices: validation.sanitized.service_ids,
       requirements: validation.sanitized.additional_requirements,
       specialNotes: validation.sanitized.notes,
@@ -49,7 +51,7 @@ export async function handleReserveBooking(request, env) {
 }
 
 export async function handleSubmitBooking(request, env) {
-  let uploadedAsset = null;
+  const uploadedReferences = [];
   try {
     if (!env.DB) return errorResponse(request, env, 'D1 database is unavailable', 503, 'SERVICE_UNAVAILABLE');
     const contentType = request.headers.get('content-type') || '';
@@ -58,24 +60,21 @@ export async function handleSubmitBooking(request, env) {
     }
 
     const formData = await request.formData();
-    // Keep compatibility with the existing website's `poster_image` field.
-    if (!formData.has('poster') && formData.has('poster_image')) {
-      formData.set('poster', formData.get('poster_image'));
-    }
-
     const validation = await validateBookingSubmission(formData);
     if (!validation.valid) {
       return errorResponse(request, env, validation.errors.join('; '), 400, 'VALIDATION_FAILED');
     }
 
-    const { bookingRef, reservationToken, posterFile, customerData } = validation.data;
+    const { bookingRef, reservationToken, customerData } = validation.data;
     const customer = customerData || {};
     const customerValidation = validateBookingReservation({
       customer_name: customer.customer_name,
       customer_phone: customer.customer_phone || customer.customer_mobile,
-      customer_email: customer.customer_email,
+      customer_whatsapp: customer.customer_whatsapp || '',
+      customer_email: customer.customer_email || '',
+      customer_address: customer.customer_address || customer.additional_requirements?.customerAddress || '',
       event_date: customer.event_date,
-      location: customer.location || customer.event_location,
+      location: customer.location || customer.event_location || 'Salem',
       service_ids: customer.service_ids || customer.selected_services,
       additional_requirements: customer.additional_requirements || customer.requirements,
       notes: customer.notes || customer.special_notes,
@@ -101,12 +100,20 @@ export async function handleSubmitBooking(request, env) {
     } else if (reservationToken) {
       return errorResponse(request, env, 'Booking reservation was not found', 404, 'RESERVATION_NOT_FOUND');
     }
-    const posterBytes = await posterFile.arrayBuffer();
-    uploadedAsset = await CloudinaryService.uploadPoster(env, bookingRef, posterBytes, {
-      customerName: safeCustomer.customer_name,
-      eventDate: safeCustomer.event_date
-    });
-
+    const referenceFiles = formData.getAll('reference_images').filter(file => file instanceof File && file.size > 0);
+    if (referenceFiles.length > 6 || referenceFiles.some(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
+      return errorResponse(request, env, 'Attach up to 6 JPG, PNG, or WebP reference images, 5 MB each maximum', 400, 'INVALID_REFERENCES');
+    }
+    for (const [index, file] of referenceFiles.entries()) {
+      const id = crypto.randomUUID();
+      try {
+        const asset = await CloudinaryService.uploadBookingReference(env, bookingRef, id, await file.arrayBuffer(), file.type);
+        uploadedReferences.push({ id, public_id: asset.public_id, secure_url: asset.secure_url, version: asset.version, format: asset.format, title: file.name.slice(0, 100), sort_order: index + 1 });
+      } catch (err) {
+        await Promise.all(uploadedReferences.map(item => CloudinaryService.deleteGalleryPhoto(env, item.public_id).catch(() => {})));
+        return errorResponse(request, env, err.message || 'Reference image upload failed', 502, 'REFERENCE_UPLOAD_FAILED');
+      }
+    }
     const consentField = formData.get('whatsapp_consent');
     const whatsappConsent = safeCustomer.whatsapp_consent === 1 || customer.whatsapp_consent === true || customer.whatsapp_consent === 1 ||
       customer.whatsapp_consent === '1' || consentField === 'true' || consentField === '1';
@@ -114,18 +121,16 @@ export async function handleSubmitBooking(request, env) {
     const booking = await D1Service.submitBooking(env, {
       bookingRef,
       reservationToken,
-      posterPublicId: uploadedAsset.public_id,
-      posterSecureUrl: uploadedAsset.secure_url,
-      posterVersion: uploadedAsset.version,
-      posterAssetId: uploadedAsset.asset_id,
-      posterFileSize: uploadedAsset.bytes || posterBytes.byteLength,
       customerName: safeCustomer.customer_name,
       customerMobile: safeCustomer.customer_phone,
+      customerWhatsapp: safeCustomer.customer_whatsapp,
+      customerAddress: safeCustomer.customer_address,
       customerEmail: customer.customer_email || null,
       eventDate: safeCustomer.event_date,
       eventLocation: safeCustomer.location,
       selectedServices: safeCustomer.service_ids,
       requirements: safeCustomer.additional_requirements,
+      referenceImages: uploadedReferences,
       specialNotes: safeCustomer.notes,
       whatsappConsent,
       idempotencyKey: formData.get('idempotency_key') || null
@@ -147,12 +152,15 @@ export async function handleSubmitBooking(request, env) {
         status: booking.booking_status,
         customer_name: booking.customer_name,
         customer_mobile: booking.customer_mobile,
+        customer_whatsapp: booking.customer_whatsapp,
+        customer_address: booking.customer_address,
         event_date: booking.event_date,
         event_location: booking.event_location,
         submitted_at: booking.submitted_at || booking.created_at
       }
     }, 201);
   } catch (err) {
+    await Promise.all(uploadedReferences.map(item => CloudinaryService.deleteGalleryPhoto(env, item.public_id).catch(() => {})));
     console.error('[Route: SubmitBooking] Error:', err);
     return errorResponse(request, env, err.message || 'Failed to submit booking', 500, 'INTERNAL_ERROR');
   }

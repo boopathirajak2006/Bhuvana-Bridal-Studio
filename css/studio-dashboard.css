@@ -1017,6 +1017,77 @@ body {
 .content-editor-row label { color: var(--ink); font-weight: 600; }
 .content-editor-row textarea { min-height: 2.75rem; resize: vertical; }
 @media (max-width: 720px) { .content-editor-row { grid-template-columns: 1fr; } }
+
+/* Owner portal: compact account menu and touch-friendly mobile layouts. */
+.dash-account-actions { position: relative; display: flex; align-items: center; gap: .6rem; }
+.dash-menu-toggle { width: 42px; height: 42px; display: grid; place-content: center; gap: 4px; border: 1px solid var(--border); border-radius: 9px; color: var(--ink); background: var(--white); cursor: pointer; }
+.dash-menu-toggle span { width: 19px; height: 2px; display: block; border-radius: 2px; background: currentColor; }
+.dash-menu-toggle .dash-menu-lines { width: 21px; height: 17px; display: grid; align-content: space-between; background: transparent; }
+.dash-menu-toggle .dash-menu-lines i { width: 21px; height: 2px; display: block; border-radius: 2px; background: var(--ink); }
+.dash-shell { position: relative; display: block; min-width: 0; }
+.dash-sidebar { display: none; position: absolute; z-index: 490; top: .65rem; right: 1rem; width: min(420px, calc(100% - 2rem)); height: auto; max-height: calc(100dvh - 100px); overflow: auto; border: 1px solid var(--border); border-radius: 12px; padding: .75rem; background: var(--white); box-shadow: 0 12px 32px rgba(40,25,15,.2); }
+.dash-sidebar.is-open { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.gallery-toolbar-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.gallery-card-owner.selected { outline: 3px solid var(--burgundy); outline-offset: 2px; }
+.gallery-card-owner[draggable="true"] { cursor: grab; }
+.gallery-sort-controls { display: flex; gap: .35rem; }
+@media (max-width: 900px) {
+  .dash-nav { flex-direction: row; align-items: center; gap: .5rem; }
+  .dash-header { z-index: 500; }
+  .dash-account-actions { gap: .4rem; }
+  .dash-sidebar { top: .4rem; right: .65rem; left: .65rem; width: auto; max-height: calc(100dvh - 80px); padding: .65rem; }
+  .dash-nav-btn { min-height: 44px; font-size: .82rem; }
+  .dash-shell { display: block; min-width: 0; }
+  .dash-content-area { padding: 1rem; }
+  .dash-table { min-width: 0; }
+  .dash-table-wrapper { overflow: visible; border: 0; box-shadow: none; background: transparent; }
+  .dash-table, .dash-table tbody { display: block; width: 100%; }
+  .dash-table thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  .dash-table tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .35rem .7rem; margin: 0 0 .75rem; padding: .75rem; border: 1px solid var(--border); border-radius: 11px; background: var(--white); }
+  .dash-table td { min-width: 0; padding: .35rem .15rem; border: 0; overflow-wrap: anywhere; font-size: .82rem; }
+  .dash-table td::before { content: attr(data-label); display: block; margin-bottom: .12rem; color: var(--ink-light); font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .035em; }
+  .dash-table td[colspan] { grid-column: 1 / -1; }
+  .dash-table td:last-child { grid-column: 1 / -1; }
+  .dash-table td .dash-btn { min-height: 38px; }
+  .calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); overflow: visible; gap: 3px; padding: .4rem; }
+  .calendar-day-header { padding: .25rem 0; font-size: .62rem; }
+  .calendar-cell { min-width: 0; min-height: 65px; padding: 3px; }
+  .calendar-cell-date { font-size: .68rem; }
+  .calendar-booking-pill { white-space: normal; font-size: .58rem; line-height: 1.15; padding: 2px; }
+  .studio-card-grid, .gallery-grid-owner { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+  .studio-item-card { padding: .75rem; gap: .6rem; overflow-wrap: anywhere; }
+  .overview-secondary-grid { grid-template-columns: minmax(0, 1fr) !important; }
+}
+@media (max-width: 520px) {
+  .dash-nav { padding: .55rem .65rem; }
+  .dash-logo { width: 36px; height: 36px; }
+  .dash-brand { gap: .45rem; min-width: 0; }
+  .dash-brand-title { font-size: 1.05rem; }
+  .dash-brand-badge { font-size: .58rem; }
+  .dash-actions { width: auto; flex: 0 0 auto; flex-wrap: nowrap; gap: .25rem; }
+  #btn-push-toggle { padding: .35rem .4rem; font-size: .68rem; }
+  #push-status-label { font-size: .64rem; }
+  .dash-brand-title { white-space: nowrap; }
+  .dash-brand-badge { white-space: nowrap; }
+  .dash-user-pill { display: none; }
+  .dash-actions .dash-btn { min-height: 38px; padding: .35rem .5rem; }
+  .dash-content-area { padding: .7rem .6rem; }
+  .dash-sidebar.is-open { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dash-metrics-grid { gap: .45rem; }
+  .metric-label { font-size: .62rem; }
+  .metric-value { font-size: 1.55rem; }
+  .dash-table tbody tr { gap: .25rem .45rem; padding: .6rem; }
+  .dash-table td { font-size: .76rem; }
+  .dash-table td::before { font-size: .6rem; }
+  .calendar-cell { min-height: 54px; }
+  .calendar-booking-pill { font-size: .52rem; }
+  .studio-card-grid, .gallery-grid-owner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gallery-card-meta { align-items: flex-start; gap: .35rem; flex-direction: column; }
+  .gallery-card-owner img { aspect-ratio: 3 / 4; }
+  .gallery-toolbar-actions { width: 100%; }
+  .gallery-toolbar-actions .dash-btn { flex: 1 1 calc(50% - .5rem); justify-content: center; }
+  .booking-detail-grid { max-width: 100%; }
+}
 @media (max-width: 900px) {
   .dash-content-area, .dash-section, .dash-section > * { min-width: 0; }
   .gallery-category-picker { width: 100%; min-width: 0; }
@@ -1024,4 +1095,12 @@ body {
   .dash-table-wrapper { max-width: 100%; overflow-x: auto; }
   .calendar-controls { align-items: stretch; }
   .calendar-controls > div { flex-wrap: wrap; gap: 0.45rem !important; }
+}
+
+/* The owner navigation opens from the top-right menu on every viewport. */
+.dash-shell { display: block; min-width: 0; position: relative; }
+.dash-sidebar { display: none; position: absolute; z-index: 490; top: .65rem; right: 1rem; left: auto; width: min(420px, calc(100% - 2rem)); height: auto; max-height: calc(100dvh - 100px); overflow: auto; border: 1px solid var(--border); border-radius: 12px; padding: .75rem; background: var(--white); box-shadow: 0 12px 32px rgba(40,25,15,.2); }
+.dash-sidebar.is-open { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 900px) {
+  .dash-sidebar { top: .4rem; right: .65rem; left: .65rem; width: auto; max-height: calc(100dvh - 80px); padding: .65rem; }
 }

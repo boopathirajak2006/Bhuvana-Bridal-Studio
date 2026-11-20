@@ -19,7 +19,6 @@
     href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/booking-poster.css">
 </head>
 
 <body>
@@ -122,12 +121,12 @@
               <!-- WhatsApp Number -->
               <div class="form-group">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-                  <label for="p-whatsapp" style="margin-bottom:0;">WhatsApp Number *</label>
+                  <label for="p-whatsapp" style="margin-bottom:0;">WhatsApp Number (Optional)</label>
                   <label style="font-size:0.78rem; color:var(--gold-dark); display:inline-flex; align-items:center; gap:0.3rem; cursor:pointer;">
                     <input type="checkbox" id="sync-whatsapp" checked> Same as Mobile
                   </label>
                 </div>
-                <input class="form-control" type="tel" id="p-whatsapp" name="whatsapp" placeholder="WhatsApp number" required inputmode="tel">
+                <input class="form-control" type="tel" id="p-whatsapp" name="whatsapp" placeholder="WhatsApp number" inputmode="tel">
                 <span class="err-msg"></span>
               </div>
 
@@ -147,7 +146,7 @@
 
               <!-- City / Location -->
               <div class="form-group">
-                <label for="p-city">City / Region *</label>
+                <label for="p-city">City / Region</label>
                 <input class="form-control" type="text" id="p-city" name="city" value="Salem" placeholder="Salem / Nearby" required>
                 <span class="err-msg"></span>
               </div>
@@ -188,21 +187,12 @@
         <div class="center" style="margin-bottom:2rem;">
           <span class="eyebrow">Step 2 of 5 &middot; Celebration Schedule</span>
           <h1>Event Details</h1>
-          <p class="lead">
-            Specify the date, muhurtham timing, and venue location so we can check artist schedule availability and reserve your slot.
-          </p>
+          <p class="lead">Share the event type, date, timing, and event venue location.</p>
         </div>
 
         <div class="enquiry-container">
           <form id="form-step-2" novalidate>
             <div class="form-grid">
-              <!-- Event Name / Occasion -->
-              <div class="form-group">
-                <label for="e-name">Event / Occasion Name *</label>
-                <input class="form-control" type="text" id="e-name" name="eventName" placeholder="e.g. Wedding Muhurtham / Reception" required>
-                <span class="err-msg"></span>
-              </div>
-
               <!-- Event Type -->
               <div class="form-group">
                 <label for="e-type">Event Type *</label>
@@ -236,35 +226,10 @@
                 </select>
               </div>
 
-              <!-- Getting Ready Time -->
-              <div class="form-group">
-                <label for="e-ready-time">Getting Ready By (Time Needed) *</label>
-                <input class="form-control" type="time" id="e-ready-time" name="gettingReadyTime" value="06:00" required>
-                <span class="err-msg"></span>
-              </div>
-
-              <!-- Function Location Setting -->
-              <div class="form-group">
-                <label for="e-location-setting">Function Setting *</label>
-                <select class="form-control" id="e-location-setting" name="functionLocation">
-                  <option value="Wedding Hall / Mandapam">Wedding Hall / Mandapam</option>
-                  <option value="Residence / Home">Residence / Home</option>
-                  <option value="Bhuvana's Studio (Salem)">Bhuvana's Studio (Salem)</option>
-                  <option value="Hotel / Resort / Other Venue">Hotel / Resort / Other Venue</option>
-                </select>
-              </div>
-
-              <!-- Venue Name -->
+              <!-- Event venue and location -->
               <div class="form-group full">
-                <label for="e-venue-name">Venue / Mandapam Name *</label>
-                <input class="form-control" type="text" id="e-venue-name" name="venueName" placeholder="e.g. Sri Krishna Mahal, Erumbalai or Home Address" required>
-                <span class="err-msg"></span>
-              </div>
-
-              <!-- Venue Address -->
-              <div class="form-group full">
-                <label for="e-venue-address">Full Venue Address *</label>
-                <textarea class="form-control" id="e-venue-address" name="venueAddress" rows="2" placeholder="Street, Area, Salem Landmark" required></textarea>
+                <label for="e-event-location">Event Venue Address / Location (Optional)</label>
+                <textarea class="form-control" id="e-event-location" name="eventLocation" rows="2" placeholder="Venue name, street, area, and nearby landmark"></textarea>
                 <span class="err-msg"></span>
               </div>
             </div>
@@ -307,6 +272,7 @@
                     <option value="Dewy Radiant Luminous Glow">Dewy Radiant Luminous Glow</option>
                     <option value="Soft Glam Natural Elegance">Soft Glam Natural Elegance</option>
                     <option value="Full Matte Glam">Full Matte Glam</option>
+                    <option value="Not required">Not required</option>
                     <option value="Discuss during consultation">Discuss during consultation</option>
                   </select>
                 </div>
@@ -321,6 +287,8 @@
                     <option value="Hollywood Waves / Open Curls">Hollywood Waves / Open Curls</option>
                     <option value="Half-up Braided Floral Crown">Half-up Braided Floral Crown</option>
                     <option value="Artist Recommendation">Artist Recommendation</option>
+                    <option value="Not required">Not required</option>
+                    <option value="Discuss during consultation">Discuss during consultation</option>
                   </select>
                 </div>
 
@@ -333,6 +301,8 @@
                     <option value="Bridal Jewellery Anchoring">Bridal Jewellery Anchoring</option>
                     <option value="Fresh Floral Veni & Petal Setting">Fresh Floral Veni & Petal Setting</option>
                     <option value="Standard Saree Draping">Standard Saree Draping</option>
+                    <option value="Not required">Not required</option>
+                    <option value="Discuss during consultation">Discuss during consultation</option>
                   </select>
                 </div>
 
@@ -347,6 +317,8 @@
                     <option value="Botanical Lotus & Roses">Botanical Lotus & Roses</option>
                     <option value="Western Lace Glove Style">Western Lace Glove Style</option>
                     <option value="Not Needed / Arranged Separately">Not Needed / Arranged Separately</option>
+                    <option value="Not required">Not required</option>
+                    <option value="Discuss during consultation">Discuss during consultation</option>
                   </select>
                 </div>
 
@@ -528,10 +500,10 @@
       <!-- ========================================================================= -->
       <section id="step-5" class="booking-step">
         <div class="center" style="margin-bottom:2rem;">
-          <span class="eyebrow">Step 5 of 5 &middot; Verification &amp; Poster</span>
+          <span class="eyebrow">Step 5 of 5 &middot; Review &amp; Confirmation</span>
           <h1>Review &amp; Confirm Your Booking</h1>
           <p class="lead">
-            Please verify all celebration information. Your personalized studio booking confirmation poster is generated below. Click Confirm to submit your enquiry directly to Bhuvaneshwari.
+            Review the details before sending your booking enquiry to Bhuvaneshwari.
           </p>
         </div>
 
@@ -579,10 +551,6 @@
           </div>
           <div class="review-grid">
             <div class="review-item">
-              <span class="review-item-label">Occasion / Event</span>
-              <span class="review-item-val" id="rev-e-name">—</span>
-            </div>
-            <div class="review-item">
               <span class="review-item-label">Event Type</span>
               <span class="review-item-val" id="rev-e-type">—</span>
             </div>
@@ -591,7 +559,7 @@
               <span class="review-item-val" id="rev-e-date">—</span>
             </div>
             <div class="review-item">
-              <span class="review-item-label">Getting Ready By</span>
+              <span class="review-item-label">Event Timing</span>
               <span class="review-item-val" id="rev-e-ready">—</span>
             </div>
             <div class="review-item" style="grid-column:1/-1;">
@@ -620,19 +588,11 @@
           <div class="review-card-header">
             <div>
               <strong style="color:var(--ink); font-size:1.1rem;">4. Customization &amp; References</strong>
-              <div style="font-size:0.8rem; color:var(--muted);">Color palette, consultation mode, and uploaded photos</div>
+              <div style="font-size:0.8rem; color:var(--muted);">Optional special requests and reference photos</div>
             </div>
             <button class="review-edit-btn btn-jump-step" data-step="4" type="button">Edit Preferences</button>
           </div>
           <div class="review-grid">
-            <div class="review-item" style="grid-column:1/-1;">
-              <span class="review-item-label">Preferred Saree Palette / Looks</span>
-              <span class="review-item-val" id="rev-c-looks">To be discussed during consultation</span>
-            </div>
-            <div class="review-item">
-              <span class="review-item-label">Consultation Mode</span>
-              <span class="review-item-val" id="rev-c-consultation">In-person Salem Studio</span>
-            </div>
             <div class="review-item">
               <span class="review-item-label">Special Notes / Allergies</span>
               <span class="review-item-val" id="rev-c-notes">None</span>
@@ -643,29 +603,6 @@
                 <span style="font-size:0.85rem; color:var(--muted);">No reference images attached</span>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- Poster Preview Wrapper -->
-        <div style="margin:2.5rem 0 1.5rem;">
-          <h3 style="font-family:var(--serif); font-size:1.6rem; color:var(--burgundy); text-align:center; margin-bottom:0.4rem;">
-            Official Studio Booking Poster Preview
-          </h3>
-          <p style="text-align:center; font-size:0.9rem; color:var(--muted); margin-bottom:1.25rem;">
-            High-resolution personalized booking document generated automatically for your records.
-          </p>
-
-          <div class="preview-image-wrapper" id="preview-image-wrapper">
-            <div class="poster-loader" id="poster-loader">
-              <div class="poster-spinner"></div>
-              <h4 style="font-family:var(--serif); font-size:1.35rem; color:var(--ink); margin-top:0.5rem;">
-                Generating Your Booking Poster...
-              </h4>
-              <p style="color:var(--muted); font-size:0.88rem;">
-                Assembling typography, emblems, and service details.
-              </p>
-            </div>
-            <img id="generated-poster-img" style="display:none;" alt="Bhuvana's Bridal Studio Booking Confirmation Poster">
           </div>
         </div>
 
@@ -680,17 +617,16 @@
             </p>
           </div>
 
-          <!-- Single Primary Action Button -->
+          <!-- Submit enquiry, then download a simple copy -->
           <div style="display:flex; flex-direction:column; align-items:center; gap:0.85rem;">
             <button class="btn btn-confirm-main" id="btn-confirm-booking" type="button" style="width:100%; max-width:420px; font-size:1.15rem; padding:1.1rem 2rem;">
               <span class="btn-icon">✨</span>
               <span class="btn-label">CONFIRM YOUR BOOKING</span>
             </button>
 
-            <!-- Customer Poster Option: ONLY Download Booking PNG -->
-            <button class="btn ghost" id="btn-download-poster" type="button" style="width:100%; max-width:420px; padding:0.85rem 1.5rem;">
+            <button class="btn ghost" id="btn-download-booking-copy" type="button" disabled style="width:100%; max-width:420px; padding:0.85rem 1.5rem; opacity:.62;">
               <span>⬇</span>
-              <span>Download Booking PNG</span>
+              <span>Download a Booking Copy</span>
             </button>
           </div>
         </div>
@@ -710,7 +646,7 @@
         Booking Submitted!
       </h2>
       <p style="color:var(--ink-light); font-size:0.95rem; margin-bottom:1rem;">
-        Thank you for choosing Bhuvana's Bridal &amp; Tailoring Studio. Your booking details and generated poster have been securely sent to Bhuvaneshwari for date and slot verification.
+        Thank you for choosing Bhuvana's Bridal &amp; Tailoring Studio. Your booking enquiry has been sent to Bhuvaneshwari for date and slot verification.
       </p>
 
       <div class="bbs-booking-ref-box">
@@ -726,10 +662,9 @@
       </div>
 
       <div class="bbs-modal-actions">
-        <!-- ONLY Download Poster PNG and Back to Home -->
         <button class="btn gold" id="btn-modal-download" type="button">
           <span>⬇</span>
-          <span>Download Poster (PNG)</span>
+          <span>Download Booking Copy</span>
         </button>
         <a class="btn ghost" href="index.html" style="color:var(--ink); border-color:var(--ink);">
           <span>🏠</span>
@@ -738,9 +673,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Offscreen Render Target (1080px width) -->
-  <div id="poster-render-target" style="position:fixed; left:-9999px; top:0; width:1080px; z-index:-1;" aria-hidden="true"></div>
 
   <!-- Footer -->
   <footer id="contact">
@@ -766,8 +698,6 @@
   <script src="js/services-data.js"></script>
   <script src="js/booking-store.js"></script>
   <script src="js/cloudflare-config.js"></script>
-  <script src="js/html2canvas.min.js"></script>
-  <script src="js/booking-poster.js"></script>
   <script src="js/enquiry-form.js"></script>
 </body>
 

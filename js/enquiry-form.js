@@ -10,13 +10,10 @@
     if (!window.BBS_STORE || !window.BBS_CATALOG) return;
 
     const store = window.BBS_STORE;
-    const posterModule = window.BBS_POSTER;
     const config = window.BBS_CONFIG;
 
     let currentStep = 1;
     let uploadedImages = []; // Array of { name, dataUrl, size }
-    let generatedCanvas = null;
-    let generatedBlob = null;
 
     // Parse URL params
     const urlParams = new URLSearchParams(window.location.search);
@@ -24,6 +21,8 @@
     if (paramPackage && ['bridal-beauty', 'designer-blouse', 'complete-bridal'].includes(paramPackage)) {
       store.setPackageType(paramPackage);
     }
+    const paramServiceId = urlParams.get('service');
+    const paramServiceName = urlParams.get('serviceName');
 
     const paramStep = parseInt(urlParams.get('step'), 10);
     if (paramStep >= 1 && paramStep <= 5) {
@@ -43,6 +42,13 @@
 
     // Load saved data into form inputs
     prefillAllSteps();
+    const requestedService = (paramServiceId && window.BBS_CATALOG?.services?.[paramServiceId])
+      || (paramServiceName && Object.values(window.BBS_CATALOG?.services || {}).find(item => item.title.toLowerCase() === paramServiceName.toLowerCase()));
+    if (requestedService) {
+      const service = requestedService;
+      const pkg = store.getPackageType();
+      if (pkg === 'complete-bridal' || service.divisionId === pkg) store.setSelectedIds([service.id]);
+    }
 
     // Render active step
     showStep(currentStep);
@@ -77,10 +83,9 @@
         adaptServiceStep();
       }
 
-      // If Step 5, populate review summaries and trigger poster rendering
+      // If Step 5, populate review summaries
       if (stepNum === 5) {
         populateReviewSummary();
-        renderPosterPreview();
       }
 
       // Update URL without reload
@@ -123,19 +128,17 @@
         if (contact.city) f1.elements.city.value = contact.city;
         if (contact.preferredContact) f1.elements.preferredContact.value = contact.preferredContact;
         if (contact.whatsappConsent) f1.elements.whatsappConsent.checked = true;
+        const sameAsMobile = document.getElementById('sync-whatsapp');
+        if (sameAsMobile) sameAsMobile.checked = !contact.whatsapp || contact.whatsapp === contact.mobile;
       }
 
       // Step 2: Event
       const f2 = document.getElementById('form-step-2');
       if (f2 && eventDetails) {
-        if (eventDetails.eventName) f2.elements.eventName.value = eventDetails.eventName;
         if (eventDetails.eventType) f2.elements.eventType.value = eventDetails.eventType;
         if (eventDetails.eventDate) f2.elements.eventDate.value = eventDetails.eventDate;
         if (eventDetails.eventTime) f2.elements.eventTime.value = eventDetails.eventTime;
-        if (eventDetails.gettingReadyTime) f2.elements.gettingReadyTime.value = eventDetails.gettingReadyTime;
-        if (eventDetails.functionLocation) f2.elements.functionLocation.value = eventDetails.functionLocation;
-        if (eventDetails.venueName) f2.elements.venueName.value = eventDetails.venueName;
-        if (eventDetails.venueAddress) f2.elements.venueAddress.value = eventDetails.venueAddress;
+        if (eventDetails.eventLocation && f2.elements.eventLocation) f2.elements.eventLocation.value = eventDetails.eventLocation;
       }
 
       // Step 3: Requirements
@@ -159,8 +162,6 @@
       // Step 4: Customization
       const f4 = document.getElementById('form-step-4');
       if (f4 && custom) {
-        if (custom.looksAndColours) f4.elements.looksAndColours.value = custom.looksAndColours;
-        if (custom.consultationPref) f4.elements.consultationPref.value = custom.consultationPref;
         if (custom.specialNotes) f4.elements.specialNotes.value = custom.specialNotes;
         if (Array.isArray(custom.referenceImages)) {
           uploadedImages = custom.referenceImages;
@@ -221,11 +222,12 @@
           setErr(f1.elements.mobile, '');
         }
 
-        const waVal = f1.elements.whatsapp.value.trim();
+        const sameAsMobile = document.getElementById('sync-whatsapp')?.checked;
+        const waVal = sameAsMobile ? mobileVal : f1.elements.whatsapp.value.trim();
         const waDigits = waVal.replace(/\D/g, '');
-        if (!waVal) {
+        if (!waVal && !document.getElementById('sync-whatsapp')?.checked) {
           setErr(f1.elements.whatsapp, 'Please enter your WhatsApp number.');
-        } else if (waDigits.length < 10) {
+        } else if (waVal && waDigits.length < 10) {
           setErr(f1.elements.whatsapp, 'Please enter a valid WhatsApp number.');
         } else {
           setErr(f1.elements.whatsapp, '');
@@ -235,7 +237,6 @@
         setErr(f1.elements.address, addrVal ? '' : 'Please provide your address.');
 
         const cityVal = f1.elements.city.value.trim();
-        setErr(f1.elements.city, cityVal ? '' : 'Please enter your city/location.');
 
         if (!ok) {
           if (firstInvalid) firstInvalid.focus();
@@ -283,20 +284,8 @@
           }
         };
 
-        const eNameVal = f2.elements.eventName.value.trim();
-        setErr(f2.elements.eventName, eNameVal ? '' : 'Please enter the occasion or event name.');
-
         const eDateVal = f2.elements.eventDate.value;
         setErr(f2.elements.eventDate, eDateVal ? '' : 'Please select your celebration date.');
-
-        const eReadyVal = f2.elements.gettingReadyTime.value;
-        setErr(f2.elements.gettingReadyTime, eReadyVal ? '' : 'Please enter the time you must be ready by.');
-
-        const vNameVal = f2.elements.venueName.value.trim();
-        setErr(f2.elements.venueName, vNameVal ? '' : 'Please provide the venue or mandapam name.');
-
-        const vAddrVal = f2.elements.venueAddress.value.trim();
-        setErr(f2.elements.venueAddress, vAddrVal ? '' : 'Please provide the venue address.');
 
         if (!ok) {
           if (firstInvalid) firstInvalid.focus();
@@ -304,23 +293,25 @@
         }
 
         // Save event details
+        const eventType = f2.elements.eventType.value;
+        const eventLocation = f2.elements.eventLocation.value.trim();
+        const locationField = f2.elements.eventLocation;
+        const locationError = locationField.closest('.form-group')?.querySelector('.err-msg');
+        if (locationError) locationError.textContent = '';
         store.setEventDetails({
-          eventName: eNameVal,
-          eventType: f2.elements.eventType.value,
+          eventName: eventType,
+          eventType,
           eventDate: eDateVal,
           preferredDate: eDateVal,
           eventTime: f2.elements.eventTime.value,
-          gettingReadyTime: eReadyVal,
-          functionLocation: f2.elements.functionLocation.value,
-          venueName: vNameVal,
-          venueAddress: vAddrVal
+          eventLocation
         });
 
         // Also update contact with eventDate & location
         const contact = store.getContact();
         contact.eventDate = eDateVal;
         contact.preferredDate = eDateVal;
-        contact.location = `${vNameVal}, ${contact.city || 'Salem'}`;
+        contact.location = eventLocation || contact.city || 'Salem';
         store.setContact(contact);
 
         showStep(3);
@@ -408,6 +399,25 @@
       const uploadZone = document.getElementById('upload-zone');
       const fileInput = document.getElementById('ref-image-input');
       const uploadErr = document.getElementById('upload-err-msg');
+      const pendingImageReads = [];
+
+      function resizeReferenceImage(file) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          const objectUrl = URL.createObjectURL(file);
+          image.onload = () => {
+            const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+            canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+            canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(objectUrl);
+            canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Could not resize this reference image')), 'image/jpeg', 0.82);
+          };
+          image.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Could not read this reference image')); };
+          image.src = objectUrl;
+        });
+      }
 
       if (uploadZone && fileInput) {
         ['dragenter', 'dragover'].forEach(eventName => {
@@ -440,7 +450,7 @@
         if (uploadErr) uploadErr.textContent = '';
 
         const maxFiles = 6;
-        const maxSizeBytes = 5 * 1024 * 1024; // 5MB limit
+        const maxSizeBytes = 15 * 1024 * 1024; // Compress original photos to keep worker requests small.
         const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
         for (let i = 0; i < files.length; i++) {
@@ -457,34 +467,34 @@
           }
 
           if (file.size > maxSizeBytes) {
-            if (uploadErr) uploadErr.textContent = `File "${file.name}" exceeds 5MB limit. Please choose a smaller image.`;
+            if (uploadErr) uploadErr.textContent = `File "${file.name}" exceeds 15MB. Please choose a smaller image.`;
             continue;
           }
 
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            uploadedImages.push({
-              name: file.name,
-              dataUrl: e.target.result,
-              size: file.size
-            });
-            renderImagePreviews();
-          };
-          reader.readAsDataURL(file);
+          const task = resizeReferenceImage(file).then(blob => {
+            if (blob.size > maxSizeBytes) throw new Error(`File "${file.name}" is too large after compression.`);
+            const reader = new FileReader();
+            reader.onload = event => {
+              uploadedImages.push({ name: file.name, blob, dataUrl: event.target.result, size: blob.size });
+              renderImagePreviews();
+            };
+            reader.readAsDataURL(blob);
+          }).catch(err => { if (uploadErr) uploadErr.textContent = err.message; });
+          pendingImageReads.push(task);
         }
       }
 
-      f4.addEventListener('submit', function (e) {
+      f4.addEventListener('submit', async function (e) {
         e.preventDefault();
+        await Promise.all(pendingImageReads);
+        if (uploadErr?.textContent) return;
 
         store.setCustomization({
-          looksAndColours: f4.elements.looksAndColours.value.trim(),
-          consultationPref: f4.elements.consultationPref.value,
           specialNotes: f4.elements.specialNotes.value.trim(),
           referenceImages: uploadedImages
         });
 
-        // Also add specialNotes to requirements for poster rendering
+        // Keep special requests available in the owner portal booking details.
         const req = store.getRequirements();
         req.specificNotes = f4.elements.specialNotes.value.trim();
         store.setRequirements(req);
@@ -537,17 +547,15 @@
       if (pAddr) pAddr.textContent = `${contact.address || ''}, ${contact.city || 'Salem'}`;
 
       // Step 2
-      const eName = document.getElementById('rev-e-name');
       const eType = document.getElementById('rev-e-type');
       const eDate = document.getElementById('rev-e-date');
       const eReady = document.getElementById('rev-e-ready');
       const eVenue = document.getElementById('rev-e-venue');
 
-      if (eName) eName.textContent = eventDetails.eventName || '—';
       if (eType) eType.textContent = eventDetails.eventType || 'Wedding Muhurtham';
       if (eDate) eDate.textContent = eventDetails.eventDate || contact.eventDate || '—';
-      if (eReady) eReady.textContent = `${eventDetails.gettingReadyTime || '06:00 AM'} (${eventDetails.eventTime || 'Morning'})`;
-      if (eVenue) eVenue.textContent = `${eventDetails.venueName || ''} — ${eventDetails.venueAddress || ''} [${eventDetails.functionLocation || 'Mandapam'}]`;
+      if (eReady) eReady.textContent = eventDetails.eventTime || '—';
+      if (eVenue) eVenue.textContent = eventDetails.eventLocation || 'Not provided';
 
       // Step 3
       const serviceList = document.getElementById('rev-service-details-list');
@@ -574,13 +582,9 @@
       }
 
       // Step 4
-      const cLooks = document.getElementById('rev-c-looks');
-      const cConsult = document.getElementById('rev-c-consultation');
       const cNotes = document.getElementById('rev-c-notes');
       const cThumbs = document.getElementById('rev-ref-thumbnails');
 
-      if (cLooks) cLooks.textContent = custom.looksAndColours || 'To be discussed during consultation';
-      if (cConsult) cConsult.textContent = custom.consultationPref || 'In-person Salem Studio';
       if (cNotes) cNotes.textContent = custom.specialNotes || 'None';
 
       if (cThumbs) {
@@ -594,56 +598,13 @@
       }
     }
 
-    async function renderPosterPreview() {
-      const renderTarget = document.getElementById('poster-render-target');
-      const previewImg = document.getElementById('generated-poster-img');
-      const loader = document.getElementById('poster-loader');
-
-      if (!renderTarget || !posterModule) return;
-
-      const contact = store.getContact();
-      const services = store.getPopulated();
-      const requirements = store.getRequirements();
-      const ref = store.getRef();
-
-      if (loader) loader.style.display = 'block';
-      if (previewImg) previewImg.style.display = 'none';
-
-      // Generate HTML markup
-      const html = posterModule.generateHTML({
-        contact: contact,
-        services: services,
-        requirements: requirements,
-        ref: ref
-      });
-
-      renderTarget.innerHTML = html;
-
-      try {
-        const rootEl = document.getElementById('poster-root');
-        generatedCanvas = await posterModule.renderToCanvas(rootEl);
-        const dataUrl = generatedCanvas.toDataURL('image/png');
-        generatedBlob = await posterModule.toBlob(generatedCanvas);
-
-        if (loader) loader.style.display = 'none';
-        if (previewImg) {
-          previewImg.src = dataUrl;
-          previewImg.style.display = 'block';
-        }
-      } catch (err) {
-        console.error('Error generating poster canvas:', err);
-        if (loader) {
-          loader.innerHTML = `<p style="color:#C62828;">Error generating poster preview: ${err.message}</p>`;
-        }
-      }
-    }
-
     function setupStep5Listeners() {
       const btnConfirm = document.getElementById('btn-confirm-booking');
-      const btnDownload = document.getElementById('btn-download-poster');
+      const btnDownload = document.getElementById('btn-download-booking-copy');
       const alertBox = document.getElementById('share-feedback-alert');
       const successModal = document.getElementById('success-modal');
       const btnModalDownload = document.getElementById('btn-modal-download');
+      let bookingCopy = null;
 
       function showAlert(msg, isSuccess) {
         if (!alertBox) return;
@@ -653,37 +614,59 @@
         alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
 
-      // Customer action: ONLY Download Booking PNG
-      function triggerDownload() {
-        if (!generatedCanvas) {
-          alert('Poster is still generating. Please wait a moment.');
-          return;
-        }
-        const dataUrl = generatedCanvas.toDataURL('image/png');
-        const ref = store.getRef();
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = `Bhuvana_Bridal_Studio_Booking_${ref}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+      function escapeCopy(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
       }
 
-      if (btnDownload) {
-        btnDownload.addEventListener('click', triggerDownload);
+      async function loadStudioLogo() {
+        const response = await fetch('assets/images/logo.png');
+        if (!response.ok) throw new Error('Studio logo could not be loaded');
+        const blob = await response.blob();
+        return await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
       }
-      if (btnModalDownload) {
-        btnModalDownload.addEventListener('click', triggerDownload);
+
+      async function downloadBookingCopy() {
+        if (!bookingCopy) {
+          showAlert('Confirm your booking enquiry first; then the booking copy will be ready to download.', false);
+          return;
+        }
+        try {
+          const logo = await loadStudioLogo();
+          const c = bookingCopy.customer;
+          const e = bookingCopy.event;
+          const sections = [
+            ['Customer', [['Name', c.customer_name], ['Mobile', c.customer_phone], ['WhatsApp', c.customer_whatsapp || 'Not provided'], ['Email', c.customer_email || 'Not provided'], ['Residential address', c.customer_address || 'Not provided'], ['Preferred contact', c.additional_requirements?.preferredContact || 'Not specified']]],
+            ['Event', [['Type', e.eventType], ['Date', e.eventDate], ['Timing', e.eventTime], ['Venue / location', e.eventLocation || 'Not provided']]],
+            ['Selected services', [['Experience', bookingCopy.package], ['Services', bookingCopy.services.join(', ') || 'Not specified'], ['Preferences', bookingCopy.preferenceText || 'See selected service details']]],
+            ['Notes & references', [['Special requests', c.notes || 'None provided'], ['Reference images', `${c.referenceCount} attached${c.referenceCount ? ' for the studio' : ''}`]]]
+          ];
+          const cards = sections.map(([title, rows]) => `<section><h2>${escapeCopy(title)}</h2>${rows.map(([label, value]) => `<div class="row"><span>${escapeCopy(label)}</span><strong>${escapeCopy(value)}</strong></div>`).join('')}</section>`).join('');
+          const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Booking copy ${escapeCopy(bookingCopy.ref)}</title><style>*{box-sizing:border-box}body{margin:0;padding:24px;background:#f1ece4;color:#3b2f2a;font:15px Arial,sans-serif}.sheet{max-width:760px;margin:auto;padding:28px;background:#fffdfa;border:1px solid #e5d5bd;border-radius:16px}.brand{display:flex;gap:16px;align-items:center;border-bottom:1px solid #eadcc8;padding-bottom:20px}.brand img{width:58px;height:58px;object-fit:contain}.brand h1{margin:0;font:26px Georgia,serif}.brand p{margin:6px 0 0;color:#8a6b3b;font-size:11px;letter-spacing:.16em}.ref{display:flex;justify-content:space-between;background:#f8f2e8;margin:20px 0;padding:15px;border-left:3px solid #b08d57}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}section{padding:16px;border:1px solid #eee4d4;border-radius:10px}section h2{font:19px Georgia,serif;border-bottom:1px solid #eadcc8;padding-bottom:9px;margin:0 0 10px}.row{display:grid;grid-template-columns:110px 1fr;gap:8px;margin:8px 0;font-size:13px;line-height:1.4}.row span{color:#806b5b}.status{margin-top:14px;background:#f6f0e5;border:1px solid #ead9bd;padding:16px;border-radius:10px;color:#735932}.status small{display:block;color:#695d53;margin-top:8px;line-height:1.5}.foot{border-top:1px solid #eee4d4;padding-top:13px;margin-top:18px;color:#8b8077;font-size:12px}@media(max-width:560px){body{padding:10px}.sheet{padding:16px}.grid{grid-template-columns:1fr}.brand h1{font-size:21px}.row{grid-template-columns:95px 1fr}}@media print{body{padding:0;background:white}.sheet{border:0;max-width:none}}</style></head><body><main class="sheet"><header class="brand"><img src="${logo}" alt="Bhuvana Bridal Studio logo"><div><h1>Bhuvana Bridal Studio</h1><p>BOOKING ENQUIRY COPY</p></div></header><div class="ref"><div><small>BOOKING REFERENCE</small><br><strong>${escapeCopy(bookingCopy.ref)}</strong></div><div><small>SUBMITTED</small><br><strong>${escapeCopy(bookingCopy.submittedAt)}</strong></div></div><div class="grid">${cards}</div><div class="status"><strong>● ENQUIRY RECEIVED · STUDIO CONFIRMATION PENDING</strong><small>This copy records your enquiry. Your appointment is not confirmed until Bhuvaneshwari reviews availability and contacts you.</small></div><footer class="foot">+91 63740 36629 · Salem, Tamil Nadu</footer></main></body></html>`;
+          const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `Bhuvana_Bridal_Studio_Booking_${bookingCopy.ref}.html`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (err) {
+          showAlert(`Booking copy could not be created: ${err.message}`, false);
+        }
       }
+
+      btnDownload?.addEventListener('click', downloadBookingCopy);
+      btnModalDownload?.addEventListener('click', downloadBookingCopy);
 
       // PRIMARY CTA: CONFIRM YOUR BOOKING
       if (btnConfirm) {
         btnConfirm.addEventListener('click', async function () {
-          if (!generatedBlob || !generatedCanvas) {
-            showAlert('Please wait for the booking poster to finish rendering before confirming.', false);
-            return;
-          }
-
           btnConfirm.disabled = true;
           const origHtml = btnConfirm.innerHTML;
           btnConfirm.innerHTML = `<span class="btn-spinner"></span> <span>SUBMITTING ENQUIRY...</span>`;
@@ -699,9 +682,11 @@
             const customerPayload = {
               customer_name: contact.name || contact.fullName || 'Valued Client',
               customer_phone: contact.mobile || contact.phone || '',
+              customer_whatsapp: contact.whatsapp || '',
               customer_email: contact.email || '',
+              customer_address: contact.address || '',
               event_date: eventDetails.eventDate || contact.eventDate || '',
-              location: contact.location || `${eventDetails.venueName || 'Salem'}`,
+              location: contact.city || 'Salem',
               service_ids: services.map(s => s.id),
               service_breakdown: {
                 bridal: services.filter(s => s.divisionId === 'bridal-beauty').map(s => s.title),
@@ -711,12 +696,9 @@
                 eventName: eventDetails.eventName,
                 eventType: eventDetails.eventType,
                 eventTime: eventDetails.eventTime,
-                gettingReadyTime: eventDetails.gettingReadyTime,
-                venueName: eventDetails.venueName,
-                venueAddress: eventDetails.venueAddress,
-                functionLocation: eventDetails.functionLocation,
-                looksAndColours: custom.looksAndColours,
-                consultationPref: custom.consultationPref
+                eventLocation: eventDetails.eventLocation,
+                customerAddress: contact.address,
+                preferredContact: contact.preferredContact || ''
               }),
               notes: custom.specialNotes || contact.message || '',
               total_price: 0,
@@ -727,7 +709,7 @@
             formData.append('booking_data', JSON.stringify(customerPayload));
             formData.append('booking_ref', ref);
             formData.append('whatsapp_consent', contact.whatsappConsent ? 'true' : 'false');
-            formData.append('poster_image', generatedBlob, `poster-${ref}.png`);
+            uploadedImages.forEach((image, index) => formData.append('reference_images', image.blob, image.name || `reference-${index + 1}.jpg`));
 
             let res = null;
             if (config && config.apiFetch) {
@@ -736,6 +718,22 @@
                 body: formData
               });
             }
+            if (!res?.success) throw new Error('The studio did not confirm receipt of this enquiry.');
+
+            const bookingRef = res.bookingRef || ref;
+            if (btnDownload) {
+              btnDownload.disabled = false;
+              btnDownload.style.opacity = '1';
+            }
+            bookingCopy = {
+              ref: bookingRef,
+              submittedAt: new Date().toLocaleString('en-IN'),
+              package: store.getPackageType() === 'designer-blouse' ? 'Designer Blouse' : store.getPackageType() === 'complete-bridal' ? 'Bridal & Blouse' : 'Bridal & Beauty',
+              services: services.map(service => service.title),
+              preferenceText: Object.entries(requirements).filter(([key, value]) => value && key !== 'specificNotes').map(([key, value]) => `${key}: ${value}`).join(' · '),
+              customer: { ...customerPayload, notes: custom.specialNotes || '', referenceCount: (custom.referenceImages || []).length },
+              event: eventDetails
+            };
 
             // Populate Success Modal
             const modalRef = document.getElementById('modal-booking-ref');
@@ -743,7 +741,7 @@
             const modalDate = document.getElementById('modal-event-date');
             const modalLoc = document.getElementById('modal-location');
 
-            if (modalRef) modalRef.textContent = (res && res.bookingRef) ? res.bookingRef : ref;
+            if (modalRef) modalRef.textContent = bookingRef;
             if (modalName) modalName.textContent = customerPayload.customer_name;
             if (modalDate) modalDate.textContent = customerPayload.event_date;
             if (modalLoc) modalLoc.textContent = customerPayload.location;
@@ -755,7 +753,7 @@
             showAlert('Your booking enquiry has been received by Bhuvana’s Bridal Studio. Status: Pending Confirmation.', true);
           } catch (err) {
             console.error('Submission error:', err);
-            showAlert(`Submission error: ${err.message}. Please save your poster image or contact studio directly at +91 63740 36629.`, false);
+            showAlert(`Submission error: ${err.message}. Please try again or contact the studio at +91 63740 36629.`, false);
           } finally {
             btnConfirm.disabled = false;
             btnConfirm.innerHTML = origHtml;

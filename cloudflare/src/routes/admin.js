@@ -106,11 +106,16 @@ export async function handleGetBookingDetails(request, env, auth, bookingId) {
   try {
     const booking = await findBooking(env, bookingId);
     if (!booking) return errorResponse(request, env, `Booking not found: ${bookingId}`, 404, 'NOT_FOUND');
-    const [auditLogs, notificationJobs] = await Promise.all([
+    const [auditLogs, notificationJobs, referenceImages] = await Promise.all([
       D1Service.getAuditLogsForBooking(env, booking.id),
-      D1Service.getNotificationJobsForBooking(env, booking.id)
+      D1Service.getNotificationJobsForBooking(env, booking.id),
+      env.DB.prepare('SELECT id, cloudinary_public_id, secure_url, asset_version, image_format, title, sort_order FROM booking_reference_images WHERE booking_ref = ? ORDER BY sort_order, created_at').bind(booking.booking_ref).all()
     ]);
-    return jsonResponse(request, env, { success: true, booking, auditLogs, notificationJobs });
+    const references = await Promise.all((referenceImages.results || []).map(async image => ({
+      ...image,
+      image_url: await CloudinaryService.generateSignedDeliveryUrl(env, image.cloudinary_public_id, image.asset_version, image.image_format || 'jpg')
+    })));
+    return jsonResponse(request, env, { success: true, booking, auditLogs, notificationJobs, referenceImages: references });
   } catch (err) {
     console.error('[Route: BookingDetails] Error:', err);
     return errorResponse(request, env, 'Failed to fetch booking details', 500, 'INTERNAL_ERROR');
