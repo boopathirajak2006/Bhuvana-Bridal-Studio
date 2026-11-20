@@ -198,7 +198,7 @@
                 <label for="e-type">Event Type *</label>
                 <select class="form-control" id="e-type" name="eventType" required>
                   <option value="Wedding / Muhurtham Ceremony">Wedding / Muhurtham Ceremony</option>
-                  <option value="Evening Reception">Evening Reception</option>
+                  <option value="Reception">Reception</option>
                   <option value="Engagement Ceremony">Engagement Ceremony</option>
                   <option value="Puberty Function (Manjal Neerattu Vizha)">Puberty Function (Manjal Neerattu Vizha)</option>
                   <option value="Baby Shower (Valaikappu / Seemantham)">Baby Shower (Valaikappu / Seemantham)</option>
@@ -229,7 +229,7 @@
               <!-- Event venue and location -->
               <div class="form-group full">
                 <label for="e-event-location">Event Venue Address / Location (Optional)</label>
-                <textarea class="form-control" id="e-event-location" name="eventLocation" rows="2" placeholder="Venue name, street, area, and nearby landmark"></textarea>
+                <input class="form-control" type="url" id="e-event-location" name="eventLocation" inputmode="url" placeholder="Paste Google Maps location link (optional)">
                 <span class="err-msg"></span>
               </div>
             </div>
@@ -453,7 +453,7 @@
                   Click to select photos or drag and drop images here
                 </div>
                 <div style="font-size:0.82rem; color:var(--muted); margin-top:0.3rem;">
-                  JPEG, PNG, WebP supported &middot; Maximum 5MB per file &middot; Up to 6 reference photos
+                  Optional · JPEG, PNG, WebP supported &middot; Maximum 5MB per file &middot; Up to 6 reference photos
                 </div>
               </div>
 
@@ -463,22 +463,6 @@
             </div>
 
             <div class="form-grid">
-              <!-- Saree Colours & Themes -->
-              <div class="form-group full">
-                <label for="c-looks">Preferred Looks / Saree Colours &amp; Palette</label>
-                <textarea class="form-control" id="c-looks" name="looksAndColours" rows="2" placeholder="e.g. Traditional Red & Gold Kanchipuram saree for Muhurtham, Pastel Pink lehenga for Reception..."></textarea>
-              </div>
-
-              <!-- Consultation Preference -->
-              <div class="form-group">
-                <label for="c-consultation">Consultation Preference</label>
-                <select class="form-control" id="c-consultation" name="consultationPref">
-                  <option value="In-person consultation at Salem Studio">In-person consultation at Salem Studio</option>
-                  <option value="Virtual Video Consultation (WhatsApp / Google Meet)">Virtual Video Consultation (WhatsApp / Google Meet)</option>
-                  <option value="Direct Phone Call">Direct Phone Call</option>
-                </select>
-              </div>
-
               <!-- Special Notes / Allergies -->
               <div class="form-group full">
                 <label for="c-notes">Special Requests, Allergies or Skin Sensitivity (Optional)</label>

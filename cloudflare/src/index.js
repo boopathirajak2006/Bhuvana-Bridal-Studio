@@ -32,8 +32,18 @@ import {
 } from './routes/whatsapp.js';
 import { handlePublicGallery, handleOwnerGalleryList, handleOwnerGalleryUpload, handleOwnerGalleryDelete, handleOwnerGalleryArrangement } from './routes/gallery.js';
 import { handlePublicContent, handleOwnerContent } from './routes/content.js';
+import { D1Service } from './services/d1.js';
 
 export default {
+  async scheduled(controller, env) {
+    try {
+      const result = await D1Service.deleteExpiredBookings(env, new Date(controller.scheduledTime));
+      console.log(`[Retention] Deleted ${result.deleted} booking record(s) older than cutoff ${result.cutoff}.`);
+    } catch (err) {
+      console.error('[Retention] Scheduled 60-day cleanup failed.', err);
+      throw err;
+    }
+  },
   /**
    * Main fetch request handler
    */

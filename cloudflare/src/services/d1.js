@@ -4,8 +4,32 @@
  */
 
 import { generateUUID, generateBookingRef, generateSalt, hashPassword, sha256, verifyPassword } from '../utils/security.js';
+import { CloudinaryService } from './cloudinary.js';
 
 export class D1Service {
+  /** Remove submitted customer records once their 60-day retention window expires. */
+  static async deleteExpiredBookings(env, now = new Date()) {
+    if (!env.DB) throw new Error('D1 database is unavailable');
+    const cutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString();
+    let deleted = 0;
+    while (true) {
+      const { results = [] } = await env.DB.prepare(`SELECT id, booking_ref FROM bookings
+        WHERE booking_status != 'draft' AND COALESCE(submitted_at, created_at) < ?
+        ORDER BY COALESCE(submitted_at, created_at) LIMIT 50`).bind(cutoff).all();
+      if (!results.length) break;
+      const refs = results.map(row => row.booking_ref);
+      const placeholders = refs.map(() => '?').join(',');
+      const photos = await env.DB.prepare(`SELECT cloudinary_public_id FROM booking_reference_images WHERE booking_ref IN (${placeholders})`).bind(...refs).all();
+      await env.DB.batch(results.map(row => env.DB.prepare('DELETE FROM bookings WHERE id = ?').bind(row.id)));
+      const assets = (photos.results || []).map(row => row.cloudinary_public_id).filter(Boolean);
+      for (const asset of assets) {
+        try { await CloudinaryService.deleteGalleryPhoto(env, asset); }
+        catch (err) { console.warn('[Retention] Private reference cleanup failed for an expired booking.', err); }
+      }
+      deleted += results.length;
+    }
+    return { deleted, cutoff };
+  }
   /**
    * Seed initial owner account ONLY if explicit password is provided in environment variables
    * Secure: Never falls back to a hardcoded default password.

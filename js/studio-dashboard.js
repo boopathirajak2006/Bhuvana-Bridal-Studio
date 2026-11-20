@@ -108,6 +108,9 @@
       navPanel?.setAttribute('aria-hidden', String(!open));
     };
     menuButton?.addEventListener('click', () => setMenuOpen(menuButton.getAttribute('aria-expanded') !== 'true'));
+    window.addEventListener('scroll', () => {
+      if (menuButton?.getAttribute('aria-expanded') === 'true') setMenuOpen(false);
+    }, { passive: true });
     document.addEventListener('click', event => {
       if (window.matchMedia('(max-width: 900px)').matches && navPanel?.classList.contains('is-open')
         && !navPanel.contains(event.target) && !menuButton?.contains(event.target)) setMenuOpen(false);
@@ -467,7 +470,7 @@
             <tr>
               <td data-label="Event Date"><strong>${escapeHtml(b.event_date || '—')}</strong></td>
               <td data-label="Customer">${escapeHtml(b.customer_name || 'Valued Client')}</td>
-              <td data-label="Location">${escapeHtml(b.event_location || 'Salem')}</td>
+              <td data-label="Location">${renderEventMapLink(b.event_location || 'Salem')}</td>
               <td data-label="Status"><span class="badge-status ${b.booking_status === 'approved' ? 'badge-approved' : 'badge-pending'}">${b.booking_status}</span></td>
               <td data-label="Action"><button class="dash-btn dash-btn-outline" style="font-size:0.75rem; padding:0.2rem 0.5rem;" onclick="window.viewBookingDetails('${b.id}')">View</button></td>
             </tr>
@@ -1043,7 +1046,7 @@
         <div><strong>Address:</strong> ${escapeHtml(b.customer_address || requirementsObj.customerAddress || 'Not provided')}</div>
         <div><strong>Event Date:</strong> ${escapeHtml(b.event_date)}</div>
         <div><strong>Event Time:</strong> ${escapeHtml(requirementsObj.eventTime || 'Not provided')}</div>
-        <div><strong>Location:</strong> ${escapeHtml(requirementsObj.eventLocation || b.event_location || 'Not provided')}</div>
+        <div><strong>Location:</strong> ${renderEventMapLink(requirementsObj.eventLocation || b.event_location || 'Not provided')}</div>
         <div><strong>Submitted At:</strong> ${new Date(b.submitted_at || b.created_at).toLocaleString('en-IN')}</div>
       `;
 
@@ -1370,6 +1373,14 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  function renderEventMapLink(location) {
+    const value = String(location || 'Salem').trim();
+    if (/^https:\/\/(maps\.app\.goo\.gl|www\.google\.com\/maps|maps\.google\.com)\//i.test(value)) {
+      return `<a href="${escapeHtml(value)}" target="_blank" rel="noopener noreferrer">Open event location ↗</a>`;
+    }
+    return escapeHtml(value);
   }
 
 })();

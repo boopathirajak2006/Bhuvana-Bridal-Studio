@@ -686,7 +686,7 @@
               customer_email: contact.email || '',
               customer_address: contact.address || '',
               event_date: eventDetails.eventDate || contact.eventDate || '',
-              location: contact.city || 'Salem',
+              location: eventDetails.eventLocation || contact.city || 'Salem',
               service_ids: services.map(s => s.id),
               service_breakdown: {
                 bridal: services.filter(s => s.divisionId === 'bridal-beauty').map(s => s.title),
@@ -718,9 +718,10 @@
                 body: formData
               });
             }
-            if (!res?.success) throw new Error('The studio did not confirm receipt of this enquiry.');
+            if (!res?.success) throw new Error(res?.error || 'The studio did not confirm receipt of this enquiry.');
 
             const bookingRef = res.bookingRef || ref;
+            store.clearBookingRef?.();
             if (btnDownload) {
               btnDownload.disabled = false;
               btnDownload.style.opacity = '1';
