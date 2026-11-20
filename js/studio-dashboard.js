@@ -114,6 +114,7 @@
     });
     navButtons.forEach(btn => {
       btn.addEventListener('click', function () {
+        if (this.id === 'btn-owner-logout') return;
         const targetSection = this.dataset.section;
         switchSection(targetSection);
         setMenuOpen(false);

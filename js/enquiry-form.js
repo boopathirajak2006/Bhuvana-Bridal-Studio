@@ -378,17 +378,15 @@
 
     function ensureDefaultServicesForPackage() {
       const pkg = store.getPackageType();
-      let ids = store.getSelectedIds();
-      if (ids.length === 0) {
-        if (pkg === 'bridal-beauty') {
-          ids = ['srv-mu-01', 'srv-hr-01', 'srv-mh-01'];
-        } else if (pkg === 'designer-blouse') {
-          ids = ['srv-bd-01', 'srv-bs-01', 'srv-aw-01'];
-        } else {
-          ids = ['srv-mu-01', 'srv-hr-01', 'srv-mh-01', 'srv-bd-01', 'srv-bs-01', 'srv-aw-01'];
-        }
-        store.setSelectedIds(ids);
-      }
+      const catalog = Object.values(window.BBS_CATALOG?.services || {});
+      const divisions = pkg === 'bridal-beauty' ? ['bridal-beauty']
+        : pkg === 'designer-blouse' ? ['designer-blouse']
+        : ['bridal-beauty', 'designer-blouse'];
+      const validIds = new Set(catalog.filter(service => divisions.includes(service.divisionId)).map(service => service.id));
+      const savedIds = store.getSelectedIds().filter(id => validIds.has(id));
+      const defaults = catalog.filter(service => divisions.includes(service.divisionId)).slice(0, pkg === 'complete-bridal' ? 6 : 3).map(service => service.id);
+      const ids = savedIds.length ? savedIds : defaults;
+      if (ids.length) store.setSelectedIds(ids);
     }
 
     // =========================================================================

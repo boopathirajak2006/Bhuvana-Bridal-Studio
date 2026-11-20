@@ -1176,6 +1176,7 @@ body.studio-detail-page .service-card { min-width: 0; }
 .gallery-category-tab.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
 .gallery-category-panel h2 { margin-bottom: 0.5rem; }
 .gallery-category-panel .gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.gallery-category-panel .gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 .gallery-category-panel .gallery-photo-button { min-width: 0; }
 .gallery-category-panel .gallery-item-img { aspect-ratio: 3 / 4; object-fit: cover; }
 
