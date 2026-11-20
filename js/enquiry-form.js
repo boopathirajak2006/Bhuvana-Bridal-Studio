@@ -139,6 +139,7 @@
         if (eventDetails.eventDate) f2.elements.eventDate.value = eventDetails.eventDate;
         if (eventDetails.eventTime) f2.elements.eventTime.value = eventDetails.eventTime;
         if (eventDetails.eventLocation && f2.elements.eventLocation) f2.elements.eventLocation.value = eventDetails.eventLocation;
+        if (eventDetails.eventMapUrl && f2.elements.eventMapUrl) f2.elements.eventMapUrl.value = eventDetails.eventMapUrl;
       }
 
       // Step 3: Requirements
@@ -286,6 +287,27 @@
 
         const eDateVal = f2.elements.eventDate.value;
         setErr(f2.elements.eventDate, eDateVal ? '' : 'Please select your celebration date.');
+        const timing = f2.elements.eventTime.value.trim();
+        const timingError = f2.elements.eventTime.closest('.form-group')?.querySelector('.err-msg');
+        if (timingError) timingError.textContent = timing ? '' : 'Enter the event time.';
+        if (!timing) { ok = false; if (!firstInvalid) firstInvalid = f2.elements.eventTime; }
+        const address = f2.elements.eventLocation.value.trim();
+        const mapUrl = f2.elements.eventMapUrl.value.trim();
+        const addressError = f2.elements.eventLocation.closest('.form-group')?.querySelector('.err-msg');
+        const mapError = f2.elements.eventMapUrl.closest('.form-group')?.querySelector('.err-msg');
+        if (addressError) addressError.textContent = '';
+        if (mapError) mapError.textContent = '';
+        if (!address && !mapUrl) {
+          if (addressError) addressError.textContent = 'Enter an event address or add a Google Maps link.';
+          if (mapError) mapError.textContent = 'Enter an event address or add a Google Maps link.';
+          ok = false;
+          if (!firstInvalid) firstInvalid = f2.elements.eventLocation;
+        }
+        if (mapUrl && !/^https:\/\/(maps\.app\.goo\.gl|www\.google\.com\/maps|maps\.google\.com)\//i.test(mapUrl)) {
+          if (mapError) mapError.textContent = 'Enter a valid Google Maps share link.';
+          ok = false;
+          if (!firstInvalid) firstInvalid = f2.elements.eventMapUrl;
+        }
 
         if (!ok) {
           if (firstInvalid) firstInvalid.focus();
@@ -294,7 +316,8 @@
 
         // Save event details
         const eventType = f2.elements.eventType.value;
-        const eventLocation = f2.elements.eventLocation.value.trim();
+        const eventLocation = address;
+        const eventMapUrl = mapUrl;
         const locationField = f2.elements.eventLocation;
         const locationError = locationField.closest('.form-group')?.querySelector('.err-msg');
         if (locationError) locationError.textContent = '';
@@ -303,8 +326,9 @@
           eventType,
           eventDate: eDateVal,
           preferredDate: eDateVal,
-          eventTime: f2.elements.eventTime.value,
-          eventLocation
+          eventTime: timing,
+          eventLocation,
+          eventMapUrl
         });
 
         // Also update contact with eventDate & location
@@ -693,6 +717,7 @@
                 eventType: eventDetails.eventType,
                 eventTime: eventDetails.eventTime,
                 eventLocation: eventDetails.eventLocation,
+                eventMapUrl: eventDetails.eventMapUrl || '',
                 customerAddress: contact.address,
                 preferredContact: contact.preferredContact || ''
               }),

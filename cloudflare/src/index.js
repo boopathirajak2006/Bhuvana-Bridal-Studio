@@ -20,6 +20,7 @@ import {
   handleGetStats,
   handleGetBookingDetails,
   handleGetBookingPoster,
+  handleGetBookingReferenceImage,
   handleApproveBooking,
   handleRejectBooking,
   handleExportBookings,
@@ -169,6 +170,11 @@ export default {
         }
 
         // Poster stream
+        const referenceImageMatch = path.match(/^\/api\/admin\/bookings\/([A-Za-z0-9-]+)\/reference-images\/([A-Za-z0-9-]+)$/);
+        if (referenceImageMatch && method === 'GET') {
+          return await handleGetBookingReferenceImage(request, env, auth, referenceImageMatch[1], referenceImageMatch[2]);
+        }
+
         const posterMatch = path.match(/^\/api\/admin\/bookings\/([A-Za-z0-9-]+)\/poster$/);
         if (posterMatch && method === 'GET') {
           return await handleGetBookingPoster(request, env, auth, posterMatch[1]);

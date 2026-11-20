@@ -1044,7 +1044,8 @@
         <div><strong>Address:</strong> ${escapeHtml(b.customer_address || requirementsObj.customerAddress || 'Not provided')}</div>
         <div><strong>Event Date:</strong> ${escapeHtml(b.event_date)}</div>
         <div><strong>Event Time:</strong> ${escapeHtml(requirementsObj.eventTime || 'Not provided')}</div>
-        <div><strong>Location:</strong> ${renderEventMapLink(requirementsObj.eventLocation || b.event_location || 'Not provided')}</div>
+        <div><strong>Event Address:</strong> ${escapeHtml(requirementsObj.eventLocation || 'Not provided')}</div>
+        <div><strong>Google Maps:</strong> ${requirementsObj.eventMapUrl ? renderEventMapLink(requirementsObj.eventMapUrl) : (requirementsObj.eventLocation && /^https:\/\//i.test(requirementsObj.eventLocation) ? renderEventMapLink(requirementsObj.eventLocation) : 'Not provided')}</div>
         <div><strong>Submitted At:</strong> ${new Date(b.submitted_at || b.created_at).toLocaleString('en-IN')}</div>
       `;
 
@@ -1061,10 +1062,19 @@
         .filter(([key]) => !['referenceImages', 'customerAddress', 'eventLocation'].includes(key))
         .filter(([, value]) => value && typeof value !== 'object')
         .map(([key, value]) => `<div><strong>${escapeHtml(key)}:</strong> ${escapeHtml(value)}</div>`).join('');
-      const referenceGallery = referenceImages.map((image, index) => {
-        const imageUrl = typeof image?.image_url === 'string' ? image.image_url : '';
-        return imageUrl ? `<a class="booking-reference-thumb" href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener"><img src="${escapeHtml(imageUrl)}" alt="Customer reference image ${index + 1}"><span>${escapeHtml(image.title || `Reference ${index + 1}`)}</span></a>` : '';
-      }).join('');
+      const referenceGallery = (await Promise.all(referenceImages.map(async (image, index) => {
+        if (typeof image?.image_url !== 'string') return '';
+        try {
+          const token = localStorage.getItem('bbs_owner_token');
+          const response = await fetch(config.url(image.image_url), { credentials: 'include', headers: token ? { Authorization: `Bearer ${token}` } : {} });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const imageUrl = URL.createObjectURL(await response.blob());
+          return `<a class="booking-reference-thumb" href="${imageUrl}" target="_blank" rel="noopener"><img src="${imageUrl}" alt="Customer reference image ${index + 1}"><span>${escapeHtml(image.title || `Reference ${index + 1}`)}</span></a>`;
+        } catch (err) {
+          console.warn('[Booking details] Could not load a customer reference image:', err);
+          return `<span class="booking-reference-thumb-error">Reference ${index + 1} could not be opened</span>`;
+        }
+      }))).join('');
 
       document.getElementById('detail-services-box').innerHTML = `
         <div style="margin-bottom: 0.5rem;"><strong>Selected Services:</strong><br>${servicesList.map(s => `• ${escapeHtml(s)}`).join('<br>')}</div>

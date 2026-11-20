@@ -293,4 +293,21 @@ export class CloudinaryService {
 
     return null;
   }
+
+  static async getPrivateReferenceStream(env, image) {
+    const cloudName = env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = env.CLOUDINARY_API_KEY;
+    const apiSecret = env.CLOUDINARY_API_SECRET;
+    if (!image?.cloudinary_public_id || [cloudName, apiKey, apiSecret].some(value => this.isPlaceholder(value))) return null;
+    const signedUrl = await this.generateSignedDeliveryUrl(env, image.cloudinary_public_id, image.asset_version, image.image_format || 'jpg');
+    if (signedUrl) {
+      const signedResponse = await fetch(signedUrl);
+      if (signedResponse.ok) return signedResponse;
+    }
+    const basicAuth = btoa(`${apiKey}:${apiSecret}`);
+    const cleanId = image.cloudinary_public_id.replace(/\.[^/.]+$/, '');
+    const downloadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/download?public_id=${encodeURIComponent(cleanId)}&format=${encodeURIComponent(image.image_format || 'jpg')}`;
+    const response = await fetch(downloadUrl, { headers: { Authorization: `Basic ${basicAuth}` } });
+    return response.ok ? response : null;
+  }
 }

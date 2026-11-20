@@ -111,14 +111,31 @@ export async function handleGetBookingDetails(request, env, auth, bookingId) {
       D1Service.getNotificationJobsForBooking(env, booking.id),
       env.DB.prepare('SELECT id, cloudinary_public_id, secure_url, asset_version, image_format, title, sort_order FROM booking_reference_images WHERE booking_ref = ? ORDER BY sort_order, created_at').bind(booking.booking_ref).all()
     ]);
-    const references = await Promise.all((referenceImages.results || []).map(async image => ({
-      ...image,
-      image_url: await CloudinaryService.generateSignedDeliveryUrl(env, image.cloudinary_public_id, image.asset_version, image.image_format || 'jpg')
-    })));
+    const references = (referenceImages.results || []).map(image => ({
+      id: image.id,
+      title: image.title,
+      image_url: `/api/admin/bookings/${encodeURIComponent(booking.booking_ref)}/reference-images/${encodeURIComponent(image.id)}`
+    }));
     return jsonResponse(request, env, { success: true, booking, auditLogs, notificationJobs, referenceImages: references });
   } catch (err) {
     console.error('[Route: BookingDetails] Error:', err);
     return errorResponse(request, env, 'Failed to fetch booking details', 500, 'INTERNAL_ERROR');
+  }
+}
+
+export async function handleGetBookingReferenceImage(request, env, auth, bookingId, imageId) {
+  try {
+    const booking = await findBooking(env, bookingId);
+    if (!booking) return errorResponse(request, env, 'Booking not found', 404, 'NOT_FOUND');
+    const image = await env.DB.prepare('SELECT cloudinary_public_id, asset_version, image_format, title FROM booking_reference_images WHERE id = ? AND booking_ref = ?').bind(imageId, booking.booking_ref).first();
+    if (!image) return errorResponse(request, env, 'Reference image not found', 404, 'NOT_FOUND');
+    const response = await CloudinaryService.getPrivateReferenceStream(env, image);
+    if (!response?.body) return errorResponse(request, env, 'Customer reference image is unavailable', 502, 'IMAGE_UNAVAILABLE');
+    const headers = new Headers({ 'Content-Type': response.headers.get('content-type') || `image/${image.image_format || 'jpeg'}`, 'Cache-Control': 'private, no-store', 'Content-Disposition': `inline; filename="reference-${imageId}.${image.image_format || 'jpg'}"` });
+    return new Response(response.body, { status: 200, headers });
+  } catch (err) {
+    console.error('[Route: BookingReferenceImage] Error:', err);
+    return errorResponse(request, env, 'Failed to retrieve customer reference image', 500, 'INTERNAL_ERROR');
   }
 }
 

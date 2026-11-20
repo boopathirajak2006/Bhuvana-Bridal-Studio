@@ -41,6 +41,11 @@ export function validateBookingReservation(body) {
   }
 
   const location = typeof body.location === 'string' ? body.location.trim() : '';
+  const requirements = body.additional_requirements || body.requirements || {};
+  const eventAddress = typeof requirements.eventLocation === 'string' ? requirements.eventLocation.trim() : '';
+  const eventMapUrl = typeof requirements.eventMapUrl === 'string' ? requirements.eventMapUrl.trim() : '';
+  if (!eventAddress && !eventMapUrl) errors.push('Provide an event address or Google Maps link');
+  if (eventMapUrl && !/^https:\/\/(maps\.app\.goo\.gl|www\.google\.com\/maps|maps\.google\.com)\//i.test(eventMapUrl)) errors.push('Event Google Maps link must be a valid Google Maps URL');
 
   const serviceIds = Array.isArray(body.service_ids) ? body.service_ids : [];
   if (serviceIds.length === 0) {
