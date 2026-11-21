@@ -276,7 +276,7 @@
       const eventPeriod = document.getElementById('e-time-period');
 
       function applyEventTime(value) {
-        const match = String(value || '').trim().match(/^(\\d{1,2}):(\\d{2})(?:\\s*(AM|PM))?$/i);
+        const match = String(value || '').trim().match(/^([0-9]{1,2}):([0-9]{2})(?:[ ]*(AM|PM))?$/i);
         if (!match) return false;
 
         let hour = Number(match[1]);
