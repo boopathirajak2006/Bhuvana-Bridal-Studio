@@ -98,9 +98,9 @@ export class CloudinaryService {
    * Generate Cloudinary delivery signature for authenticated/private images
    * Formula: First 8 characters of Base64 URL-safe SHA-1 of `[v<version>/]<public_id><api_secret>`
    */
-  static async generateDeliverySignature(publicId, version, format, apiSecret) {
+  static async generateDeliverySignature(publicId, version, apiSecret) {
     const versionPrefix = version ? `v${version}/` : '';
-    const toSign = `${versionPrefix}${publicId}.${format}${apiSecret}`;
+    const toSign = `${versionPrefix}${publicId}${apiSecret}`;
     const encoder = new TextEncoder();
     const hashBuffer = await crypto.subtle.digest('SHA-1', encoder.encode(toSign));
     const bytes = new Uint8Array(hashBuffer);
@@ -125,7 +125,7 @@ export class CloudinaryService {
     const apiSecret = env.CLOUDINARY_API_SECRET;
     if (this.isPlaceholder(cloudName) || this.isPlaceholder(apiSecret)) return null;
 
-    const signature = await this.generateDeliverySignature(publicId, version, format, apiSecret);
+    const signature = await this.generateDeliverySignature(publicId, version, apiSecret);
     const versionPart = version ? `v${version}/` : '';
     const cleanPublicId = publicId.replace(/\.[^/.]+$/, ''); // Remove extension if present
 
@@ -311,4 +311,3 @@ export class CloudinaryService {
     return response.ok ? response : null;
   }
 }
-
