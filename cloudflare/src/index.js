@@ -64,6 +64,7 @@ export default {
       // -------------------------------------------------------------
       if (path === '/api/health' && method === 'GET') {
         return jsonResponse(request, env, {
+          success: true,
           status: 'healthy',
           timestamp: new Date().toISOString(),
           service: "Bhuvana's Bridal Studio Cloudflare Backend",
