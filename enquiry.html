@@ -432,36 +432,15 @@
       <!-- ========================================================================= -->
       <section id="step-4" class="booking-step">
         <div class="center" style="margin-bottom:2rem;">
-          <span class="eyebrow">Step 4 of 5 &middot; Inspiration &amp; References</span>
+          <span class="eyebrow">Step 4 of 5 &middot; Preferences</span>
           <h1>Customization &amp; Preferences</h1>
           <p class="lead">
-            Upload reference images of your saree, blouse inspirations, or makeup looks, and share specific preferences.
+            Share any special requests, allergies, or preferences for your booking.
           </p>
         </div>
 
         <div class="enquiry-container">
           <form id="form-step-4" novalidate>
-            <!-- Reference Images Upload Zone -->
-            <div class="form-group full" style="margin-bottom:2rem;">
-              <label style="font-weight:600; color:var(--ink); margin-bottom:0.4rem; display:block;">
-                Upload Reference Images (Saree, Blouse Designs, or Makeup Inspirations)
-              </label>
-              <div class="image-upload-zone" id="upload-zone">
-                <input type="file" id="ref-image-input" multiple accept="image/jpeg,image/png,image/webp">
-                <div style="font-size:2rem; margin-bottom:0.4rem;">📷</div>
-                <div style="font-weight:600; color:var(--ink); font-size:1.05rem;">
-                  Click to select photos or drag and drop images here
-                </div>
-                <div style="font-size:0.82rem; color:var(--muted); margin-top:0.3rem;">
-                  Optional · JPEG, PNG, WebP supported &middot; Maximum 5MB per file &middot; Up to 6 reference photos
-                </div>
-              </div>
-
-              <!-- Upload Previews Grid -->
-              <div class="image-preview-grid" id="image-preview-grid"></div>
-              <span id="upload-err-msg" class="err-msg" style="display:block; margin-top:0.4rem;"></span>
-            </div>
-
             <div class="form-grid">
               <!-- Special Notes / Allergies -->
               <div class="form-group full">
@@ -571,8 +550,8 @@
         <div class="review-card">
           <div class="review-card-header">
             <div>
-              <strong style="color:var(--ink); font-size:1.1rem;">4. Customization &amp; References</strong>
-              <div style="font-size:0.8rem; color:var(--muted);">Optional special requests and reference photos</div>
+              <strong style="color:var(--ink); font-size:1.1rem;">4. Special Requests</strong>
+              <div style="font-size:0.8rem; color:var(--muted);">Optional notes for the studio</div>
             </div>
             <button class="review-edit-btn btn-jump-step" data-step="4" type="button">Edit Preferences</button>
           </div>
@@ -580,12 +559,6 @@
             <div class="review-item">
               <span class="review-item-label">Special Notes / Allergies</span>
               <span class="review-item-val" id="rev-c-notes">None</span>
-            </div>
-            <div class="review-item" style="grid-column:1/-1;">
-              <span class="review-item-label">Uploaded Reference Photos</span>
-              <div id="rev-ref-thumbnails" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.4rem;">
-                <span style="font-size:0.85rem; color:var(--muted);">No reference images attached</span>
-              </div>
             </div>
           </div>
         </div>
