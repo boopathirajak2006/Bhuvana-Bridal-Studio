@@ -298,73 +298,6 @@
       const f2 = document.getElementById('form-step-2');
       if (!f2) return;
 
-      const eventTimeInput = f2.elements.eventTime;
-      const timeTrigger = document.getElementById('e-time-trigger');
-      const timeDisplay = document.getElementById('e-time-display');
-      const timePicker = document.getElementById('event-time-picker');
-      const hourSelect = document.getElementById('e-time-hour');
-      const minuteSelect = document.getElementById('e-time-minute');
-      const periodSelect = document.getElementById('e-time-period');
-      const timePickerError = document.getElementById('event-time-picker-error');
-
-      function syncTimePickerFromValue() {
-        const match = String(eventTimeInput.value || '').match(/^([0-9]{2}):([0-9]{2})$/);
-        if (!match) {
-          hourSelect.value = '';
-          minuteSelect.value = '';
-          periodSelect.value = '';
-          timeDisplay.textContent = 'Select event time';
-          return;
-        }
-        const hour24 = Number(match[1]);
-        const minute = Number(match[2]);
-        const hour12 = hour24 % 12 || 12;
-        const period = hour24 >= 12 ? 'PM' : 'AM';
-        hourSelect.value = String(hour12).padStart(2, '0');
-        minuteSelect.value = String(minute).padStart(2, '0');
-        periodSelect.value = period;
-        timeDisplay.textContent = formatTimeWithPeriod(eventTimeInput.value);
-      }
-
-      function closeTimePicker() {
-        if (timePicker) timePicker.style.display = 'none';
-        if (timeTrigger) {
-          timeTrigger.setAttribute('aria-expanded', 'false');
-          timeTrigger.focus();
-        }
-      }
-
-      function openTimePicker() {
-        if (!timePicker) return;
-        syncTimePickerFromValue();
-        if (timePickerError) timePickerError.textContent = '';
-        timePicker.style.display = 'flex';
-        timeTrigger.setAttribute('aria-expanded', 'true');
-        hourSelect.focus();
-      }
-
-      timeTrigger?.addEventListener('click', openTimePicker);
-      document.getElementById('btn-time-picker-cancel')?.addEventListener('click', closeTimePicker);
-      timePicker?.addEventListener('click', event => {
-        if (event.target === timePicker) closeTimePicker();
-      });
-      document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && timePicker?.style.display !== 'none') closeTimePicker();
-      });
-      document.getElementById('btn-time-picker-apply')?.addEventListener('click', () => {
-        if (!hourSelect.value || !minuteSelect.value || !periodSelect.value) {
-          if (timePickerError) timePickerError.textContent = 'Select the hour, minute, and AM or PM.';
-          return;
-        }
-        const hour12 = Number(hourSelect.value);
-        const hour24 = (hour12 % 12) + (periodSelect.value === 'PM' ? 12 : 0);
-        eventTimeInput.value = `${String(hour24).padStart(2, '0')}:${minuteSelect.value}`;
-        timeDisplay.textContent = formatTimeWithPeriod(eventTimeInput.value);
-        if (timePickerError) timePickerError.textContent = '';
-        closeTimePicker();
-      });
-      syncTimePickerFromValue();
-
       f2.addEventListener('submit', function (e) {
         e.preventDefault();
         let ok = true;
@@ -386,7 +319,7 @@
         const timing = formatTimeWithPeriod(eventTimeInput.value);
         const timingError = eventTimeInput.closest('.form-group')?.querySelector('.err-msg');
         if (timingError) timingError.textContent = timing ? '' : 'Choose the event time, including AM or PM.';
-        if (!timing) { ok = false; if (!firstInvalid) firstInvalid = timeTrigger || eventTimeInput; }
+        if (!timing) { ok = false; if (!firstInvalid) firstInvalid = eventTimeInput; }
         const address = f2.elements.eventLocation.value.trim();
         const mapUrl = f2.elements.eventMapUrl.value.trim();
         const addressError = f2.elements.eventLocation.closest('.form-group')?.querySelector('.err-msg');
