@@ -108,6 +108,34 @@
       }
     }
 
+    // Convert saved AM/PM or legacy 24-hour times for the native picker.
+    function normalizeTimeForPicker(value) {
+      const match = String(value || '').trim().match(/^([0-9]{1,2}):([0-9]{2})(?:[ ]*(AM|PM))?$/i);
+      if (!match) return '';
+      let hour = Number(match[1]);
+      const minute = Number(match[2]);
+      const period = match[3]?.toUpperCase();
+      if (minute > 59) return '';
+      if (period) {
+        if (hour < 1 || hour > 12) return '';
+        hour = hour % 12 + (period === 'PM' ? 12 : 0);
+      } else if (hour < 0 || hour > 23) {
+        return '';
+      }
+      return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    }
+
+    function formatTimeWithPeriod(value) {
+      const match = String(value || '').trim().match(/^([0-9]{2}):([0-9]{2})$/);
+      if (!match) return '';
+      const hour24 = Number(match[1]);
+      const minute = Number(match[2]);
+      if (hour24 > 23 || minute > 59) return '';
+      const period = hour24 >= 12 ? 'PM' : 'AM';
+      const hour12 = hour24 % 12 || 12;
+      return `${hour12}:${String(minute).padStart(2, '0')} ${period}`;
+    }
+
     // =========================================================================
     // PREFILL SAVED DATA
     // =========================================================================
@@ -137,7 +165,7 @@
       if (f2 && eventDetails) {
         if (eventDetails.eventType) f2.elements.eventType.value = eventDetails.eventType;
         if (eventDetails.eventDate) f2.elements.eventDate.value = eventDetails.eventDate;
-        if (eventDetails.eventTime) f2.elements.eventTime.value = eventDetails.eventTime;
+        if (eventDetails.eventTime) f2.elements.eventTime.value = normalizeTimeForPicker(eventDetails.eventTime);
         if (eventDetails.eventLocation && f2.elements.eventLocation) f2.elements.eventLocation.value = eventDetails.eventLocation;
         if (eventDetails.eventMapUrl && f2.elements.eventMapUrl) f2.elements.eventMapUrl.value = eventDetails.eventMapUrl;
       }
@@ -270,51 +298,6 @@
       const f2 = document.getElementById('form-step-2');
       if (!f2) return;
 
-      const eventTimeValue = f2.elements.eventTime;
-      const eventHour = document.getElementById('e-time-hour');
-      const eventMinute = document.getElementById('e-time-minute');
-      const eventPeriod = document.getElementById('e-time-period');
-
-      function applyEventTime(value) {
-        const match = String(value || '').trim().match(/^([0-9]{1,2}):([0-9]{2})(?:[ ]*(AM|PM))?$/i);
-        if (!match) return false;
-
-        let hour = Number(match[1]);
-        const minute = Number(match[2]);
-        let period = match[3]?.toUpperCase();
-
-        if (minute > 59) return false;
-        if (period) {
-          if (hour < 1 || hour > 12) return false;
-        } else {
-          if (hour < 0 || hour > 23) return false;
-          period = hour >= 12 ? 'PM' : 'AM';
-          hour = hour % 12 || 12;
-        }
-
-        if (!eventHour || !eventMinute || !eventPeriod) return false;
-        eventHour.value = String(hour).padStart(2, '0');
-        eventMinute.value = String(minute).padStart(2, '0');
-        eventPeriod.value = period;
-        eventTimeValue.value = `${hour}:${String(minute).padStart(2, '0')} ${period}`;
-        return true;
-      }
-
-      function updateEventTimeValue() {
-        if (!eventHour || !eventMinute || !eventPeriod) return;
-        if (eventHour.value && eventMinute.value && eventPeriod.value) {
-          const hour = Number(eventHour.value);
-          eventTimeValue.value = `${hour}:${eventMinute.value} ${eventPeriod.value}`;
-        } else {
-          eventTimeValue.value = '';
-        }
-      }
-
-      if (eventTimeValue?.value && !applyEventTime(eventTimeValue.value)) eventTimeValue.value = '';
-      [eventHour, eventMinute, eventPeriod].filter(Boolean).forEach(field => {
-        field.addEventListener('change', updateEventTimeValue);
-      });
-
       f2.addEventListener('submit', function (e) {
         e.preventDefault();
         let ok = true;
@@ -332,10 +315,11 @@
 
         const eDateVal = f2.elements.eventDate.value;
         setErr(f2.elements.eventDate, eDateVal ? '' : 'Please select your celebration date.');
-        const timing = f2.elements.eventTime.value.trim();
-        const timingError = f2.elements.eventTime.closest('.form-group')?.querySelector('.err-msg');
-        if (timingError) timingError.textContent = timing ? '' : 'Enter the event time.';
-        if (!timing) { ok = false; if (!firstInvalid) firstInvalid = eventHour || f2.elements.eventTime; }
+        const eventTimeInput = f2.elements.eventTime;
+        const timing = formatTimeWithPeriod(eventTimeInput.value);
+        const timingError = eventTimeInput.closest('.form-group')?.querySelector('.err-msg');
+        if (timingError) timingError.textContent = timing ? '' : 'Choose the event time, including AM or PM.';
+        if (!timing) { ok = false; if (!firstInvalid) firstInvalid = eventTimeInput; }
         const address = f2.elements.eventLocation.value.trim();
         const mapUrl = f2.elements.eventMapUrl.value.trim();
         const addressError = f2.elements.eventLocation.closest('.form-group')?.querySelector('.err-msg');
