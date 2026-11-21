@@ -165,7 +165,17 @@
       if (f2 && eventDetails) {
         if (eventDetails.eventType) f2.elements.eventType.value = eventDetails.eventType;
         if (eventDetails.eventDate) f2.elements.eventDate.value = eventDetails.eventDate;
-        if (eventDetails.eventTime) f2.elements.eventTime.value = normalizeTimeForPicker(eventDetails.eventTime);
+        if (eventDetails.eventTime) {
+          const savedTime = normalizeTimeForPicker(eventDetails.eventTime);
+          if (savedTime) {
+            f2.elements.eventTime.value = savedTime;
+            const [savedHour, savedMinute] = savedTime.split(':');
+            const hour24 = Number(savedHour);
+            document.getElementById('e-time-hour').value = String(hour24 % 12 || 12).padStart(2, '0');
+            document.getElementById('e-time-minute').value = savedMinute;
+            document.getElementById('e-time-period').value = hour24 >= 12 ? 'PM' : 'AM';
+          }
+        }
         if (eventDetails.eventLocation && f2.elements.eventLocation) f2.elements.eventLocation.value = eventDetails.eventLocation;
         if (eventDetails.eventMapUrl && f2.elements.eventMapUrl) f2.elements.eventMapUrl.value = eventDetails.eventMapUrl;
       }
@@ -298,6 +308,21 @@
       const f2 = document.getElementById('form-step-2');
       if (!f2) return;
 
+      const eventTimeInput = f2.elements.eventTime;
+      const hourSelect = document.getElementById('e-time-hour');
+      const minuteSelect = document.getElementById('e-time-minute');
+      const periodSelect = document.getElementById('e-time-period');
+      const syncEventTime = () => {
+        if (!hourSelect.value || !minuteSelect.value || !periodSelect.value) {
+          eventTimeInput.value = '';
+          return;
+        }
+        const hour12 = Number(hourSelect.value) % 12;
+        const hour24 = hour12 + (periodSelect.value === 'PM' ? 12 : 0);
+        eventTimeInput.value = `${String(hour24).padStart(2, '0')}:${minuteSelect.value}`;
+      };
+      [hourSelect, minuteSelect, periodSelect].forEach(select => select.addEventListener('change', syncEventTime));
+
       f2.addEventListener('submit', function (e) {
         e.preventDefault();
         let ok = true;
@@ -315,11 +340,10 @@
 
         const eDateVal = f2.elements.eventDate.value;
         setErr(f2.elements.eventDate, eDateVal ? '' : 'Please select your celebration date.');
-        const eventTimeInput = f2.elements.eventTime;
         const timing = formatTimeWithPeriod(eventTimeInput.value);
         const timingError = eventTimeInput.closest('.form-group')?.querySelector('.err-msg');
         if (timingError) timingError.textContent = timing ? '' : 'Choose the event time, including AM or PM.';
-        if (!timing) { ok = false; if (!firstInvalid) firstInvalid = eventTimeInput; }
+        if (!timing) { ok = false; if (!firstInvalid) firstInvalid = hourSelect; }
         const address = f2.elements.eventLocation.value.trim();
         const mapUrl = f2.elements.eventMapUrl.value.trim();
         const addressError = f2.elements.eventLocation.closest('.form-group')?.querySelector('.err-msg');
