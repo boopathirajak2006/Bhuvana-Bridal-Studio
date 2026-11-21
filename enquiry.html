@@ -218,7 +218,8 @@
               <!-- Event Time -->
               <div class="form-group">
                 <label for="e-time">Event Timing *</label>
-                <input class="form-control" type="text" id="e-time" name="eventTime" placeholder="e.g. 6:30 AM or 7:00 PM" required>
+                <input class="form-control" type="time" id="e-time" name="eventTime" step="60" required aria-describedby="event-time-hint">
+                <small id="event-time-hint" style="display:block; margin-top:0.35rem; color:var(--muted);">Tap here to choose the event time.</small>
               </div>
 
               <!-- Event venue and location -->
