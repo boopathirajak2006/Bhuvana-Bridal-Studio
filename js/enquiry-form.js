@@ -125,6 +125,21 @@
       return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
     }
 
+    function getTimeOfDayOption(value) {
+      const labels = ['Early morning', 'Morning', 'Afternoon', 'Evening', 'Night', 'Midnight'];
+      const saved = String(value || '').trim();
+      if (labels.includes(saved)) return saved;
+      const normalized = normalizeTimeForPicker(saved);
+      if (!normalized) return '';
+      const hour = Number(normalized.split(':')[0]);
+      if (hour < 5) return 'Midnight';
+      if (hour < 8) return 'Early morning';
+      if (hour < 12) return 'Morning';
+      if (hour < 16) return 'Afternoon';
+      if (hour < 19) return 'Evening';
+      return 'Night';
+    }
+
     function formatTimeWithPeriod(value) {
       const match = String(value || '').trim().match(/^([0-9]{2}):([0-9]{2})$/);
       if (!match) return '';
@@ -166,14 +181,10 @@
         if (eventDetails.eventType) f2.elements.eventType.value = eventDetails.eventType;
         if (eventDetails.eventDate) f2.elements.eventDate.value = eventDetails.eventDate;
         if (eventDetails.eventTime) {
-          const savedTime = normalizeTimeForPicker(eventDetails.eventTime);
-          if (savedTime) {
-            f2.elements.eventTime.value = savedTime;
-            const [savedHour, savedMinute] = savedTime.split(':');
-            const hour24 = Number(savedHour);
-            document.getElementById('e-time-hour').value = String(hour24 % 12 || 12).padStart(2, '0');
-            document.getElementById('e-time-minute').value = savedMinute;
-            document.getElementById('e-time-period').value = hour24 >= 12 ? 'PM' : 'AM';
+          const timeOfDay = getTimeOfDayOption(eventDetails.eventTime);
+          if (timeOfDay) {
+            f2.elements.eventTime.value = timeOfDay;
+            document.getElementById('e-time-period').value = timeOfDay;
           }
         }
         if (eventDetails.eventLocation && f2.elements.eventLocation) f2.elements.eventLocation.value = eventDetails.eventLocation;
@@ -309,19 +320,10 @@
       if (!f2) return;
 
       const eventTimeInput = f2.elements.eventTime;
-      const hourSelect = document.getElementById('e-time-hour');
-      const minuteSelect = document.getElementById('e-time-minute');
-      const periodSelect = document.getElementById('e-time-period');
-      const syncEventTime = () => {
-        if (!hourSelect.value || !minuteSelect.value || !periodSelect.value) {
-          eventTimeInput.value = '';
-          return;
-        }
-        const hour12 = Number(hourSelect.value) % 12;
-        const hour24 = hour12 + (periodSelect.value === 'PM' ? 12 : 0);
-        eventTimeInput.value = `${String(hour24).padStart(2, '0')}:${minuteSelect.value}`;
-      };
-      [hourSelect, minuteSelect, periodSelect].forEach(select => select.addEventListener('change', syncEventTime));
+      const timeOfDaySelect = document.getElementById('e-time-period');
+      timeOfDaySelect.addEventListener('change', () => {
+        eventTimeInput.value = timeOfDaySelect.value;
+      });
 
       f2.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -340,10 +342,10 @@
 
         const eDateVal = f2.elements.eventDate.value;
         setErr(f2.elements.eventDate, eDateVal ? '' : 'Please select your celebration date.');
-        const timing = formatTimeWithPeriod(eventTimeInput.value);
+        const timing = eventTimeInput.value;
         const timingError = eventTimeInput.closest('.form-group')?.querySelector('.err-msg');
-        if (timingError) timingError.textContent = timing ? '' : 'Choose the event time, including AM or PM.';
-        if (!timing) { ok = false; if (!firstInvalid) firstInvalid = hourSelect; }
+        if (timingError) timingError.textContent = timing ? '' : 'Choose a time of day.';
+        if (!timing) { ok = false; if (!firstInvalid) firstInvalid = timeOfDaySelect; }
         const address = f2.elements.eventLocation.value.trim();
         const mapUrl = f2.elements.eventMapUrl.value.trim();
         const addressError = f2.elements.eventLocation.closest('.form-group')?.querySelector('.err-msg');
