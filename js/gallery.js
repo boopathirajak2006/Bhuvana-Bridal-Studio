@@ -3,7 +3,7 @@
 
   const taxonomy = {
     'bridal-beauty': [
-      ['baby-shower', 'Baby Shower Makeup'], ['wedding-makeup', 'Wedding Makeup'], ['party-makeup', 'Party Makeup'],
+      ['baby-shower', 'Baby Shower Makeup'], ['puberty-makeup', 'Puberty Makeup'], ['mehndi-design', 'Mehndi Design'], ['wedding-makeup', 'Wedding Makeup'], ['party-makeup', 'Party Makeup'],
       ['engagement-makeup', 'Engagement Makeup'], ['reception-makeup', 'Reception Makeup'], ['bridal-hairstyling', 'Bridal Hairstyling'], ['other-bridal', 'Other Bridal Work']
     ],
     'designer-blouse': [
