@@ -27,9 +27,7 @@
         return `<section class="gallery-category-section" id="gallery-${escapeHtml(subcategory)}" aria-labelledby="gallery-title-${index + 1}">
           <div class="gallery-category-heading"><span class="eyebrow">Category ${String(index + 1).padStart(2, '0')}</span><h2 id="gallery-title-${index + 1}">${escapeHtml(label)}</h2></div>
           <div class="gallery-grid">${items.map((photo, photoIndex) => {
-            const caption = subcategory === 'puberty-makeup' ? 'Puberty Makeup completed customer work'
-              : subcategory === 'mehndi-design' ? 'Mehndi Design completed customer work'
-              : photo.title || `${label} completed customer work`;
+            const caption = `${label} completed customer work`;
             return `<button type="button" class="gallery-photo-button" data-gallery-photo="${escapeHtml(photo.id || `${subcategory}-${photoIndex}`)}" data-gallery-caption="${escapeHtml(caption)}" aria-label="View ${escapeHtml(caption)}"><img class="gallery-item-img" src="${escapeHtml(photo.image_url)}" alt="${escapeHtml(caption)}" loading="lazy"></button>`;
           }).join('') || '<p class="gallery-empty">Completed customer photos in this category will appear here.</p>'}</div>
         </section>`;
