@@ -246,6 +246,91 @@
               </div>
             </div>
 
+            <!-- Actions -->
+            <div class="action-btn-row">
+              <button class="btn ghost btn-step-back" type="button" data-target="step-2">&larr; Back to Event Details</button>
+              <button class="btn gold" type="submit">Continue to Customization &rarr;</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- ========================================================================= -->
+      <!-- STEP 3: SERVICE DETAILS                                                   -->
+      <!-- ========================================================================= -->
+      <section id="step-3" class="booking-step">
+        <div class="center" style="margin-bottom:2rem;">
+          <span class="eyebrow">Step 3 of 5 &middot; Service Details</span>
+          <h1>Service Details</h1>
+          <p class="lead">Choose the details that will help us prepare your studio service.</p>
+        </div>
+        <div class="enquiry-container">
+          <form id="form-step-3" novalidate>
+
+            <!-- Bridal and beauty preferences -->
+            <div id="service-block-bridal" style="margin-bottom:2rem;">
+              <h3 style="font-size:1.3rem; color:var(--burgundy); border-bottom:1.5px solid var(--border); padding-bottom:0.5rem; margin-bottom:1.25rem;">
+                Bridal Beauty Service Details
+              </h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="s-makeup-style">Makeup Style</label>
+                  <select class="form-control" id="s-makeup-style" name="makeupStyle">
+                    <option value="Traditional bridal makeup">Traditional bridal makeup</option>
+                    <option value="HD makeup">HD makeup</option>
+                    <option value="Airbrush makeup">Airbrush makeup</option>
+                    <option value="Soft glam makeup">Soft glam makeup</option>
+                    <option value="Discuss during consultation">Discuss during consultation</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="s-hair-style">Hairstyle</label>
+                  <select class="form-control" id="s-hair-style" name="hairStyle">
+                    <option value="Traditional bridal bun">Traditional bridal bun</option>
+                    <option value="Braided hairstyle">Braided hairstyle</option>
+                    <option value="Open curls or waves">Open curls or waves</option>
+                    <option value="Discuss during consultation">Discuss during consultation</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="s-draping-type">Saree / Outfit Draping</label>
+                  <select class="form-control" id="s-draping-type" name="drapingType">
+                    <option value="Traditional saree draping">Traditional saree draping</option>
+                    <option value="Bridal saree pleats and pinning">Bridal saree pleats and pinning</option>
+                    <option value="Lehenga dupatta draping">Lehenga dupatta draping</option>
+                    <option value="Discuss during consultation">Discuss during consultation</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="s-mehndi-style">Mehndi Preference</label>
+                  <select class="form-control" id="s-mehndi-style" name="mehndiStyle">
+                    <option value="Bridal full-hand mehndi">Bridal full-hand mehndi</option>
+                    <option value="Simple mehndi design">Simple mehndi design</option>
+                    <option value="No mehndi required">No mehndi required</option>
+                    <option value="Discuss during consultation">Discuss during consultation</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="s-jewellery-assistance">Jewellery Assistance</label>
+                  <select class="form-control" id="s-jewellery-assistance" name="jewelleryAssistance">
+                    <option value="Need help with jewellery setting">Need help with jewellery setting</option>
+                    <option value="Jewellery will be arranged by customer">Jewellery will be arranged by customer</option>
+                    <option value="Discuss during consultation">Discuss during consultation</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="s-makeup-people">Number of People for Makeup</label>
+                  <select class="form-control" id="s-makeup-people" name="makeupPeople">
+                    <option value="1">1 person</option>
+                    <option value="2">2 people</option>
+                    <option value="3">3 people</option>
+                    <option value="4+">4 or more people</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <!-- 3B: Designer Blouse & Tailoring Block -->
             <div id="service-block-tailoring" style="display:none; margin-bottom:2rem;">
               <h3 style="font-size:1.3rem; color:var(--burgundy); border-bottom:1.5px solid var(--border); padding-bottom:0.5rem; margin-bottom:1.25rem;">
@@ -322,8 +407,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- Actions -->
             <div class="action-btn-row">
               <button class="btn ghost btn-step-back" type="button" data-target="step-2">&larr; Back to Event Details</button>
               <button class="btn gold" type="submit">Continue to Customization &rarr;</button>
@@ -560,7 +643,7 @@
   <script src="js/services-data.js"></script>
   <script src="js/booking-store.js"></script>
   <script src="js/cloudflare-config.js"></script>
-  <script src="js/enquiry-form.js"></script>
+  <script src="js/enquiry-form.js?v=service-step3-fix"></script>
 </body>
 
 </html>
