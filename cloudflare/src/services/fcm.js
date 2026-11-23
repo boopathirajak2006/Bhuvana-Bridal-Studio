@@ -7,6 +7,16 @@
 import { D1Service } from './d1.js';
 
 export class FCMService {
+  static getServiceAccount(env) {
+    if (!env.FIREBASE_SERVICE_ACCOUNT_JSON) return null;
+    try {
+      return JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    } catch {
+      console.error('[FCM] FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON.');
+      return null;
+    }
+  }
+
   /**
    * Send Google OAuth2 signed JWT to obtain access token for FCM v1
    */
@@ -16,9 +26,10 @@ export class FCMService {
       return env.FIREBASE_ACCESS_TOKEN;
     }
 
-    const projectId = env.FIREBASE_PROJECT_ID;
-    const clientEmail = env.FIREBASE_CLIENT_EMAIL;
-    const privateKeyPem = env.FIREBASE_PRIVATE_KEY;
+    const serviceAccount = this.getServiceAccount(env);
+    const projectId = env.FIREBASE_PROJECT_ID || serviceAccount?.project_id;
+    const clientEmail = env.FIREBASE_CLIENT_EMAIL || serviceAccount?.client_email;
+    const privateKeyPem = env.FIREBASE_PRIVATE_KEY || serviceAccount?.private_key;
 
     if (!projectId || !clientEmail || !privateKeyPem) {
       console.warn('[FCM] Firebase service account credentials not fully configured in environment.');
@@ -120,7 +131,7 @@ export class FCMService {
     const clickUrl = `https://boopathirajak2006.github.io/Bhuvana-Bridal-Studio/studio-inbox.html?ref=${encodeURIComponent(booking.booking_ref)}`;
 
     const accessToken = await this.getGoogleAccessToken(env);
-    const projectId = env.FIREBASE_PROJECT_ID;
+    const projectId = env.FIREBASE_PROJECT_ID || this.getServiceAccount(env)?.project_id;
 
     for (const device of devices) {
       let jobId = null;
